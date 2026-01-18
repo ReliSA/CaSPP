@@ -26,6 +26,8 @@ Pattern categorization by the publication or source they appear in.
 
 [Hybrid learning spaces](koh17/koh17.md)
 
+[Hybridity through subspace creation](dub24/dub24.md)
+
 ## I
 [Improving Coding Workshops: A Pattern Collection](ber24/ber24.md)
 
