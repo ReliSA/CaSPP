@@ -13,7 +13,7 @@ Celebrate Your Team
 - [Methodology](facets/methodologies/methodologies.md): [General](facets/methodologies/General.md)
 - [Mode](facets/modes/modes.md): [General](facets/modes/General.md)
 - [Primary perspective](facets/perspectives/perspectives.md): [Team](facets/perspectives/Team.md)
-- [Stage](facets/stages/modes.md): [Execution](facets/stages/Execution.md)
+- [Stage](facets/stages/stages.md): [Execution](facets/stages/Execution.md)
 
 ## Context
 

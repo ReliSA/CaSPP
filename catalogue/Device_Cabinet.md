@@ -13,7 +13,7 @@ Tablet Trolley
 - [Methodology](facets/methodologies/methodologies.md): [General](facets/methodologies/General.md)
 - [Mode](facets/modes/modes.md): [General](facets/modes/General.md)
 - [Primary perspective](facets/perspectives/perspectives.md): [Organization](facets/perspectives/Organization.md)
-- [Stage](facets/stages/modes.md): [Course Design](facets/stages/Course_Design.md)
+- [Stage](facets/stages/stages.md): [Course Design](facets/stages/Course_Design.md)
 
 ## Synopsis
 

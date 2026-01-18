@@ -9,7 +9,7 @@
 - [Methodology](facets/methodologies/methodologies.md): [General](facets/methodologies/General.md)
 - [Mode](facets/modes/modes.md): [Online](facets/modes/Online.md)
 - [Primary perspective](facets/perspectives/perspectives.md): [Teacher](facets/perspectives/Teacher.md)
-- [Stage](facets/stages/modes.md): [Initiation](facets/stages/Initiation.md)
+- [Stage](facets/stages/stages.md): [Initiation](facets/stages/Initiation.md)
 
 ## Context
 

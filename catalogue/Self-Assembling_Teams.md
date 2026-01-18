@@ -9,7 +9,7 @@
 - [Methodology](facets/methodologies/methodologies.md): [Agile](facets/methodologies/Agile.md)
 - [Mode](facets/modes/modes.md): [General](facets/modes/General.md)
 - [Primary perspective](facets/perspectives/perspectives.md): [Teacher](facets/perspectives/Teacher.md)
-- [Stage](facets/stages/modes.md): [Team and Project Setup](facets/categories/Team_and_Project_Setup.md)
+- [Stage](facets/stages/stages.md): [Team and Project Setup](facets/categories/Team_and_Project_Setup.md)
 
 ## Synopsis (optional)
 

@@ -9,7 +9,7 @@
 - [Methodology](facets/methodologies/methodologies.md): [General](facets/methodologies/General.md)
 - [Mode](facets/modes/modes.md): [General](facets/modes/General.md)
 - [Primary perspective](facets/perspectives/perspectives.md): [Team](facets/perspectives/Team.md)
-- [Stage](facets/stages/modes.md): [Initiation](facets/categories/Initiation.md)
+- [Stage](facets/stages/stages.md): [Initiation](facets/categories/Initiation.md)
 ## Context
 
 A group assignment has been given to you and some fellow students, including a description of what has to be done and what is expected from you.
