@@ -12,7 +12,7 @@ Browse
  - by [perspective](catalogue/facets/perspectives/perspectives.md),
  - by [publication](catalogue/facets/publications/publications.md),
  - by project [stage](catalogue/facets/stages/stages.md), 
- - all alphabtically below.
+ - all alphabtically below ( :asterisk: marks drafts ).
 
 --- 
 ## 0-9
@@ -21,10 +21,10 @@ Browse
 ## A
 [A Proper Tool Is Half The Job Done](catalogue/A_Proper_Tool_Is_Half_The_Job_Done.md)
 
-[Ask for Individual Grading](catalogue/Ask_for_Individual_Grading.md) 
+:asterisk:[Ask for Individual Grading](catalogue/Ask_for_Individual_Grading.md) 
 
 ## B
-[Big Brother](catalogue/Big_Brother.md)
+:asterisk:[Big Brother](catalogue/Big_Brother.md)
 
 [Bring Your Own Device](catalogue/Bring_Your_Own_Device.md)
 
@@ -37,7 +37,7 @@ Browse
 
 [Challenging personal learning goals](catalogue/Challenging_personal_learning_goals.md)
 
-[Check Customer's Privilege](catalogue/Check_Customers_Privilege.md)
+:asterisk:[Check Customer's Privilege](catalogue/Check_Customers_Privilege.md)
 
 [Class Buddy](catalogue/Class_Buddy.md)
 
@@ -51,29 +51,29 @@ Browse
 
 [Connected Interactive Walls](catalogue/Large_Interactive_Walls.md)
 
-[Cross-Pollination](catalogue/Cross-Pollination.md)
+:asterisk:[Cross-Pollination](catalogue/Cross-Pollination.md)
 
 [Customer's Side Project](catalogue/Non-Essential_Project.md)
 
 ## D
 [Daily Learning Logs](catalogue/Daily_Learning_Logs.md)
 
-[Deliver High Quality Products](catalogue/Deliver_High_Quality_Products.md)
+:asterisk:[Deliver High Quality Products](catalogue/Deliver_High_Quality_Products.md)
 
 [Device Cabinet](catalogue/Device_Cabinet.md)
 
 [Discussion Board](catalogue/Discussion_Board.md)
 
-[Disproportional Initial Stage](catalogue/Disproportional_Initial_Stage.md)
+:asterisk:[Disproportional Initial Stage](catalogue/Disproportional_Initial_Stage.md)
 
-[Dual Process Ownership](catalogue/Dual_Process_Ownership.md)
+:asterisk:[Dual Process Ownership](catalogue/Dual_Process_Ownership.md)
 
 ## E
-[Early Meetings Crutch](catalogue/Early_Meetings_Crutch.md)
+:asterisk:[Early Meetings Crutch](catalogue/Early_Meetings_Crutch.md)
 
 [Effective product delivery meetings](catalogue/Effective_product_delivery_meetings.md)
 
-[Eliminate Bottlenecks](catalogue/Eliminate_Bottlenecks.md)
+:asterisk:[Eliminate Bottlenecks](catalogue/Eliminate_Bottlenecks.md)
 
 [Embracing the Mobile Device](catalogue/Embracing_the_Mobile_Device.md)
 
@@ -96,20 +96,20 @@ Browse
 
 [Flipped Conference](catalogue/Flipped_Conference.md)
 
-[Focus on Seriosness](catalogue/Focus_on_Seriosness.md)
+:asterisk:[Focus on Seriosness](catalogue/Focus_on_Seriosness.md)
 
-[Focus the Discussion](catalogue/Focus_the_Discussion.md)
+:asterisk:[Focus the Discussion](catalogue/Focus_the_Discussion.md)
 
 [From requirements to tasks](catalogue/From_requirements_to_tasks.md)
 
-[Full Product Backlog from Day One](catalogue/Full_Product_Backlog_from_Day_One.md)
+:asterisk:[Full Product Backlog from Day One](catalogue/Full_Product_Backlog_from_Day_One.md)
 
 ## G
 [Getting Out of the Void](catalogue/Getting_Out_of_the_Void.md)
 
 [Give a First Warning](catalogue/Give_a_First_Warning.md)
 
-[Give Constructive Feedback](catalogue/Give_Constructive_Feedback.md)
+:asterisk:[Give Constructive Feedback](catalogue/Give_Constructive_Feedback.md)
 
 [Grading individuals is teamwork](catalogue/2_2_makes_four_eyes.md)
 
@@ -122,14 +122,14 @@ Browse
 
 [Hands On First](catalogue/Hands_On_First.md)
 
-[Higher Ceremony](catalogue/Higher_Ceremony.md)
+:asterisk:[Higher Ceremony](catalogue/Higher_Ceremony.md)
 
 [Hybrid Learning Space](catalogue/Hybrid_Learning_Space.md)
 
 ## I
 [If all pigs would be equal...](catalogue/If_all_pigs_would_be_equal.md)
 
-[Improve the Presentation](catalogue/Improve_the_Presentation.md)
+:asterisk:[Improve the Presentation](catalogue/Improve_the_Presentation.md)
 
 [Interactive eLearning](catalogue/Interactive_eLearning.md)
 
@@ -140,7 +140,7 @@ Browse
 ## K
 [Keep Motivated](catalogue/Keep_Motivated.md)
 
-[Keep Team Spirit](catalogue/Keep_Team_Spirit.md)
+:asterisk:[Keep Team Spirit](catalogue/Keep_Team_Spirit.md)
 
 ## L
 [Large Interactive Walls](catalogue/Large_Interactive_Walls.md)
@@ -163,25 +163,25 @@ Browse
 ## N
 [Nearby power supply](catalogue/Nearby_power_supply.md)
 
-[Nominate One Communicator](catalogue/Nominate_One_Communicator.md)
+:asterisk:[Nominate One Communicator](catalogue/Nominate_One_Communicator.md)
 
-[Non-Daily Scrum](catalogue/Non-Daily_Scrum.md)
+:asterisk:[Non-Daily Scrum](catalogue/Non-Daily_Scrum.md)
 
 [Non-Essential Project](catalogue/Non-Essential_Project.md)
 
-[Not All Iterations Are Equal](catalogue/Not_All_Iterations_Are_Equal.md)
+:asterisk:[Not All Iterations Are Equal](catalogue/Not_All_Iterations_Are_Equal.md)
 
 [Not Business Critical](catalogue/Non-Essential_Project.md)
 
 ## O
-[Own Your Work](catalogue/Own_Your_Work.md)
+:asterisk:[Own Your Work](catalogue/Own_Your_Work.md)
 
 ## P
 [Personal Introductions](catalogue/Personal_Introductions.md)
 
-[Plan External Worktime](catalogue/Plan_External_Worktime.md)
+:asterisk:[Plan External Worktime](catalogue/Plan_External_Worktime.md)
 
-[Process-Focused Evaluation](catalogue/Process-Focused_Evaluation.md)
+:asterisk:[Process-Focused Evaluation](catalogue/Process-Focused_Evaluation.md)
 
 ## Q
 
@@ -193,9 +193,9 @@ Browse
 ## S
 [Self-Assembling Teams](catalogue/Self-Assembling_Teams.md)
 
-[Self-Defined Policies](catalogue/Self-Defined_Policies.md)
+:asterisk:[Self-Defined Policies](catalogue/Self-Defined_Policies.md)
 
-[Shallow Feedback Loops](catalogue/Shallow_Feedback_Loops.md)
+:asterisk:[Shallow Feedback Loops](catalogue/Shallow_Feedback_Loops.md)
 
 [Share Expectations](catalogue/Share_Expectations.md)
 
@@ -207,13 +207,13 @@ Browse
 
 [Start Immediately](catalogue/Start_Immediately.md)
 
-[Strictly Time-Boxed Team Ceremonies](catalogue/Strictly_Time-Boxed_Team_Ceremonies.md)
+:asterisk:[Strictly Time-Boxed Team Ceremonies](catalogue/Strictly_Time-Boxed_Team_Ceremonies.md)
 
 [Structured for Self Study](catalogue/Structured_for_Self_Study.md)
 
 [Student's accountability](catalogue/Face_their_facts.md)
 
-[Support_the_Leader](catalogue/Support_the_Leader.md)
+:asterisk:[Support_the_Leader](catalogue/Support_the_Leader.md)
 
 ## T
 [Tablet Trolley](catalogue/Device_Cabinet.md)
@@ -232,14 +232,14 @@ Browse
 
 [TED Evenings](catalogue/TED_Evenings.md)
 
-[The Mentor-Assessor Role](catalogue/The_Mentor-Assessor_Role.md)
+:asterisk:[The Mentor-Assessor Role](catalogue/The_Mentor-Assessor_Role.md)
 
 [Time Size Limitation](catalogue/Team_Size_Limitation.md)
 
 [Tracking progress](catalogue/Tracking_progress.md)
 
 ## U
-[Use a Styleguide](catalogue/Use_a_Styleguide.md)
+:asterisk:[Use a Styleguide](catalogue/Use_a_Styleguide.md)
 
 [Using metrics in a fair way](catalogue/Whodunnit.md)
 
