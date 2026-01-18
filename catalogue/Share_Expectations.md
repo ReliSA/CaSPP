@@ -47,7 +47,7 @@ Even if all members have the same expectations and goals, it can happen that som
 |Pattern|Relation type|Relation description|
 |--|--|--|
 |[Ask for Individual Grading](Ask_for_Individual_Grading.md)|can lead to|if it shows that the goals or priorities differ|
-|[Fill Knowledge Gaps]](Fill_Knowledge_Gaps.md)|leads to|if it shows that the goals or priorities differ|
+|[Fill Knowledge Gaps](Fill_Knowledge_Gaps.md)|leads to|if it shows that the goals or priorities differ|
 |[Give a First Warning](Give_a_First_Warning.md)|can lead to|if some members do not fulfil expectations|
 |[Resolve Conflicts](Resolve_Conflicts.md)|precedes||
  
