@@ -98,7 +98,7 @@ Figure 1: Noise-protected [Learning alcove](Learning_alcove.md) with display and
 
 Figure 2: [Learning alcove](Learning_alcove.md) as a Workstation with (interactive) displays at the University of Strathclyde (Photo: Christian Kohls)
 
-![Workstation with (interactive) displays at the "Lernarena" (Photo: Dennis Dubbert)](https://github.com/ReliSA/STePSEnHECs-PaCt/blob/main/catalogue/facets/publications/dub24/Workstation_with_interactive_displays-2.png "Workstation with (interactive) displays at the "Lernarena" (Photo: Dennis Dubbert)")
+![Workstation with (interactive) displays at the 'Lernarena' (Photo: Dennis Dubbert)](https://github.com/ReliSA/STePSEnHECs-PaCt/blob/main/catalogue/facets/publications/dub24/Workstation_with_interactive_displays-2.png "Workstation with (interactive) displays at the 'Lernarena' (Photo: Dennis Dubbert)")
 
 Figure 3: Workstation with (interactive) displays at the "Lernarena" (Photo: Dennis Dubbert)
 
