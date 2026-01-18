@@ -56,7 +56,7 @@ As this solution describes an initial hands-on part, the example from the Code w
 
 |Pattern|Relation type|Relation description|
 |--|--|--|
-|First Steep[[IBA'09]](../References.md)|supports solution|First Steep supports the idea of straight jumping into an interesting sounding topic and following your intuition alongside. This idea aligns with the solution of Hands-on first, which supports the exploratory introduction into a new topic.|
+|First Steep [[IBA'09]](../References.md)|supports solution|First Steep supports the idea of straight jumping into an interesting sounding topic and following your intuition alongside. This idea aligns with the solution of Hands-on first, which supports the exploratory introduction into a new topic.|
 |Prototyping [[IBA'11]](../References.md)|potential enabler|Prototyping your ideas, can support the aspect of exploring a new topic. Participants can therefore validate or iterate their ideas.|
 |Students Decide [[ECK'02]](../References.md)|potential enabler|Students Decide supports the idea of student leading the topic of a class, based on their interests and expectations. This can also be applied to the structure of a Coding Workshop.|
  
