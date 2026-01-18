@@ -51,7 +51,7 @@ _(Ordered alphabetically by the key.)_
 
 [[KOH'22]](catalogue/facets/publications/koh22/koh22.md) Kohls, Christian. "Hybrid Events in Education". In Proceedings of the 27th European Conference on Pattern Languages of Programs (EuroPLop ’22). Association for Computing Machinery, New York, NY, USA, July 2022. Pages 1-7. [[link]](https://doi.org/10.1145/3551902.3551976)
 
-[[KOH'23]] Kohls, Christian, Dubbert, Dennis and Kehrer, Mareike. "The dynamic campus - flexible learning spaces for hybrid education". In Proceedings of the 28th European Conference on Pattern Languages of Programs. Association for Computing Machinery, New York, NY, USA, July 2023. Pages 1-11. [[link]](https://doi.org/10.1145/3628034.3628062)
+[[KOH'23]](catalogue/facets/publications/koh23/koh23.md) Kohls, Christian, Dubbert, Dennis and Kehrer, Mareike. "The dynamic campus - flexible learning spaces for hybrid education". In Proceedings of the 28th European Conference on Pattern Languages of Programs. Association for Computing Machinery, New York, NY, USA, July 2023. Pages 1-11. [[link]](https://doi.org/10.1145/3628034.3628062)
 
 [[KOP'12]](catalogue/facets/publications/kop12/kop12.md) Köppe, Christian. "Learning Patterns for Group Assignments - Part 1". In Proceedings of the 19th Conference on Pattern Languages of Programs. 2012. Pages 1-12. [[link]](https://www.researchgate.net/profile/Christian-Koeppe/publication/230682834_Learning_Patterns_for_Group_Assignments_-_Part_1/links/599a9ebc45851564432f0b1f/Learning-Patterns-for-Group-Assignments-Part-1.pdf)
 
