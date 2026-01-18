@@ -5,7 +5,7 @@
 ## [Classification](facets/facets.md)
 
 - [Category](facets/categories/categories.md):
-- [Form](facets/forms/forms.md): [Environment and Infrastructure](facets/forms/Environment and Infrastructure.md)
+- [Form](facets/forms/forms.md): [Environment and Infrastructure](facets/forms/Environment_and_Infrastructure.md)
 - [Methodology](facets/methodologies/methodologies.md): [General](facets/methodologies/General.md)
 - [Mode](facets/modes/modes.md): [Online](facets/modes/Online.md)
 - [Primary perspective](facets/perspectives/perspectives.md): [Teacher](facets/perspectives/Teacher.md)
