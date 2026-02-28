@@ -2,6 +2,12 @@ import re
 import os
 from pathlib import Path
 from typing import List, Dict, Tuple
+import logging
+
+from core.constants import FileConstants
+from utils.exceptions import FileNotFoundError, FileReadError, InvalidInputError
+
+logger = logging.getLogger(__name__)
 
 class MarkdownAnalyzer:
     def __init__(self, base_path: str = None):
@@ -16,13 +22,27 @@ class MarkdownAnalyzer:
             app_dir = Path(__file__).parent.parent
             self.base_path = app_dir.parent
         else:
-            self.base_path = Path(base_path)
+            # Validate base_path
+            if not isinstance(base_path, (str, Path)):
+                raise InvalidInputError("base_path", base_path, "must be a string or Path object")
+            
+            base_path_obj = Path(base_path)
+            if not base_path_obj.exists():
+                raise FileNotFoundError(str(base_path_obj))
+                
+            self.base_path = base_path_obj
     
     def find_markdown_links(self, content: str) -> List[Dict[str, str]]:
         """
         Find all markdown links in the content.
         Returns a list of dictionaries with 'text', 'url', and 'type' keys.
         """
+        if not isinstance(content, str):
+            raise InvalidInputError("content", content, "must be a string")
+        
+        if not content.strip():
+            return []
+        
         links = []
         
         # Pattern for markdown links: [text](url)
@@ -33,7 +53,7 @@ class MarkdownAnalyzer:
             url = match.group(2)
             
             # Determine if it's a markdown file link
-            link_type = "markdown" if url.endswith('.md') else "other"
+            link_type = "markdown" if any(url.endswith(ext) for ext in FileConstants.MARKDOWN_EXTENSIONS) else "other"
             
             links.append({
                 'text': text,
@@ -53,26 +73,52 @@ class MarkdownAnalyzer:
             file_path: The file path to check (from markdown link)
             relative_to_file: The path of the markdown file being analyzed
         """
-        # Get the directory of the analyzed file
-        analyzed_file_dir = Path(relative_to_file).parent
+        # Input validation
+        if not isinstance(file_path, str) or not file_path.strip():
+            raise InvalidInputError("file_path", file_path, "must be a non-empty string")
         
-        # Handle relative paths
-        if not os.path.isabs(file_path):
-            full_path = analyzed_file_dir / file_path
-        else:
-            full_path = Path(file_path)
+        if not isinstance(relative_to_file, str) or not relative_to_file.strip():
+            raise InvalidInputError("relative_to_file", relative_to_file, "must be a non-empty string")
         
-        return full_path.exists(), str(full_path.resolve())
+        try:
+            # Get the directory of the analyzed file
+            analyzed_file_dir = Path(relative_to_file).parent
+            
+            # Handle relative paths
+            if not os.path.isabs(file_path):
+                full_path = analyzed_file_dir / file_path
+            else:
+                full_path = Path(file_path)
+            
+            return full_path.exists(), str(full_path.resolve())
+            
+        except (OSError, ValueError) as e:
+            logger.warning(f"Error checking file existence for '{file_path}': {e}")
+            return False, ""
     
     def analyze_markdown_file(self, file_path: str) -> Dict:
         """
         Analyze a markdown file for structure and linked files.
         """
+        # Input validation
+        if not isinstance(file_path, str) or not file_path.strip():
+            raise InvalidInputError("file_path", file_path, "must be a non-empty string")
+        
+        file_path_obj = Path(file_path)
+        if not file_path_obj.exists():
+            raise FileNotFoundError(str(file_path_obj))
+            
+        # Check if it's a markdown file
+        if not any(file_path.lower().endswith(ext) for ext in FileConstants.MARKDOWN_EXTENSIONS):
+            logger.warning(f"File '{file_path}' is not a markdown file")
+        
         try:
-            with open(file_path, 'r', encoding='utf-8') as file:
+            with open(file_path, 'r', encoding=FileConstants.ENCODING_UTF8) as file:
                 content = file.read()
-        except FileNotFoundError:
-            return {'error': f'File not found: {file_path}'}
+                
+        except (OSError, UnicodeDecodeError) as e:
+            logger.error(f"Failed to read file '{file_path}': {e}")
+            raise FileReadError(file_path, str(e)) from e
         
         # Find all links
         links = self.find_markdown_links(content)
@@ -107,6 +153,12 @@ class MarkdownAnalyzer:
     
     def extract_headings(self, content: str) -> List[Dict[str, str]]:
         """Extract all headings from markdown content."""
+        if not isinstance(content, str):
+            raise InvalidInputError("content", content, "must be a string")
+        
+        if not content.strip():
+            return []
+            
         headings = []
         heading_pattern = r'^(#{1,6})\s+(.+)$'
         
@@ -125,6 +177,9 @@ class MarkdownAnalyzer:
     
     def generate_report(self, analysis: Dict) -> str:
         """Generate a human-readable report of the analysis."""
+        if not isinstance(analysis, dict):
+            raise InvalidInputError("analysis", analysis, "must be a dictionary")
+        
         if 'error' in analysis:
             return f"Error: {analysis['error']}"
         

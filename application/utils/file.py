@@ -7,6 +7,12 @@ from typing import Optional, List, Tuple
 
 from PyQt6.QtWidgets import QFileDialog, QMessageBox, QWidget
 
+from core.constants import FileConstants
+from utils.exceptions import (
+    FileNotFoundError, FileReadError, FileWriteError, 
+    InvalidFileTypeError, FileSizeError
+)
+
 
 class FileHelper:
     """Helper class for file operations."""
@@ -37,7 +43,7 @@ class FileHelper:
                 parent,
                 title,
                 str(self.base_path),
-                "Markdown Files (*.md);;All Files (*)"
+                FileConstants.MARKDOWN_FILTER
             )
             
             if file_path:
@@ -45,7 +51,7 @@ class FileHelper:
             
             return None
         
-        except Exception as e:
+        except (OSError, RuntimeError) as e:
             self._show_error(parent, "File Selection Error", 
                            f"Failed to open file dialog: {str(e)}")
             return None
@@ -67,7 +73,7 @@ class FileHelper:
                 parent,
                 title,
                 str(self.base_path),
-                "Markdown Files (*.md);;All Files (*)"
+                FileConstants.MARKDOWN_FILTER
             )
             
             validated_paths = []
@@ -78,7 +84,7 @@ class FileHelper:
             
             return validated_paths
         
-        except Exception as e:
+        except (OSError, RuntimeError) as e:
             self._show_error(parent, "File Selection Error",
                            f"Failed to open file dialog: {str(e)}")
             return []
@@ -107,7 +113,7 @@ class FileHelper:
             
             return None
         
-        except Exception as e:
+        except (OSError, RuntimeError) as e:
             self._show_error(parent, "Directory Selection Error",
                            f"Failed to open directory dialog: {str(e)}")
             return None
@@ -136,7 +142,11 @@ class FileHelper:
             
             return str(path.resolve())
         
-        except Exception:
+        except (OSError, ValueError) as e:
+            # Log the error but return None for validation failure
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"File validation failed for '{file_path}': {e}")
             return None
     
     def _show_error(self, parent: Optional[QWidget], title: str, message: str):
@@ -170,14 +180,17 @@ class FileHelper:
         
         try:
             if recursive:
-                pattern = "**/*.md"
+                pattern = f"**/*{FileConstants.MARKDOWN_EXTENSIONS[0]}"
             else:
-                pattern = "*.md"
+                pattern = f"*{FileConstants.MARKDOWN_EXTENSIONS[0]}"
             
             md_files = list(search_dir.glob(pattern))
             return [str(f.resolve()) for f in md_files if f.is_file()]
         
-        except Exception:
+        except (OSError, ValueError) as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Error finding markdown files in '{search_dir}': {e}")
             return []
     
     def get_recent_files(self, max_count: int = 10) -> List[str]:
@@ -196,7 +209,7 @@ class FileHelper:
         recent_files = []
         
         # Look for common markdown files
-        common_names = ["README.md", "index.md", "main.md", "introduction.md"]
+        common_names = FileConstants.COMMON_MARKDOWN_FILES
         
         for name in common_names:
             file_path = self.base_path / name
@@ -242,7 +255,7 @@ class FileHelper:
             
             return file_path
         
-        except Exception as e:
+        except (OSError, RuntimeError) as e:
             self._show_error(parent, "Save Error", 
                            f"Failed to save file: {str(e)}")
             return None
@@ -262,10 +275,13 @@ class FileHelper:
             if not validated_path:
                 return None
             
-            with open(validated_path, 'r', encoding='utf-8') as f:
+            with open(validated_path, 'r', encoding=FileConstants.ENCODING_UTF8) as f:
                 return f.read()
         
-        except Exception:
+        except (OSError, UnicodeDecodeError) as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to read file '{file_path}': {e}")
             return None
     
     def get_file_info(self, file_path: str) -> Optional[dict]:
@@ -295,5 +311,8 @@ class FileHelper:
                 'extension': path.suffix
             }
         
-        except Exception:
+        except (OSError, ValueError) as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Failed to get file info for '{file_path}': {e}")
             return None
