@@ -154,6 +154,51 @@ class InvalidFileFormatError(FileException):
         )
 
 
+class FileReadError(FileException):
+    """Raised when reading a file fails."""
+    
+    def __init__(self, file_path: str, cause: str):
+        super().__init__(
+            message=f"Failed to read file: {file_path} - {cause}",
+            error_code="FILE_READ_ERROR",
+            user_message=f"Could not read file '{file_path}'. {cause}"
+        )
+
+
+class FileWriteError(FileException):
+    """Raised when writing to a file fails."""
+    
+    def __init__(self, file_path: str, cause: str):
+        super().__init__(
+            message=f"Failed to write file: {file_path} - {cause}",
+            error_code="FILE_WRITE_ERROR",
+            user_message=f"Could not write to file '{file_path}'. {cause}"
+        )
+
+
+class InvalidFileTypeError(FileException):
+    """Raised when file type is not supported."""
+    
+    def __init__(self, file_path: str, expected_types: list):
+        types_str = ", ".join(expected_types)
+        super().__init__(
+            message=f"Invalid file type for {file_path}. Expected one of: {types_str}",
+            error_code="INVALID_FILE_TYPE",
+            user_message=f"Unsupported file type. Expected: {types_str}"
+        )
+
+
+class FileSizeError(FileException):
+    """Raised when file size exceeds limits."""
+    
+    def __init__(self, file_path: str, actual_size: int, max_size: int):
+        super().__init__(
+            message=f"File {file_path} size {actual_size} bytes exceeds maximum {max_size} bytes",
+            error_code="FILE_SIZE_ERROR",
+            user_message=f"File is too large. Maximum size allowed: {max_size // (1024*1024)}MB"
+        )
+
+
 # Analysis-related exceptions
 class AnalysisException(BaseAppException):
     """Base exception for analysis-related errors."""

@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import QFileDialog, QMessageBox, QWidget
 from core.constants import FileConstants
 from utils.exceptions import (
     FileNotFoundError, FileReadError, FileWriteError, 
-    InvalidFileTypeError, FileSizeError
+    InvalidFileTypeError, FileSizeError, FileAccessError
 )
 
 
@@ -127,23 +127,27 @@ class FileHelper:
         
         Returns:
             Validated file path or None if invalid
+            
+        Raises:
+            FileNotFoundError: If file doesn't exist
+            FileAccessError: If file is not readable
         """
         try:
             path = Path(file_path)
             
             if not path.exists():
-                return None
+                raise FileNotFoundError(str(path))
             
             if not path.is_file():
-                return None
+                raise InvalidFileTypeError(str(path), ["regular file"])
             
             if not os.access(file_path, os.R_OK):
-                return None
+                raise FileAccessError(str(path), "read")
             
             return str(path.resolve())
         
         except (OSError, ValueError) as e:
-            # Log the error but return None for validation failure
+            # Log the error but return None for validation failure in UI context
             import logging
             logger = logging.getLogger(__name__)
             logger.warning(f"File validation failed for '{file_path}': {e}")
@@ -233,14 +237,24 @@ class FileHelper:
         
         Returns:
             Path where file was saved, or None if cancelled/failed
+            
+        Raises:
+            FileWriteError: If writing the file fails
+            FileSizeError: If content is too large
         """
         try:
+            # Validate content size
+            content_size = len(content.encode(FileConstants.ENCODING_UTF8))
+            max_size = FileConstants.MAX_FILE_SIZE_MB * 1024 * 1024
+            if content_size > max_size:
+                raise FileSizeError("content", content_size, max_size)
+            
             if file_path is None:
                 file_path, _ = QFileDialog.getSaveFileName(
                     parent,
                     "Save Markdown File",
                     str(self.base_path),
-                    "Markdown Files (*.md);;All Files (*)"
+                    FileConstants.MARKDOWN_FILTER
                 )
                 
                 if not file_path:
@@ -250,12 +264,17 @@ class FileHelper:
             Path(file_path).parent.mkdir(parents=True, exist_ok=True)
             
             # Write the file
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, 'w', encoding=FileConstants.ENCODING_UTF8) as f:
                 f.write(content)
             
             return file_path
         
-        except (OSError, RuntimeError) as e:
+        except (OSError, UnicodeEncodeError) as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to save file '{file_path}': {e}")
+            raise FileWriteError(file_path or "unknown", str(e))
+        except RuntimeError as e:
             self._show_error(parent, "Save Error", 
                            f"Failed to save file: {str(e)}")
             return None
@@ -269,20 +288,36 @@ class FileHelper:
         
         Returns:
             File content or None if failed
+            
+        Raises:
+            FileNotFoundError: If file doesn't exist
+            FileReadError: If reading the file fails
         """
         try:
             validated_path = self._validate_file(file_path)
             if not validated_path:
+                # _validate_file already logs the specific error
                 return None
             
             with open(validated_path, 'r', encoding=FileConstants.ENCODING_UTF8) as f:
-                return f.read()
+                content = f.read()
+                
+            # Check for reasonable file size
+            if len(content) > FileConstants.MAX_FILE_SIZE_MB * 1024 * 1024:
+                raise FileSizeError(validated_path, len(content), FileConstants.MAX_FILE_SIZE_MB * 1024 * 1024)
+                
+            return content
         
-        except (OSError, UnicodeDecodeError) as e:
+        except UnicodeDecodeError as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Encoding error reading file '{file_path}': {e}")
+            raise FileReadError(file_path, "File encoding not supported")
+        except OSError as e:
             import logging
             logger = logging.getLogger(__name__)
             logger.error(f"Failed to read file '{file_path}': {e}")
-            return None
+            raise FileReadError(file_path, str(e))
     
     def get_file_info(self, file_path: str) -> Optional[dict]:
         """
