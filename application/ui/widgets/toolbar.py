@@ -74,6 +74,26 @@ class Toolbar(QToolBar):
         self.git_pull_action.triggered.connect(self._git_pull)
         self.addAction(self.git_pull_action)
         
+        self.addSeparator()
+        
+        # Git staging actions
+        self.git_stage_all_action = QAction("📋 Stage All", self)
+        self.git_stage_all_action.setToolTip("Stage all changes for commit")
+        self.git_stage_all_action.triggered.connect(self._git_stage_all)
+        self.addAction(self.git_stage_all_action)
+        
+        self.git_unstage_all_action = QAction("🔄 Unstage All", self)
+        self.git_unstage_all_action.setToolTip("Unstage all staged changes")
+        self.git_unstage_all_action.triggered.connect(self._git_unstage_all)
+        self.addAction(self.git_unstage_all_action)
+        
+        self.git_status_action = QAction("📊 Status", self)
+        self.git_status_action.setToolTip("View repository status")
+        self.git_status_action.triggered.connect(self._git_status)
+        self.addAction(self.git_status_action)
+        
+        self.addSeparator()
+        
         # Git commit action
         self.git_commit_action = QAction("💾 Commit", self)
         self.git_commit_action.setToolTip("Commit current changes")
@@ -182,6 +202,23 @@ class Toolbar(QToolBar):
         
         if reply == QMessageBox.StandardButton.Yes:
             self._execute_git_command("pull", "Successfully pulled changes from remote.")
+    
+    def _git_stage_all(self):
+        """Stage all changes."""
+        self._execute_git_command("stage_all", "Successfully staged all changes.")
+    
+    def _git_unstage_all(self):
+        """Unstage all changes."""
+        reply = QMessageBox.question(
+            self,
+            "Confirm Unstage",
+            "This will unstage all staged changes. Continue?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            self._execute_git_command("unstage_all", "Successfully unstaged all changes.")
     
     def _git_commit(self):
         """Execute git commit command."""
@@ -296,6 +333,9 @@ class Toolbar(QToolBar):
         """Enable or disable git actions."""
         self.git_fetch_action.setEnabled(enabled)
         self.git_pull_action.setEnabled(enabled)
+        self.git_stage_all_action.setEnabled(enabled)
+        self.git_unstage_all_action.setEnabled(enabled)
+        self.git_status_action.setEnabled(enabled)
         self.git_commit_action.setEnabled(enabled)
     
     def enable_file_actions(self, enabled: bool = True):

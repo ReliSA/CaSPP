@@ -46,6 +46,10 @@ class GitWorker(QThread):
                 success, message = helper.commit(commit_message, stage_all)
             elif self.operation == "status":
                 success, message = helper.get_status_detailed()
+            elif self.operation == "stage_all":
+                success, message = helper.stage_all()
+            elif self.operation == "unstage_all":
+                success, message = helper.unstage_all()
             else:
                 success, message = False, f"Unknown operation: {self.operation}"
             
@@ -298,6 +302,25 @@ class GitHelper:
             return False, f"Failed to stage changes: {str(e)}"
         except Exception as e:
             return False, f"Error staging changes: {str(e)}"
+    
+    def unstage_all(self) -> Tuple[bool, str]:
+        """
+        Unstage all staged changes.
+        
+        Returns:
+            Tuple of (success, message)
+        """
+        try:
+            if not self.is_repo_available():
+                return False, "No git repository found"
+            
+            self.repo.git.reset("HEAD")  # Unstage all files
+            return True, "All changes unstaged successfully"
+        
+        except GitCommandError as e:
+            return False, f"Failed to unstage changes: {str(e)}"
+        except Exception as e:
+            return False, f"Error unstaging changes: {str(e)}"
     
     def commit(self, message: str, stage_all: bool = False) -> Tuple[bool, str]:
         """
