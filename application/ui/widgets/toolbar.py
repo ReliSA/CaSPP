@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
     QToolBar, QMessageBox, QInputDialog, 
     QProgressDialog, QApplication
 )
-from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtCore import pyqtSignal, Qt, QTimer
 from PyQt6.QtGui import QIcon, QAction
 
 from core.config import Config
@@ -117,8 +117,6 @@ class Toolbar(QToolBar):
     def _execute_git_command(self, operation: str, success_message: str, **kwargs):
         """Execute git command in background thread."""
         print(f"DEBUG: _execute_git_command called with operation: {operation}")
-        print(f"DEBUG: git_helper: {self.git_helper}")
-        print(f"DEBUG: git_helper.is_repo_available(): {self.git_helper.is_repo_available() if self.git_helper else 'N/A'}")
         
         if not self.git_helper or not self.git_helper.is_repo_available():
             print("DEBUG: Git helper not available, showing warning")
@@ -138,8 +136,9 @@ class Toolbar(QToolBar):
             self
         )
         self.progress_dialog.setWindowModality(Qt.WindowModality.WindowModal)
-        self.progress_dialog.setAutoClose(True)
+        self.progress_dialog.setAutoClose(False)  # Don't auto-close
         self.progress_dialog.show()
+        QApplication.processEvents()  # Process events to show dialog
         
         # Create and start worker thread
         repo_path = self.git_helper.get_repo_root()
@@ -160,29 +159,49 @@ class Toolbar(QToolBar):
     
     def _on_git_operation_finished(self, success: bool, message: str, success_message: str):
         """Handle completion of git operation."""
-        # Close progress dialog first
-        if self.progress_dialog:
-            self.progress_dialog.close()
-            self.progress_dialog = None
+        print(f"DEBUG: _on_git_operation_finished called - success: {success}")
         
-        # Clean up the worker thread properly
+        # Clean up the worker thread first
         if self.current_git_worker:
+            print("DEBUG: Cleaning up worker thread")
             self.current_git_worker.deleteLater()
             self.current_git_worker = None
         
-        # Show result message
-        if success:
-            QMessageBox.information(
-                self,
-                "Git Success",
-                f"{success_message}\n\n{message}" if message else success_message
-            )
-        else:
-            QMessageBox.warning(
-                self,
-                "Git Error",
-                f"Git operation failed:\n{message}"
-            )
+        # Close progress dialog with proper null checks
+        if self.progress_dialog is not None:
+            print("DEBUG: Closing progress dialog")
+            try:
+                self.progress_dialog.close()
+                self.progress_dialog.deleteLater()
+            except Exception as e:
+                print(f"DEBUG: Error closing progress dialog: {e}")
+            finally:
+                self.progress_dialog = None
+        
+        # Use QTimer to show message after cleanup to avoid blocking
+        def show_message():
+            try:
+                if success:
+                    msg_box = QMessageBox(self)
+                    msg_box.setIcon(QMessageBox.Icon.Information)
+                    msg_box.setWindowTitle("Git Success")
+                    msg_box.setText(f"{success_message}\n\n{message}" if message else success_message)
+                    msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
+                    msg_box.show()
+                    print("DEBUG: Success message box created")
+                else:
+                    msg_box = QMessageBox(self)
+                    msg_box.setIcon(QMessageBox.Icon.Warning)
+                    msg_box.setWindowTitle("Git Error")
+                    msg_box.setText(f"Git operation failed:\n{message}")
+                    msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
+                    msg_box.show()
+                    print("DEBUG: Error message box created")
+            except Exception as e:
+                print(f"DEBUG: Error showing message box: {e}")
+        
+        # Show message after a short delay to ensure cleanup is complete
+        QTimer.singleShot(100, show_message)
     
     def _cancel_git_operation(self):
         """Cancel current git operation."""
@@ -192,9 +211,14 @@ class Toolbar(QToolBar):
             self.current_git_worker.deleteLater()
             self.current_git_worker = None
         
-        if self.progress_dialog:
-            self.progress_dialog.close()
-            self.progress_dialog = None
+        if self.progress_dialog is not None:
+            try:
+                self.progress_dialog.close()
+                self.progress_dialog.deleteLater()
+            except Exception as e:
+                print(f"DEBUG: Error closing progress dialog in cancel: {e}")
+            finally:
+                self.progress_dialog = None
     
     def _git_fetch(self):
         """Execute git fetch command."""
@@ -358,21 +382,33 @@ class Toolbar(QToolBar):
     
     def _on_markdown_staging_finished(self, success: bool, message: str, commit_message: str):
         """Handle completion of markdown file staging."""
+        print(f"DEBUG: _on_markdown_staging_finished called - success: {success}")
+        
         if not success:
             # Clean up on failure
-            if self.progress_dialog:
-                self.progress_dialog.close()
-                self.progress_dialog = None
-            
             if self.current_git_worker:
                 self.current_git_worker.deleteLater()
                 self.current_git_worker = None
             
-            QMessageBox.warning(
-                self,
-                "Staging Error",
-                f"Failed to stage markdown files:\n{message}"
-            )
+            if self.progress_dialog is not None:
+                try:
+                    self.progress_dialog.close()
+                    self.progress_dialog.deleteLater()
+                except Exception as e:
+                    print(f"DEBUG: Error closing progress dialog in staging failure: {e}")
+                finally:
+                    self.progress_dialog = None
+            
+            # Show error message with delay
+            def show_error():
+                msg_box = QMessageBox(self)
+                msg_box.setIcon(QMessageBox.Icon.Warning)
+                msg_box.setWindowTitle("Staging Error")
+                msg_box.setText(f"Failed to stage markdown files:\n{message}")
+                msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
+                msg_box.show()
+            
+            QTimer.singleShot(100, show_error)
             return
         
         # Update progress dialog for commit step
@@ -381,11 +417,13 @@ class Toolbar(QToolBar):
         
         # Clean up the staging worker first
         if self.current_git_worker:
+            print("DEBUG: Cleaning up staging worker")
             self.current_git_worker.deleteLater()
             self.current_git_worker = None
         
         # Now create a new worker for commit
         repo_path = self.git_helper.get_repo_root()
+        print("DEBUG: Creating commit worker")
         self.current_git_worker = GitWorker(
             operation="commit",
             repo_path=repo_path,
