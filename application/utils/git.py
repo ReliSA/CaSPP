@@ -216,12 +216,12 @@ class GitHelper:
         Returns:
             Tuple of (has_unstaged_changes, has_staged_changes)
         """
-        if self._safe_repo_operation("has_changes") is None:
+        if not self.is_repo_available():
             return False, False
         
         try:
             unstaged = len(self.repo.index.diff(None)) > 0 or len(self.repo.untracked_files) > 0
-            staged = len(self.repo.index.diff("HEAD")) > 0
+            staged = len(self.repo.index.diff(GitConstants.DEFAULT_BRANCH_HEAD)) > 0
             return unstaged, staged
         except (GitCommandError, git.exc.BadName) as e:
             # Handle case where HEAD doesn't exist (new repo) or other git errors
@@ -242,7 +242,7 @@ class GitHelper:
             Dictionary with 'modified', 'added', 'deleted', 'untracked' file lists
         """
         empty_status = {'modified': [], 'added': [], 'deleted': [], 'untracked': []}
-        if self._safe_repo_operation("get_status") is None:
+        if not self.is_repo_available():
             return empty_status
         
         try:
@@ -472,18 +472,27 @@ class GitHelper:
         try:
             # Stage all changes if requested
             if stage_all:
+                logger.info("Staging all changes before commit...")
                 stage_success, stage_msg = self.stage_all()
                 if not stage_success:
+                    logger.error(f"Failed to stage changes: {stage_msg}")
                     raise GitOperationError("stage", Exception(stage_msg))
+                logger.info("Successfully staged all changes")
             
             # Check if there are staged changes
-            _, has_staged = self.has_changes()
+            unstaged, has_staged = self.has_changes()
+            logger.debug(f"Repository state - Unstaged changes: {unstaged}, Staged changes: {has_staged}")
+            
             if not has_staged:
-                return False, "No staged changes to commit"
+                if unstaged:
+                    return False, "No staged changes to commit. Use 'Stage All' first or enable 'Stage All' option."
+                else:
+                    return False, "No changes to commit - working directory is clean."
             
             # Commit the changes
             logger.info(f"Committing changes with message: {message[:GitConstants.LOG_MESSAGE_TRUNCATE]}...")
             commit = self.repo.index.commit(message.strip())
+            logger.info(f"Successfully committed: {commit.hexsha[:GitConstants.COMMIT_HASH_DISPLAY_LENGTH]}")
             return True, f"Successfully committed changes: {commit.hexsha[:GitConstants.COMMIT_HASH_DISPLAY_LENGTH]}"
         
         except GitCommandError as e:
