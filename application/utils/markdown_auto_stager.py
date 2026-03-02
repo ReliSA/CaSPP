@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Optional, Callable
 from PyQt6.QtCore import QTimer, QObject, pyqtSignal
 
-from utils.git import GitHelper, GitWorker
+from utils.git import GitHelper
 from utils.exceptions import GitRepositoryNotFoundError, GitLibraryNotAvailableError
 
 logger = logging.getLogger(__name__)
@@ -18,46 +18,37 @@ class MarkdownAutoStager(QObject):
     Handles automatic staging of edited markdown files.
     
     This class monitors for markdown file changes and automatically stages them
-    when they are saved. It provides both immediate staging and batched staging
-    with configurable delay to avoid excessive git operations.
+    when they are saved using a simple, synchronous approach to avoid threading issues.
     
     Signals:
         file_staged: Emitted when a file is successfully staged (file_path: str, message: str)
         staging_failed: Emitted when staging fails (file_path: str, error: str)
-        batch_staged: Emitted when multiple files are staged (count: int, message: str)
     """
     
     # Signals
     file_staged = pyqtSignal(str, str)  # file_path, message
     staging_failed = pyqtSignal(str, str)  # file_path, error
-    batch_staged = pyqtSignal(int, str)  # count, message
     
     def __init__(self, repo_path: Optional[str] = None, 
-                 auto_stage_delay: int = 2000, 
-                 batch_staging: bool = True):
+                 auto_stage_delay: int = 1000):
         """
         Initialize the auto-stager.
         
         Args:
             repo_path: Path to git repository. If None, will search for repo.
-            auto_stage_delay: Delay in milliseconds before staging files (default: 2000ms)
-            batch_staging: Whether to batch multiple file changes together (default: True)
+            auto_stage_delay: Delay in milliseconds before staging files (default: 1000ms)
         """
         super().__init__()
         self.repo_path = repo_path
         self.auto_stage_delay = auto_stage_delay
-        self.batch_staging = batch_staging
         
         # Queue of files pending staging
         self._pending_files = set()
         
-        # Timer for batched staging
+        # Timer for delayed staging
         self._staging_timer = QTimer()
         self._staging_timer.timeout.connect(self._process_pending_files)
         self._staging_timer.setSingleShot(True)
-        
-        # Keep track of active workers to clean them up properly
-        self._active_workers = []
         
         # Check if git is available
         self._git_available = self._check_git_availability()
@@ -97,7 +88,7 @@ class MarkdownAutoStager(QObject):
     
     def stage_file_immediately(self, file_path: str) -> None:
         """
-        Stage a markdown file immediately.
+        Stage a markdown file immediately using synchronous approach.
         
         Args:
             file_path: Path to the markdown file to stage
@@ -110,16 +101,17 @@ class MarkdownAutoStager(QObject):
             logger.debug(f"Not a markdown file, skipping staging of {file_path}")
             return
         
-        # Use GitWorker for non-blocking operation
-        worker = GitWorker("stage_file", self.repo_path or "", file_path=file_path)
-        worker.finished.connect(lambda success, message: self._on_stage_complete(file_path, success, message))
-        worker.finished.connect(lambda: self._cleanup_worker(worker))
-        self._active_workers.append(worker)
-        worker.start()
+        try:
+            with GitHelper(self.repo_path) as helper:
+                success, message = helper.stage_file(file_path)
+                self._on_stage_complete(file_path, success, message)
+        except Exception as e:
+            logger.error(f"Error staging file immediately: {e}")
+            self._on_stage_complete(file_path, False, str(e))
     
     def stage_file_delayed(self, file_path: str) -> None:
         """
-        Stage a markdown file with configurable delay (for batching).
+        Stage a markdown file with configurable delay.
         
         Args:
             file_path: Path to the markdown file to stage
@@ -132,17 +124,13 @@ class MarkdownAutoStager(QObject):
             logger.debug(f"Not a markdown file, skipping staging of {file_path}")
             return
         
-        if self.batch_staging:
-            # Add to pending files and restart timer
-            self._pending_files.add(file_path)
-            self._staging_timer.start(self.auto_stage_delay)
-            logger.debug(f"Added {file_path} to pending staging queue")
-        else:
-            # Stage immediately
-            self.stage_file_immediately(file_path)
+        # Add to pending files and restart timer
+        self._pending_files.add(file_path)
+        self._staging_timer.start(self.auto_stage_delay)
+        logger.debug(f"Added {file_path} to pending staging queue")
     
     def _process_pending_files(self) -> None:
-        """Process all files in the pending queue."""
+        """Process all files in the pending queue synchronously."""
         if not self._pending_files:
             return
         
@@ -151,21 +139,27 @@ class MarkdownAutoStager(QObject):
         
         logger.info(f"Processing {len(files_to_stage)} pending files for staging")
         
-        # Use GitWorker for non-blocking batch operation
-        worker = GitWorker("stage_markdown", self.repo_path or "", file_paths=files_to_stage)
-        worker.finished.connect(lambda success, message: self._on_batch_complete(len(files_to_stage), success, message))
-        worker.finished.connect(lambda: self._cleanup_worker(worker))
-        self._active_workers.append(worker)
-        worker.start()
-    
-    def _cleanup_worker(self, worker):
-        """Clean up a finished worker."""
-        if worker in self._active_workers:
-            self._active_workers.remove(worker)
-        worker.deleteLater()
+        try:
+            with GitHelper(self.repo_path) as helper:
+                success, message = helper.stage_markdown_files(files_to_stage)
+                if success:
+                    logger.info(f"Successfully staged {len(files_to_stage)} markdown files")
+                    # Emit individual file staged signals
+                    for file_path in files_to_stage:
+                        self.file_staged.emit(file_path, f"Staged with {len(files_to_stage)} other files")
+                else:
+                    logger.warning(f"Failed to stage markdown files: {message}")
+                    # Emit failure for all files
+                    for file_path in files_to_stage:
+                        self.staging_failed.emit(file_path, message)
+        except Exception as e:
+            logger.error(f"Error processing pending files: {e}")
+            # Emit failure for all files
+            for file_path in files_to_stage:
+                self.staging_failed.emit(file_path, str(e))
     
     def _on_stage_complete(self, file_path: str, success: bool, message: str) -> None:
-        """Handle completion of single file staging."""
+        """Handle completion of file staging."""
         if success:
             logger.info(f"Successfully staged: {file_path}")
             self.file_staged.emit(file_path, message)
@@ -176,16 +170,6 @@ class MarkdownAutoStager(QObject):
             self.staging_failed.emit(file_path, message)
             if self._on_stage_failure:
                 self._on_stage_failure(file_path, message)
-    
-    def _on_batch_complete(self, file_count: int, success: bool, message: str) -> None:
-        """Handle completion of batch staging."""
-        if success:
-            logger.info(f"Successfully staged {file_count} markdown files")
-            self.batch_staged.emit(file_count, message)
-        else:
-            logger.warning(f"Failed to stage markdown files: {message}")
-            # For batch operations, we emit a general staging failure
-            self.staging_failed.emit(f"{file_count} files", message)
     
     def flush_pending(self) -> None:
         """Immediately process any pending files."""
@@ -199,21 +183,6 @@ class MarkdownAutoStager(QObject):
         if self._staging_timer.isActive():
             self._staging_timer.stop()
         logger.debug("Cleared all pending files")
-    
-    def cleanup(self) -> None:
-        """Clean up all resources and stop any running operations."""
-        # Clear pending files
-        self.clear_pending()
-        
-        # Stop and clean up all active workers
-        for worker in self._active_workers[:]:  # Copy list to avoid modification during iteration
-            if worker.isRunning():
-                worker.terminate()
-                worker.wait(1000)  # Wait up to 1 second for graceful termination
-            worker.deleteLater()
-        self._active_workers.clear()
-        
-        logger.debug("Auto-stager cleanup completed")
     
     def get_pending_count(self) -> int:
         """Get the number of files pending staging."""
@@ -231,3 +200,8 @@ class MarkdownAutoStager(QObject):
         
         self._git_available = enabled and self._check_git_availability()
         logger.info(f"Auto-staging {'enabled' if self._git_available else 'disabled'}")
+    
+    def cleanup(self) -> None:
+        """Clean up the auto-stager."""
+        self.clear_pending()
+        logger.debug("Auto-stager cleaned up")

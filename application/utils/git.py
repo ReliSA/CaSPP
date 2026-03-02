@@ -79,6 +79,10 @@ class GitWorker(QThread):
             # Unexpected errors
             logger.exception(f"Unexpected error in GitWorker operation '{self.operation}': {e}")
             self.finished.emit(False, f"Unexpected error during {self.operation}: {str(e)}")
+        finally:
+            # Ensure we mark the thread as finished
+            self.quit()
+            logger.debug(f"GitWorker finished operation: {self.operation}")
     
     def _dispatch_operation(self, helper: 'GitHelper') -> Tuple[bool, str]:
         """

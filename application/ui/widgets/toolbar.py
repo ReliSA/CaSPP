@@ -160,10 +160,17 @@ class Toolbar(QToolBar):
     
     def _on_git_operation_finished(self, success: bool, message: str, success_message: str):
         """Handle completion of git operation."""
+        # Close progress dialog first
         if self.progress_dialog:
             self.progress_dialog.close()
             self.progress_dialog = None
         
+        # Clean up the worker thread properly
+        if self.current_git_worker:
+            self.current_git_worker.deleteLater()
+            self.current_git_worker = None
+        
+        # Show result message
         if success:
             QMessageBox.information(
                 self,
@@ -176,15 +183,18 @@ class Toolbar(QToolBar):
                 "Git Error",
                 f"Git operation failed:\n{message}"
             )
-        
-        self.current_git_worker = None
     
     def _cancel_git_operation(self):
         """Cancel current git operation."""
         if self.current_git_worker and self.current_git_worker.isRunning():
             self.current_git_worker.terminate()
-            self.current_git_worker.wait()
+            self.current_git_worker.wait(1000)  # Wait up to 1 second
+            self.current_git_worker.deleteLater()
             self.current_git_worker = None
+        
+        if self.progress_dialog:
+            self.progress_dialog.close()
+            self.progress_dialog = None
     
     def _git_fetch(self):
         """Execute git fetch command."""
@@ -349,23 +359,32 @@ class Toolbar(QToolBar):
     def _on_markdown_staging_finished(self, success: bool, message: str, commit_message: str):
         """Handle completion of markdown file staging."""
         if not success:
+            # Clean up on failure
             if self.progress_dialog:
                 self.progress_dialog.close()
                 self.progress_dialog = None
+            
+            if self.current_git_worker:
+                self.current_git_worker.deleteLater()
+                self.current_git_worker = None
             
             QMessageBox.warning(
                 self,
                 "Staging Error",
                 f"Failed to stage markdown files:\n{message}"
             )
-            self.current_git_worker = None
             return
         
         # Update progress dialog for commit step
         if self.progress_dialog:
             self.progress_dialog.setLabelText("Committing changes...")
         
-        # Now commit the staged changes
+        # Clean up the staging worker first
+        if self.current_git_worker:
+            self.current_git_worker.deleteLater()
+            self.current_git_worker = None
+        
+        # Now create a new worker for commit
         repo_path = self.git_helper.get_repo_root()
         self.current_git_worker = GitWorker(
             operation="commit",
