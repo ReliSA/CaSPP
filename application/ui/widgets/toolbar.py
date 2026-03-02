@@ -94,9 +94,9 @@ class Toolbar(QToolBar):
         
         self.addSeparator()
         
-        # Git commit action
-        self.git_commit_action = QAction("💾 Commit", self)
-        self.git_commit_action.setToolTip("Commit current changes")
+        # Git commit action (markdown-focused)
+        self.git_commit_action = QAction("📝 Commit", self)
+        self.git_commit_action.setToolTip("Commit markdown files")
         self.git_commit_action.triggered.connect(self._git_commit)
         self.addAction(self.git_commit_action)
         
@@ -221,7 +221,7 @@ class Toolbar(QToolBar):
             self._execute_git_command("unstage_all", "Successfully unstaged all changes.")
     
     def _git_commit(self):
-        """Execute git commit command."""
+        """Commit markdown files with a focused workflow."""
         if not self.git_helper or not self.git_helper.is_repo_available():
             QMessageBox.warning(
                 self,
@@ -231,22 +231,44 @@ class Toolbar(QToolBar):
             return
         
         try:
-            # Check for changes
-            unstaged_changes, staged_changes = self.git_helper.has_changes()
+            # Get repository status
+            status = self.git_helper.get_status()
             
-            if staged_changes:
-                # There are staged changes, get commit message and commit
+            # Find all markdown files with changes
+            all_md_files = []
+            staged_md_files = []
+            unstaged_md_files = []
+            
+            # Collect markdown files from all categories
+            for file_list in [status['modified'], status['added'], status['deleted'], status['untracked']]:
+                md_files = [f for f in file_list if f.endswith('.md')]
+                all_md_files.extend(md_files)
+            
+            # Check which markdown files are staged
+            staged_status = self.git_helper.get_status()
+            for file in staged_status['added'] + staged_status['modified']:
+                if file.endswith('.md'):
+                    staged_md_files.append(file)
+            
+            # Check for unstaged markdown files
+            for file in status['modified'] + status['untracked']:
+                if file.endswith('.md') and file not in staged_md_files:
+                    unstaged_md_files.append(file)
+            
+            if staged_md_files:
+                # There are staged markdown files - proceed with commit
+                file_list = '\n'.join(f"• {f}" for f in staged_md_files)
                 commit_message, ok = QInputDialog.getText(
                     self,
-                    "Commit Changes",
-                    "Enter commit message:",
-                    text="Update analysis"
+                    "Commit Files",
+                    f"Staged markdown files:\n{file_list}\n\nEnter commit message:",
+                    text=f"Update {len(staged_md_files)} markdown file{'s' if len(staged_md_files) > 1 else ''}"
                 )
                 
                 if ok and commit_message.strip():
                     self._execute_git_command(
                         "commit",
-                        "Successfully committed changes.",
+                        f"Successfully committed {len(staged_md_files)} markdown file(s).",
                         message=commit_message.strip()
                     )
                 else:
@@ -256,37 +278,35 @@ class Toolbar(QToolBar):
                         "Commit cancelled - no message provided."
                     )
             
-            elif unstaged_changes:
-                # There are unstaged changes, ask to stage and commit
+            elif unstaged_md_files:
+                # No staged markdown files, but there are unstaged ones
+                file_list = '\n'.join(f"• {f}" for f in unstaged_md_files)
                 reply = QMessageBox.question(
                     self,
-                    "Stage Changes",
-                    "No staged changes found, but there are unstaged changes. Stage all changes and commit?",
+                    "Stage Files",
+                    f"No staged markdown files found, but there are unstaged markdown files:\n{file_list}\n\nStage and commit these files?",
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                    QMessageBox.StandardButton.No
+                    QMessageBox.StandardButton.Yes
                 )
                 
                 if reply == QMessageBox.StandardButton.Yes:
-                    # Get commit message and stage + commit
+                    # Stage markdown files and commit
                     commit_message, ok = QInputDialog.getText(
                         self,
-                        "Commit Changes", 
-                        "Enter commit message:",
-                        text="Update analysis"
+                        "Commit Files",
+                        f"Enter commit message for {len(unstaged_md_files)} markdown file(s):",
+                        text=f"Update {len(unstaged_md_files)} markdown file{'s' if len(unstaged_md_files) > 1 else ''}"
                     )
                     
                     if ok and commit_message.strip():
-                        self._execute_git_command(
-                            "commit",
-                            "Successfully staged and committed changes.",
-                            message=commit_message.strip(),
-                            stage_all=True
-                        )
+                        # First stage the markdown files
+                        self._stage_markdown_files_and_commit(unstaged_md_files, commit_message.strip())
+            
             else:
                 QMessageBox.information(
                     self,
                     "No Changes",
-                    "No changes to commit."
+                    "No markdown file changes to commit."
                 )
         
         except Exception as e:
@@ -295,6 +315,70 @@ class Toolbar(QToolBar):
                 "Error",
                 f"Failed to check git status: {str(e)}"
             )
+    
+    def _stage_markdown_files_and_commit(self, md_files: list, commit_message: str):
+        """Stage specific markdown files and then commit."""
+        # Create progress dialog for the two-step process
+        self.progress_dialog = QProgressDialog(
+            "Staging markdown files...",
+            "Cancel",
+            0, 0,
+            self
+        )
+        self.progress_dialog.setWindowModality(Qt.WindowModality.WindowModal)
+        self.progress_dialog.setAutoClose(False)
+        self.progress_dialog.show()
+        
+        # Create worker to stage markdown files
+        repo_path = self.git_helper.get_repo_root()
+        self.current_git_worker = GitWorker(
+            operation="stage_markdown",
+            repo_path=repo_path,
+            file_paths=md_files
+        )
+        
+        # When staging finishes, commit
+        self.current_git_worker.finished.connect(
+            lambda success, message: self._on_markdown_staging_finished(
+                success, message, commit_message
+            )
+        )
+        self.progress_dialog.canceled.connect(self._cancel_git_operation)
+        self.current_git_worker.start()
+    
+    def _on_markdown_staging_finished(self, success: bool, message: str, commit_message: str):
+        """Handle completion of markdown file staging."""
+        if not success:
+            if self.progress_dialog:
+                self.progress_dialog.close()
+                self.progress_dialog = None
+            
+            QMessageBox.warning(
+                self,
+                "Staging Error",
+                f"Failed to stage markdown files:\n{message}"
+            )
+            self.current_git_worker = None
+            return
+        
+        # Update progress dialog for commit step
+        if self.progress_dialog:
+            self.progress_dialog.setLabelText("Committing changes...")
+        
+        # Now commit the staged changes
+        repo_path = self.git_helper.get_repo_root()
+        self.current_git_worker = GitWorker(
+            operation="commit",
+            repo_path=repo_path,
+            message=commit_message
+        )
+        
+        self.current_git_worker.finished.connect(
+            lambda success, message: self._on_git_operation_finished(
+                success, message, "Successfully staged and committed markdown files."
+            )
+        )
+        self.current_git_worker.start()
     
     def _git_status(self):
         """Show git repository status."""

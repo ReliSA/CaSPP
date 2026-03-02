@@ -24,6 +24,11 @@ class Application:
         # Set up toolbar file selection signal
         self.main_window.get_toolbar().file_selected.connect(self.load_markdown_file)
         
+        # Set up markdown viewer signals for auto-staging
+        markdown_viewer = self.main_window.get_markdown_viewer()
+        markdown_viewer.file_saved.connect(self._on_file_saved)
+        markdown_viewer.file_staged.connect(self._on_file_staged)
+        
         # Load default markdown file
         self.load_markdown_file(Config.get_default_markdown_path())
     
@@ -67,6 +72,17 @@ class Application:
         except Exception as e:
             error_msg = f"Error during analysis: {str(e)}"
             self.main_window.get_analysis_panel().set_error(error_msg)
+    
+    def _on_file_saved(self, file_path: str):
+        """Handle file save events."""
+        # Re-analyze the saved file
+        if file_path.endswith('.md'):
+            self._analyze_current_file(file_path)
+    
+    def _on_file_staged(self, file_path: str, message: str):
+        """Handle file staging events."""
+        # Could show notifications or update UI to reflect staged status
+        print(f"File staged: {file_path} - {message}")
     
     def run(self) -> int:
         """

@@ -104,6 +104,14 @@ class GitWorker(QThread):
             return helper.stage_all()
         elif self.operation == "unstage_all":
             return helper.unstage_all()
+        elif self.operation == "stage_file":
+            file_path = self.kwargs.get('file_path')
+            if not file_path:
+                return False, "No file path provided for staging"
+            return helper.stage_file(file_path)
+        elif self.operation == "stage_markdown":
+            file_paths = self.kwargs.get('file_paths')
+            return helper.stage_markdown_files(file_paths)
         else:
             return False, f"Unknown operation: {self.operation}"
 
@@ -420,6 +428,105 @@ class GitHelper:
         except (AttributeError, OSError) as e:
             logger.error(f"File system error during staging: {e}")
             return False, f"Error staging changes: {str(e)}"
+    
+    def stage_file(self, file_path: str) -> Tuple[bool, str]:
+        """
+        Stage a specific file for commit.
+        
+        Args:
+            file_path: Path to the file to stage (relative or absolute)
+            
+        Returns:
+            Tuple of (success, message)
+        """
+        try:
+            if not self.is_repo_available():
+                return False, "No git repository found"
+            
+            # Convert to relative path from repo root if absolute path provided
+            repo_root = Path(self.repo.working_dir)
+            file_path_obj = Path(file_path)
+            
+            if file_path_obj.is_absolute():
+                try:
+                    relative_path = file_path_obj.relative_to(repo_root)
+                    file_to_stage = str(relative_path)
+                except ValueError:
+                    return False, f"File is not within repository: {file_path}"
+            else:
+                file_to_stage = file_path
+                # Check if file exists in repo
+                full_path = repo_root / file_to_stage
+                if not full_path.exists():
+                    return False, f"File not found: {file_path}"
+            
+            # Stage the file
+            self.repo.git.add(file_to_stage)
+            logger.info(f"Successfully staged file: {file_to_stage}")
+            return True, f"Successfully staged: {file_to_stage}"
+        
+        except GitCommandError as e:
+            logger.error(f"Git command failed during staging of '{file_path}': {e}")
+            return False, f"Failed to stage file: {str(e)}"
+        except (AttributeError, OSError) as e:
+            logger.error(f"File system error during staging of '{file_path}': {e}")
+            return False, f"Error staging file: {str(e)}"
+    
+    def stage_markdown_files(self, file_paths: Optional[List[str]] = None) -> Tuple[bool, str]:
+        """
+        Stage markdown files for commit.
+        
+        Args:
+            file_paths: List of specific .md files to stage. If None, stages all modified .md files.
+            
+        Returns:
+            Tuple of (success, message)
+        """
+        try:
+            if not self.is_repo_available():
+                return False, "No git repository found"
+            
+            staged_files = []
+            failed_files = []
+            
+            if file_paths is None:
+                # Get all modified .md files
+                status = self.get_status()
+                md_files = []
+                
+                # Collect all .md files that have changes
+                for file_list in [status['modified'], status['deleted'], status['untracked']]:
+                    md_files.extend([f for f in file_list if f.endswith('.md')])
+                
+                file_paths = md_files
+            
+            if not file_paths:
+                return True, "No markdown files to stage"
+            
+            # Stage each markdown file
+            for file_path in file_paths:
+                if file_path.endswith('.md'):
+                    success, msg = self.stage_file(file_path)
+                    if success:
+                        staged_files.append(file_path)
+                    else:
+                        failed_files.append(f"{file_path}: {msg}")
+                        logger.warning(f"Failed to stage {file_path}: {msg}")
+            
+            # Prepare result message
+            messages = []
+            if staged_files:
+                messages.append(f"Staged {len(staged_files)} markdown file(s): {', '.join(staged_files)}")
+            
+            if failed_files:
+                messages.append(f"Failed to stage {len(failed_files)} file(s): {', '.join(failed_files)}")
+                return len(staged_files) > 0, "; ".join(messages)
+            
+            return len(staged_files) > 0, messages[0] if messages else "No files staged"
+        
+        except Exception as e:
+            logger.error(f"Unexpected error during markdown staging: {e}")
+            return False, f"Error staging markdown files: {str(e)}"
     
     def unstage_all(self) -> Tuple[bool, str]:
         """
