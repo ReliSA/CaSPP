@@ -1,4 +1,4 @@
-Home - test
+Home - test looooool
 # Student Team Projects in Software Engineering Higher Education Courses (STePSEnHEC's) Patterns Catalogue (PaCt)
 
 We started this catalogue to collect and consolidate the knowledge on teaching (primarily) software engineering courses with team student project in higher education in form of patterns. To put it simply, patterns are regularly occurring solutions to common problems in the given domain with positive effects.  This catalogue is an on-going effort with the aim to create a space where the wider community can contribute and thus, together we can reconcile the various sources and foster discussion on understanding and descriptions of the individual patterns. So feel free to fork this repository and send us pull requests when you have something to contribute.
@@ -38,5 +38,3 @@ Find templates used for individual pattern or facet pages in their [folder](temp
 ## References
 
 [Literature and online sources](References.md) used to gather the patterns.
-# Test edit Mon Mar  2 11:24:43 CET 2026
-# Another test edit Mon Mar  2 11:25:13 CET 2026
