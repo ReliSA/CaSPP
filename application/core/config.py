@@ -26,9 +26,15 @@ class Config:
     
     @classmethod
     def get_base_path(cls) -> Path:
-        """Get the base path of the project (parent of application directory)."""
-        return Path(__file__).parent.parent.parent
-    
+        """Find the Git repository root dynamically."""
+        path = Path.cwd()
+
+        for parent in [path] + list(path.parents):
+            if (parent / ".git").exists():
+                return parent
+
+        raise RuntimeError("No Git repository found.")
+
     @classmethod
     def get_default_markdown_path(cls) -> str:
         """Get the default markdown file path."""
