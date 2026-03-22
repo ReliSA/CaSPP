@@ -5,3 +5,6 @@
 *.vscode/
 *venv/
 app.log
+*internal
+*build
+*dist
