@@ -2,11 +2,15 @@
 """
 Debug script to check git repository status and help diagnose commit issues.
 """
+import os
 import sys
 from pathlib import Path
 
+from core.config import Config
+
 # Add application directory to Python path
-app_dir = Path(__file__).parent / "application"
+repo_root = Config.get_base_path()
+app_dir = repo_root / "application"
 sys.path.insert(0, str(app_dir))
 
 from utils.git import GitHelper
