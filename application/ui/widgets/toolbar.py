@@ -26,6 +26,10 @@ class Toolbar(QToolBar):
         self.setWindowTitle("Main Toolbar")
         self.current_git_worker: Optional[GitWorker] = None
         self.progress_dialog: Optional[QProgressDialog] = None
+        # Flag indicating whether a successful commit should be followed by a push
+        self._push_after_commit: bool = False
+        # Track last git operation name so callbacks can react (e.g. commit -> push)
+        self._last_operation: Optional[str] = None
         self.file_helper: FileHelper = FileHelper(str(Config.get_base_path()))
         self.git_helper: Optional[GitHelper] = None
         self._init_git_helper()
@@ -95,7 +99,7 @@ class Toolbar(QToolBar):
         self.addSeparator()
         
         # Git commit action (markdown-focused)
-        self.git_commit_action = QAction("📝 Commit", self)
+        self.git_commit_action = QAction("📝 Commit and Push", self)
         self.git_commit_action.setToolTip("Commit markdown files")
         self.git_commit_action.triggered.connect(self._git_commit)
         self.addAction(self.git_commit_action)
@@ -117,6 +121,8 @@ class Toolbar(QToolBar):
     def _execute_git_command(self, operation: str, success_message: str, **kwargs):
         """Execute git command in background thread."""
         print(f"DEBUG: _execute_git_command called with operation: {operation}")
+        # remember what operation we're starting
+        self._last_operation = operation
         
         if not self.git_helper or not self.git_helper.is_repo_available():
             print("DEBUG: Git helper not available, showing warning")
@@ -161,6 +167,19 @@ class Toolbar(QToolBar):
         """Handle completion of git operation."""
         print(f"DEBUG: _on_git_operation_finished called - success: {success}")
         
+        last_op = getattr(self, "_last_operation", None)
+        
+        # If the completed operation was a commit and the UI requested a push after commit,
+        # start the push operation instead of showing an intermediate success dialog.
+        if success and last_op == "commit" and getattr(self, "_push_after_commit", False):
+            print("DEBUG: Commit succeeded and push requested; starting push")
+            # reset push flag and last_operation before starting push
+            self._push_after_commit = False
+            self._last_operation = None
+            # Start push operation and return early (push's completion will show final message)
+            self._execute_git_command("push", "Successfully pushed changes to remote.")
+            return
+
         # Clean up the worker thread first
         if self.current_git_worker:
             print("DEBUG: Cleaning up worker thread")
@@ -202,6 +221,9 @@ class Toolbar(QToolBar):
         
         # Show message after a short delay to ensure cleanup is complete
         QTimer.singleShot(100, show_message)
+        
+        # Clear last_operation after handling (if not already cleared)
+        self._last_operation = None
     
     def _cancel_git_operation(self):
         """Cancel current git operation."""
@@ -256,6 +278,9 @@ class Toolbar(QToolBar):
     
     def _git_commit(self):
         """Commit markdown files with a focused workflow."""
+        # This toolbar action performs commit AND push
+        self._push_after_commit = True
+
         if not self.git_helper or not self.git_helper.is_repo_available():
             QMessageBox.warning(
                 self,
@@ -306,12 +331,14 @@ class Toolbar(QToolBar):
                         message=commit_message.strip()
                     )
                 else:
+                    # User cancelled the commit -- do not push
+                    self._push_after_commit = False
                     QMessageBox.information(
                         self,
                         "Commit Cancelled",
                         "Commit cancelled - no message provided."
                     )
-            
+             
             elif unstaged_md_files:
                 # No staged markdown files, but there are unstaged ones
                 file_list = '\n'.join(f"• {f}" for f in unstaged_md_files)
@@ -335,8 +362,16 @@ class Toolbar(QToolBar):
                     if ok and commit_message.strip():
                         # First stage the markdown files
                         self._stage_markdown_files_and_commit(unstaged_md_files, commit_message.strip())
-            
+                    else:
+                        # user didn't provide a commit message -> cancel push
+                        self._push_after_commit = False
+                else:
+                    # user chose not to stage & commit
+                    self._push_after_commit = False
+             
             else:
+                # Nothing to commit, so cancel the push request
+                self._push_after_commit = False
                 QMessageBox.information(
                     self,
                     "No Changes",
@@ -344,6 +379,8 @@ class Toolbar(QToolBar):
                 )
         
         except Exception as e:
+            # on error, cancel any pending push
+            self._push_after_commit = False
             QMessageBox.critical(
                 self,
                 "Error",
@@ -424,6 +461,8 @@ class Toolbar(QToolBar):
         # Now create a new worker for commit
         repo_path = self.git_helper.get_repo_root()
         print("DEBUG: Creating commit worker")
+        # Indicate that the upcoming worker is a commit so callbacks can chain a push
+        self._last_operation = "commit"
         self.current_git_worker = GitWorker(
             operation="commit",
             repo_path=repo_path,
