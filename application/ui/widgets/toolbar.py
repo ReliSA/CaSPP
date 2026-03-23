@@ -82,7 +82,8 @@ class Toolbar(QToolBar):
         
         # Git staging actions
         self.git_stage_all_action = QAction("📋 Stage All", self)
-        self.git_stage_all_action.setToolTip("Stage all changes for commit")
+        # NOTE: Stage All is scoped to markdown files only in this UI
+        self.git_stage_all_action.setToolTip("Stage markdown files only")
         self.git_stage_all_action.triggered.connect(self._git_stage_all)
         self.addAction(self.git_stage_all_action)
         
@@ -334,7 +335,8 @@ class Toolbar(QToolBar):
     
     def _git_stage_all(self):
         """Stage all changes."""
-        self._execute_git_command("stage_all", "Successfully staged all changes.")
+        # Stage only markdown files
+        self._execute_git_command("stage_markdown", "Successfully staged markdown files.")
     
     def _git_unstage_all(self):
         """Unstage all changes."""
@@ -568,21 +570,55 @@ class Toolbar(QToolBar):
             return
         
         try:
-            success, message = self.git_helper.get_status_detailed()
-            
-            if success:
-                QMessageBox.information(
-                    self,
-                    "Git Status",
-                    message
-                )
-            else:
-                QMessageBox.warning(
-                    self,
-                    "Git Error",
-                    f"Failed to get git status: {message}"
-                )
-        
+            # Build a markdown-only status message from lower-level status info
+            branch = self.git_helper.get_current_branch()
+            status = self.git_helper.get_status()
+
+            md_untracked = [f for f in status.get('untracked', []) if f.endswith('.md')]
+            md_modified = [f for f in status.get('modified', []) if f.endswith('.md')]
+            md_added = [f for f in status.get('added', []) if f.endswith('.md')]
+            md_deleted = [f for f in status.get('deleted', []) if f.endswith('.md')]
+
+            message_lines = [f"Branch: {branch}", ""]
+            has_any = False
+
+            if md_untracked:
+                has_any = True
+                message_lines.append("Untracked markdown files:")
+                for f in md_untracked:
+                    message_lines.append(f"  {f}")
+                message_lines.append("")
+
+            if md_modified:
+                has_any = True
+                message_lines.append("Modified markdown files:")
+                for f in md_modified:
+                    message_lines.append(f"  {f}")
+                message_lines.append("")
+
+            if md_added:
+                has_any = True
+                message_lines.append("Staged markdown files:")
+                for f in md_added:
+                    message_lines.append(f"  {f}")
+                message_lines.append("")
+
+            if md_deleted:
+                has_any = True
+                message_lines.append("Deleted markdown files:")
+                for f in md_deleted:
+                    message_lines.append(f"  {f}")
+                message_lines.append("")
+
+            if not has_any:
+                message_lines.append("No markdown file changes found.")
+
+            QMessageBox.information(
+                self,
+                "Git Status (Markdown)",
+                "\n".join(message_lines)
+            )
+
         except Exception as e:
             QMessageBox.critical(
                 self,
@@ -604,7 +640,7 @@ class Toolbar(QToolBar):
         self.open_file_action.setEnabled(enabled)
         self.recent_files_action.setEnabled(enabled)
     
-    def _show_recent_files(self):
+    def _show_recent_files(self): # asdsadasdasd
         """Show recent files menu (placeholder)."""
         # TODO: Implement recent files functionality
         recent_files = self.file_helper.get_recent_files()
