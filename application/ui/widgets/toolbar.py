@@ -189,12 +189,24 @@ class Toolbar(QToolBar):
         # Close progress dialog with proper null checks
         if self.progress_dialog is not None:
             print("DEBUG: Closing progress dialog")
+            # Capture the dialog reference locally to avoid re-entrancy issues where
+            # closing the dialog triggers its 'canceled' handler which can set
+            # self.progress_dialog to None before deleteLater() runs.
+            dlg = self.progress_dialog
             try:
-                self.progress_dialog.close()
-                self.progress_dialog.deleteLater()
+                # Try to disconnect the canceled handler to avoid re-entrancy. If
+                # the disconnect fails (e.g. not connected) ignore the error.
+                try:
+                    dlg.canceled.disconnect(self._cancel_git_operation)
+                except Exception:
+                    pass
+
+                dlg.close()
+                dlg.deleteLater()
             except Exception as e:
                 print(f"DEBUG: Error closing progress dialog: {e}")
             finally:
+                # Ensure attribute is cleared
                 self.progress_dialog = None
         
         # Use QTimer to show message after cleanup to avoid blocking
@@ -428,9 +440,17 @@ class Toolbar(QToolBar):
                 self.current_git_worker = None
             
             if self.progress_dialog is not None:
+                # Same safe-close approach as in _on_git_operation_finished to avoid
+                # re-entrancy when closing the dialog.
+                dlg = self.progress_dialog
                 try:
-                    self.progress_dialog.close()
-                    self.progress_dialog.deleteLater()
+                    try:
+                        dlg.canceled.disconnect(self._cancel_git_operation)
+                    except Exception:
+                        pass
+
+                    dlg.close()
+                    dlg.deleteLater()
                 except Exception as e:
                     print(f"DEBUG: Error closing progress dialog in staging failure: {e}")
                 finally:

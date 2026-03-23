@@ -102,6 +102,11 @@ class GitWorker(QThread):
             commit_message = self.kwargs.get('message', GitConstants.DEFAULT_COMMIT_MESSAGE)
             stage_all = self.kwargs.get('stage_all', False)
             return helper.commit(commit_message, stage_all)
+        elif self.operation == "push":
+            # allow caller to provide remote and branch via kwargs
+            remote = self.kwargs.get('remote')
+            branch = self.kwargs.get('branch')
+            return helper.push(remote, branch)
         elif self.operation == "status":
             return helper.get_status_detailed()
         elif self.operation == "stage_all":
@@ -552,6 +557,65 @@ class GitHelper:
         except (AttributeError, OSError) as e:
             logger.error(f"File system error during unstaging: {e}")
             return False, f"Error unstaging changes: {str(e)}"
+    
+    def push(self, remote_name: Optional[str] = None, branch: Optional[str] = None) -> Tuple[bool, str]:
+        """
+        Push local commits to the specified remote/branch.
+
+        Args:
+            remote_name: Name of the remote to push to. If None, uses self.remote_name.
+            branch: Branch name to push. If None, uses the current active branch.
+
+        Returns:
+            Tuple of (success, message)
+
+        Raises:
+            GitRepositoryNotFoundError: If repository is not available
+            GitRemoteError: If push operation fails
+        """
+        self._ensure_repo_available("push")
+
+        if remote_name is None:
+            remote_name = self.remote_name
+
+        # Ensure remotes exist
+        try:
+            remote_names = [r.name for r in self.repo.remotes]
+        except Exception as e:
+            logger.error(f"Error reading remotes: {e}")
+            return False, "No remotes configured"
+
+        if not remote_names:
+            return False, "No remotes configured"
+
+        if remote_name not in remote_names:
+            return False, f"Remote '{remote_name}' not found"
+
+        remote = getattr(self.repo.remotes, remote_name)
+
+        # Determine branch to push
+        if branch is None:
+            try:
+                current_branch = self.repo.active_branch
+                branch = current_branch.name
+            except Exception as e:
+                logger.warning(f"Could not determine current branch for push: {e}")
+                return False, "Cannot determine current branch (detached HEAD). Specify branch explicitly."
+
+        try:
+            logger.info(f"Pushing branch '{branch}' to remote '{remote_name}'")
+            result = remote.push(branch)
+
+            # result is a list of PushInfo objects; we treat absence of exception as success
+            logger.info(f"Push result: {result}")
+            return True, f"Successfully pushed {branch} to {remote_name}"
+
+        except GitCommandError as e:
+            logger.error(f"Git push failed: {e}")
+            raise GitRemoteError(remote_name, "push", e) from e
+        except Exception as e:
+            logger.exception(f"Unexpected error during push: {e}")
+            raise GitRemoteError(remote_name, "push", e) from e
     
     def commit(self, message: str, stage_all: bool = False) -> Tuple[bool, str]:
         """
