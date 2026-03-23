@@ -172,12 +172,73 @@ class Toolbar(QToolBar):
         # If the completed operation was a commit and the UI requested a push after commit,
         # start the push operation instead of showing an intermediate success dialog.
         if success and last_op == "commit" and getattr(self, "_push_after_commit", False):
-            print("DEBUG: Commit succeeded and push requested; starting push")
-            # reset push flag and last_operation before starting push
+            print("DEBUG: Commit succeeded and push requested; starting push (reuse dialog)")
+            # reset push flag and set next operation
             self._push_after_commit = False
-            self._last_operation = None
-            # Start push operation and return early (push's completion will show final message)
-            self._execute_git_command("push", "Successfully pushed changes to remote.")
+            self._last_operation = "push"
+
+            # Clean up the commit worker reference (it has finished)
+            if self.current_git_worker:
+                try:
+                    self.current_git_worker.deleteLater()
+                except Exception:
+                    pass
+                finally:
+                    self.current_git_worker = None
+
+            # Reuse existing progress dialog to avoid creating an orphan dialog
+            if self.progress_dialog is not None:
+                try:
+                    self.progress_dialog.setLabelText("Pushing changes...")
+                except Exception:
+                    # If updating label fails, close and recreate below
+                    try:
+                        self.progress_dialog.close()
+                        self.progress_dialog.deleteLater()
+                    except Exception:
+                        pass
+                    self.progress_dialog = None
+
+            if self.progress_dialog is None:
+                self.progress_dialog = QProgressDialog(
+                    "Pushing changes...",
+                    "Cancel",
+                    0, 0,
+                    self
+                )
+                self.progress_dialog.setWindowModality(Qt.WindowModality.WindowModal)
+                self.progress_dialog.setAutoClose(False)
+                self.progress_dialog.show()
+                self.progress_dialog.canceled.connect(self._cancel_git_operation)
+
+            # Create and start push worker directly (avoid _execute_git_command which would create another dialog)
+            try:
+                repo_path = self.git_helper.get_repo_root()
+                print(f"DEBUG: Creating GitWorker (push) with repo_path: {repo_path}")
+                self.current_git_worker = GitWorker(
+                    operation="push",
+                    repo_path=repo_path
+                )
+                self.current_git_worker.finished.connect(
+                    lambda success, message: self._on_git_operation_finished(
+                        success, message, "Successfully pushed changes to remote."
+                    )
+                )
+                print("DEBUG: Starting GitWorker (push) thread")
+                self.current_git_worker.start()
+            except Exception as e:
+                print(f"DEBUG: Failed to start push worker: {e}")
+                # Show error immediately
+                def show_error():
+                    msg_box = QMessageBox(self)
+                    msg_box.setIcon(QMessageBox.Icon.Warning)
+                    msg_box.setWindowTitle("Git Error")
+                    msg_box.setText(f"Failed to start push: {e}")
+                    msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
+                    msg_box.show()
+                QTimer.singleShot(100, show_error)
+
+            # Return early; push worker will call this method again when finished
             return
 
         # Clean up the worker thread first
