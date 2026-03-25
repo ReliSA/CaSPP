@@ -53,6 +53,16 @@ RE_IMAGE = re.compile(r'^!\[')
 # Breadcrumb line guard — italic-only lines are template instructions, not breadcrumbs
 RE_ITALIC_ONLY = re.compile(r'^\*[^*].*[^*]\*$|^\*[^*]\*$')
 
+# Content-type string constants — single source of truth for the vocabulary
+# used in both ContentRules.expected_types and ContentInfo.found_types.
+CT_TEXT            = 'text'
+CT_BULLET_LIST     = 'bullet_list'
+CT_TABLE           = 'table'
+CT_HORIZONTAL_RULE = 'horizontal_rule'
+CT_FOOTNOTE        = 'footnote'
+CT_LINKS           = 'links'
+CT_IMAGE           = 'image'
+
 
 @dataclass
 class ParsedHeading:
@@ -135,9 +145,9 @@ def split_h1(text: str) -> Tuple[Optional[str], str]:
     Returns:
         A tuple of (prefix, value) where *prefix* is None for plain titles.
     """
-    m = RE_H1_PREFIX.match(text)
-    if m:
-        return m.group(1).strip(), m.group(2).strip()
+    match = RE_H1_PREFIX.match(text)
+    if match:
+        return match.group(1).strip(), match.group(2).strip()
     return None, text.strip()
 
 
@@ -150,24 +160,14 @@ def parse_breadcrumbs(line: str) -> Optional[list]:
     Returns:
         List of breadcrumb part strings, or None if the line is not a breadcrumb.
     """
+    min_len = 2
     if '>' not in line or '[' not in line:
         return None
     # Italic-only lines are template instructions ("*remove or replace…*"), not breadcrumbs.
     if line.startswith('*') and line.endswith('*'):
         return None
     parts = [p.strip() for p in line.split('>')]
-    return parts if len(parts) >= 2 else None
-
-
-# Content-type string constants — single source of truth for the vocabulary
-# used in both ContentRules.expected_types and ContentInfo.found_types.
-CT_TEXT            = 'text'
-CT_BULLET_LIST     = 'bullet_list'
-CT_TABLE           = 'table'
-CT_HORIZONTAL_RULE = 'horizontal_rule'
-CT_FOOTNOTE        = 'footnote'
-CT_LINKS           = 'links'
-CT_IMAGE           = 'image'
+    return parts if len(parts) >= min_len else None
 
 
 def classify_content_line(

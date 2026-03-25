@@ -4,7 +4,7 @@ import os
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set
 
-from md_parser import (
+from utils.md_parser import (
     classify_content_line,
     parse_breadcrumbs,
     parse_heading_line,
@@ -14,6 +14,9 @@ from md_parser import (
 
 logger = logging.getLogger(__name__)
 
+_ALPHABET_LABELS: List[str] = ["0-9"] + [chr(c) for c in range(ord("A"), ord("Z") + 1)]
+_ALPHABET_SET: Set[str] = set(_ALPHABET_LABELS)
+_MIN_ALPHABET_RUN = 5
 
 @dataclass
 class DocumentRules:
@@ -82,7 +85,7 @@ class HeadingRules:
     content_rules: ContentRules = field(default_factory=ContentRules)
 
     def to_dict(self) -> Dict[str, Any]:
-        d = {
+        dictionary = {
             "level": self.level,
             "text": self.text,
             "optional": self.optional,
@@ -95,8 +98,8 @@ class HeadingRules:
             "content_rules": self.content_rules.to_dict(),
         }
         if self.is_group:
-            d["group_members"] = self.group_members
-        return d
+            dictionary["group_members"] = self.group_members
+        return dictionary
 
 
 @dataclass
@@ -116,13 +119,8 @@ class TemplateRules:
                 "breadcrumbs": self.document_rules.breadcrumbs,
                 "h1_prefix": self.document_rules.h1_prefix,
             },
-            "headings": [h.to_dict() for h in self.headings],
+            "headings": [heading.to_dict() for heading in self.headings],
         }
-    
-
-_ALPHABET_LABELS: List[str] = ["0-9"] + [chr(c) for c in range(ord("A"), ord("Z") + 1)]
-_ALPHABET_SET: Set[str] = set(_ALPHABET_LABELS)
-_MIN_ALPHABET_RUN = 5
 
 
 def _detect_and_collapse_alphabet_groups(headings: List[HeadingRules]) -> List[HeadingRules]:
@@ -130,21 +128,21 @@ def _detect_and_collapse_alphabet_groups(headings: List[HeadingRules]) -> List[H
     result: List[HeadingRules] = []
     i = 0
     while i < len(headings):
-        h = headings[i]
-        if h.text not in _ALPHABET_SET:
-            result.append(h)
+        heading = headings[i]
+        if heading.text not in _ALPHABET_SET:
+            result.append(heading)
             i += 1
             continue
 
-        run: List[HeadingRules] = [h]
+        run: List[HeadingRules] = [heading]
         j = i + 1
-        while j < len(headings) and headings[j].text in _ALPHABET_SET and headings[j].level == h.level:
+        while j < len(headings) and headings[j].text in _ALPHABET_SET and headings[j].level == heading.level:
             run.append(headings[j])
             j += 1
 
         if len(run) >= _MIN_ALPHABET_RUN:
             result.append(HeadingRules(
-                level=h.level,
+                level=heading.level,
                 text="[A-Z]",
                 optional=sum(r.optional for r in run) >= len(run) // 2,
                 is_group=True,
@@ -153,7 +151,7 @@ def _detect_and_collapse_alphabet_groups(headings: List[HeadingRules]) -> List[H
             ))
             i = j
         else:
-            result.append(h)
+            result.append(heading)
             i += 1
 
     return result
@@ -198,6 +196,7 @@ class TemplateLoader:
                     logger.error("Failed to load template %s: %s", name, exc)
 
         self._loaded = True
+        self.dump_json("output")
         logger.info("Loaded %d template(s) from %s", len(self.templates), self.templates_dir)
 
     def get_template(self, name: str) -> TemplateRules:
@@ -254,9 +253,9 @@ class TemplateLoader:
                     continue
 
                 # Heading
-                m = RE_HEADING.match(line)
-                if m:
-                    ph = parse_heading_line(m.group(1), m.group(2), is_template=True)
+                match = RE_HEADING.match(line)
+                if match:
+                    ph = parse_heading_line(match.group(1), match.group(2), is_template=True)
                     current = HeadingRules(
                         level=ph.level,
                         text=ph.text,

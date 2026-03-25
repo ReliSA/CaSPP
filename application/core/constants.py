@@ -42,6 +42,8 @@ class FileConstants:
     COMMON_MARKDOWN_FILES = ["README.md", "index.md", "main.md", "introduction.md"]
     ALL_FILES_FILTER = "All Files (*)"
 
+    TEMPLATES_PATH = "templates"
+
 
 # UI-related constants
 class UIConstants:
