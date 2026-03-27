@@ -6,7 +6,9 @@ import sys
 from pathlib import Path
 
 from ui.main_window import MainWindow
+from core.constants import FileConstants
 from utils.markdown_analyzer import MarkdownAnalyzer
+from utils.template_loader import TemplateLoader
 from core.config import Config
 
 
@@ -17,6 +19,8 @@ class Application:
         self.app = QApplication(sys.argv if 'sys' in globals() else [])
         self.main_window = MainWindow()
         self.markdown_analyzer = MarkdownAnalyzer(str(Config.get_base_path()))
+        self.template_loader = TemplateLoader(str(Config.get_base_path() / FileConstants.TEMPLATES_PATH))
+        self.template_loader.load()
         self._setup_application()
     
     def _setup_application(self):
