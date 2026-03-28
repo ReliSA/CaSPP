@@ -1,23 +1,27 @@
 """
 Git operations helper module.
 """
+
+# standard library imports
 import logging
 from pathlib import Path
 from typing import Optional, Tuple, List, Dict
+
+# third-party imports
 from PyQt6.QtCore import QThread, pyqtSignal
-
-from core.constants import GitConstants
-from utils.exceptions import (
-    GitLibraryNotAvailableError, GitRepositoryNotFoundError, GitOperationError,
-    GitRemoteError, GitDirtyWorkingTreeError, InvalidInputError
-)
-
 try:
     import git
     from git import Repo, GitCommandError, InvalidGitRepositoryError
     GIT_AVAILABLE = True
 except ImportError:
     GIT_AVAILABLE = False
+
+# local imports
+from core.constants import GitConstants
+from utils.exceptions import (
+    GitLibraryNotAvailableError, GitRepositoryNotFoundError, GitOperationError,
+    GitRemoteError, GitDirtyWorkingTreeError, InvalidInputError
+)
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -128,7 +132,7 @@ class GitWorker(QThread):
 class GitHelper:
     """Helper class for git operations using GitPython library."""
     
-    def __init__(self, repo_path: Optional[str] = None, remote_name: str = GitConstants.DEFAULT_REMOTE_NAME):
+    def __init__(self, repo_path: Optional[str] = None, remote_name: str = GitConstants.DEFAULT_REMOTE_NAME) -> None:
         """
         Initialize git helper.
         
@@ -144,12 +148,12 @@ class GitHelper:
     def __enter__(self):
         """Context manager entry."""
         return self
-    
-    def __exit__(self, exc_type, exc_val, exc_tb):
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         """Context manager exit with resource cleanup."""
         self._cleanup()
-    
-    def _cleanup(self):
+
+    def _cleanup(self) -> None:
         """Clean up resources."""
         if hasattr(self, 'repo') and self.repo:
             try:
@@ -161,7 +165,7 @@ class GitHelper:
             finally:
                 self.repo = None
     
-    def _find_and_validate_repo(self):
+    def _find_and_validate_repo(self) -> None:
         """Find and validate the git repository."""
         if not GIT_AVAILABLE:
             raise GitLibraryNotAvailableError()

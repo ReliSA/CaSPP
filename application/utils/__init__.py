@@ -1,5 +1,6 @@
 # Utils package
 
+# local imports
 from .exceptions import (
     BaseAppException,
     GitException, GitRepositoryNotFoundError, GitLibraryNotAvailableError,

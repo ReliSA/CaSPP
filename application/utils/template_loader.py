@@ -1,9 +1,15 @@
+"""
+Loader for markdown templates defining expected document structure and content.
+"""
+
+# standard library imports
 import json
 import logging
 import os
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set
 
+# local imports
 from utils.md_parser import (
     classify_content_line,
     parse_breadcrumbs,
@@ -14,6 +20,7 @@ from utils.md_parser import (
 
 logger = logging.getLogger(__name__)
 
+# NOTE: move these to constants please
 _ALPHABET_LABELS: List[str] = ["0-9"] + [chr(c) for c in range(ord("A"), ord("Z") + 1)]
 _ALPHABET_SET: Set[str] = set(_ALPHABET_LABELS)
 _MIN_ALPHABET_RUN = 5
@@ -123,7 +130,7 @@ class TemplateRules:
         }
 
 
-def _detect_and_collapse_alphabet_groups(headings: List[HeadingRules]) -> List[HeadingRules]:
+def _detect_and_collapse_alphabet_groups(headings: List[HeadingRules]) -> List[HeadingRules]: # NOTE: missing information about the argument and return value
     """Replace runs of A–Z / 0-9 sibling headings with a single is_group=True entry."""
     result: List[HeadingRules] = []
     i = 0

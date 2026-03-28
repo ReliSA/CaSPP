@@ -1,13 +1,17 @@
 """
 Markdown viewer widget for displaying markdown content.
 """
+# standard library imports
 import logging
+from pathlib import Path
+from typing import Optional
+
+# third-party imports
 from PyQt6.QtWidgets import QTextEdit, QVBoxLayout, QWidget, QLabel, QHBoxLayout, QPushButton, QMessageBox
 from PyQt6.QtCore import pyqtSignal, QTimer
 from PyQt6.QtGui import QKeySequence, QShortcut
-from typing import Optional
-from pathlib import Path
 
+# local imports
 from utils.markdown_auto_stager import MarkdownAutoStager
 
 logger = logging.getLogger(__name__)
@@ -22,8 +26,8 @@ class MarkdownViewer(QWidget):
     file_saved = pyqtSignal(str)  # file_path
     # Signal emitted when auto-staging occurs
     file_staged = pyqtSignal(str, str)  # file_path, message
-    
-    def __init__(self, parent=None):
+
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self._current_file_path = None
         self._original_content = ""
@@ -40,8 +44,8 @@ class MarkdownViewer(QWidget):
         self._auto_save_timer.setSingleShot(True)
         
         self._setup_ui()
-    
-    def _setup_ui(self):
+
+    def _setup_ui(self) -> None:
         """Set up the user interface."""
         layout = QVBoxLayout(self)
         
@@ -198,15 +202,15 @@ class MarkdownViewer(QWidget):
         """Handle failed file staging."""
         if file_path == self._current_file_path:
             self._update_status(f"Staging failed: {error}", error=True)
-    
-    def set_content(self, content: str):
+
+    def set_content(self, content: str) -> None:
         """Set the markdown content to display."""
         # Temporarily disconnect the signal to avoid triggering change events
         self.text_edit.textChanged.disconnect()
         self.text_edit.setPlainText(content)
         self.text_edit.textChanged.connect(self._on_text_changed)
-    
-    def set_error(self, error_message: str):
+
+    def set_error(self, error_message: str) -> None:
         """Display an error message."""
         self.text_edit.setPlainText(error_message)
         self._update_status(error_message, error=True)
@@ -214,8 +218,8 @@ class MarkdownViewer(QWidget):
     def get_content(self) -> str:
         """Get the current content."""
         return self.text_edit.toPlainText()
-    
-    def set_read_only(self, read_only: bool):
+
+    def set_read_only(self, read_only: bool) -> None:
         """Set whether the text edit is read-only."""
         self.text_edit.setReadOnly(read_only)
         # Disable save functionality when read-only
@@ -241,8 +245,8 @@ class MarkdownViewer(QWidget):
     def get_auto_stager(self) -> MarkdownAutoStager:
         """Get the auto-stager instance."""
         return self._auto_stager
-    
-    def closeEvent(self, event):
+
+    def closeEvent(self, event) -> None:
         """Handle widget close event."""
         # Clean up auto-stager
         if hasattr(self, '_auto_stager'):
@@ -253,8 +257,8 @@ class MarkdownViewer(QWidget):
             self._auto_save_timer.stop()
         
         super().closeEvent(event)
-    
-    def _on_text_changed(self):
+
+    def _on_text_changed(self) -> None:
         """Handle text change events."""
         current_content = self.get_content()
         self._unsaved_changes = (current_content != self._original_content)

@@ -88,7 +88,7 @@ def parse_heading_line(hashes: str, raw_text: str, is_template: bool = False) ->
                      italic variable placeholders (*Name*).
 
     Returns:
-        A :class:ParsedHeading with all fields populated.
+        A ParsedHeading with all fields populated.
     """
     level = len(hashes)
     text = raw_text.strip()
@@ -160,7 +160,7 @@ def parse_breadcrumbs(line: str) -> Optional[list]:
     Returns:
         List of breadcrumb part strings, or None if the line is not a breadcrumb.
     """
-    min_len = 2
+    min_len = 2 # NOTE: might make more sense to be a constant
     if '>' not in line or '[' not in line:
         return None
     # Italic-only lines are template instructions ("*remove or replace…*"), not breadcrumbs.
@@ -170,7 +170,7 @@ def parse_breadcrumbs(line: str) -> Optional[list]:
     return parts if len(parts) >= min_len else None
 
 
-def classify_content_line(
+def classify_content_line( # NOTE: the header style is different from `parse_heading_line`, maybe make a unified style
     line: str,
     is_template: bool = False,
 ) -> Tuple[Set[str], Optional[str], Optional[str], Optional[list]]:

@@ -16,7 +16,7 @@ class BaseAppException(Exception):
     """
     
     def __init__(self, message: str, error_code: Optional[str] = None, 
-                 user_message: Optional[str] = None):
+                 user_message: Optional[str] = None) -> None:
         """
         Initialize base exception.
         
@@ -38,8 +38,8 @@ class GitException(BaseAppException):
 
 class GitRepositoryNotFoundError(GitException):
     """Raised when no git repository is found."""
-    
-    def __init__(self, path: Optional[str] = None):
+
+    def __init__(self, path: Optional[str] = None) -> None:
         message = f"No git repository found at: {path}" if path else "No git repository found"
         super().__init__(
             message=message,
@@ -50,8 +50,8 @@ class GitRepositoryNotFoundError(GitException):
 
 class GitLibraryNotAvailableError(GitException):
     """Raised when GitPython library is not available."""
-    
-    def __init__(self):
+
+    def __init__(self) -> None:
         super().__init__(
             message="GitPython library not available",
             error_code="GIT_LIB_UNAVAILABLE",
@@ -61,8 +61,8 @@ class GitLibraryNotAvailableError(GitException):
 
 class GitOperationError(GitException):
     """Raised when a git operation fails."""
-    
-    def __init__(self, operation: str, cause: Optional[Exception] = None):
+
+    def __init__(self, operation: str, cause: Optional[Exception] = None) -> None:
         message = f"Git {operation} operation failed"
         if cause:
             message += f": {str(cause)}"
@@ -76,8 +76,8 @@ class GitOperationError(GitException):
 
 class GitRemoteError(GitException):
     """Raised when remote operations fail."""
-    
-    def __init__(self, remote_name: str, operation: str, cause: Optional[Exception] = None):
+
+    def __init__(self, remote_name: str, operation: str, cause: Optional[Exception] = None) -> None:
         message = f"Remote '{remote_name}' {operation} failed"
         if cause:
             message += f": {str(cause)}"
@@ -91,8 +91,8 @@ class GitRemoteError(GitException):
 
 class GitBranchError(GitException):
     """Raised when branch operations fail."""
-    
-    def __init__(self, branch_name: str, operation: str):
+
+    def __init__(self, branch_name: str, operation: str) -> None:
         super().__init__(
             message=f"Branch '{branch_name}' {operation} failed",
             error_code="GIT_BRANCH_ERROR",
@@ -102,8 +102,8 @@ class GitBranchError(GitException):
 
 class GitDirtyWorkingTreeError(GitException):
     """Raised when working tree has uncommitted changes."""
-    
-    def __init__(self, operation: str):
+
+    def __init__(self, operation: str) -> None:
         super().__init__(
             message=f"Cannot {operation}: working tree has uncommitted changes",
             error_code="GIT_DIRTY_TREE",
@@ -119,8 +119,8 @@ class FileException(BaseAppException):
 
 class FileNotFoundError(FileException):
     """Raised when a file is not found."""
-    
-    def __init__(self, file_path: str):
+
+    def __init__(self, file_path: str) -> None:
         super().__init__(
             message=f"File not found: {file_path}",
             error_code="FILE_NOT_FOUND",
@@ -130,8 +130,8 @@ class FileNotFoundError(FileException):
 
 class FileAccessError(FileException):
     """Raised when file access is denied or fails."""
-    
-    def __init__(self, file_path: str, operation: str, cause: Optional[Exception] = None):
+
+    def __init__(self, file_path: str, operation: str, cause: Optional[Exception] = None) -> None:
         message = f"Failed to {operation} file: {file_path}"
         if cause:
             message += f" ({str(cause)})"
@@ -145,8 +145,8 @@ class FileAccessError(FileException):
 
 class InvalidFileFormatError(FileException):
     """Raised when file format is invalid."""
-    
-    def __init__(self, file_path: str, expected_format: str):
+
+    def __init__(self, file_path: str, expected_format: str) -> None:
         super().__init__(
             message=f"Invalid file format for {file_path}. Expected: {expected_format}",
             error_code="INVALID_FILE_FORMAT",
@@ -156,8 +156,8 @@ class InvalidFileFormatError(FileException):
 
 class FileReadError(FileException):
     """Raised when reading a file fails."""
-    
-    def __init__(self, file_path: str, cause: str):
+
+    def __init__(self, file_path: str, cause: str) -> None:
         super().__init__(
             message=f"Failed to read file: {file_path} - {cause}",
             error_code="FILE_READ_ERROR",
@@ -167,8 +167,8 @@ class FileReadError(FileException):
 
 class FileWriteError(FileException):
     """Raised when writing to a file fails."""
-    
-    def __init__(self, file_path: str, cause: str):
+
+    def __init__(self, file_path: str, cause: str) -> None:
         super().__init__(
             message=f"Failed to write file: {file_path} - {cause}",
             error_code="FILE_WRITE_ERROR",
@@ -178,8 +178,8 @@ class FileWriteError(FileException):
 
 class InvalidFileTypeError(FileException):
     """Raised when file type is not supported."""
-    
-    def __init__(self, file_path: str, expected_types: list):
+
+    def __init__(self, file_path: str, expected_types: list) -> None:
         types_str = ", ".join(expected_types)
         super().__init__(
             message=f"Invalid file type for {file_path}. Expected one of: {types_str}",
@@ -190,8 +190,8 @@ class InvalidFileTypeError(FileException):
 
 class FileSizeError(FileException):
     """Raised when file size exceeds limits."""
-    
-    def __init__(self, file_path: str, actual_size: int, max_size: int):
+
+    def __init__(self, file_path: str, actual_size: int, max_size: int) -> None:
         super().__init__(
             message=f"File {file_path} size {actual_size} bytes exceeds maximum {max_size} bytes",
             error_code="FILE_SIZE_ERROR",
@@ -207,8 +207,8 @@ class AnalysisException(BaseAppException):
 
 class MarkdownParsingError(AnalysisException):
     """Raised when markdown parsing fails."""
-    
-    def __init__(self, file_path: str, cause: Optional[Exception] = None):
+
+    def __init__(self, file_path: str, cause: Optional[Exception] = None) -> None:
         message = f"Failed to parse markdown file: {file_path}"
         if cause:
             message += f" ({str(cause)})"
@@ -228,8 +228,8 @@ class ConfigurationException(BaseAppException):
 
 class InvalidConfigurationError(ConfigurationException):
     """Raised when configuration is invalid."""
-    
-    def __init__(self, setting: str, value: str):
+
+    def __init__(self, setting: str, value: str) -> None:
         super().__init__(
             message=f"Invalid configuration for '{setting}': {value}",
             error_code="INVALID_CONFIG",
@@ -245,8 +245,8 @@ class ValidationException(BaseAppException):
 
 class InvalidInputError(ValidationException):
     """Raised when input validation fails."""
-    
-    def __init__(self, parameter: str, value: str, reason: str):
+
+    def __init__(self, parameter: str, value: str, reason: str) -> None:
         super().__init__(
             message=f"Invalid {parameter}: {value} ({reason})",
             error_code="INVALID_INPUT",
@@ -256,8 +256,8 @@ class InvalidInputError(ValidationException):
 
 class EmptyInputError(ValidationException):
     """Raised when required input is empty."""
-    
-    def __init__(self, parameter: str):
+
+    def __init__(self, parameter: str) -> None:
         super().__init__(
             message=f"Required parameter '{parameter}' cannot be empty",
             error_code="EMPTY_INPUT",
@@ -273,8 +273,8 @@ class ThreadException(BaseAppException):
 
 class ThreadOperationError(ThreadException):
     """Raised when thread operations fail."""
-    
-    def __init__(self, operation: str, cause: Optional[Exception] = None):
+
+    def __init__(self, operation: str, cause: Optional[Exception] = None) -> None:
         message = f"Thread {operation} failed"
         if cause:
             message += f": {str(cause)}"
@@ -294,8 +294,8 @@ class UIException(BaseAppException):
 
 class WidgetInitializationError(UIException):
     """Raised when widget initialization fails."""
-    
-    def __init__(self, widget_name: str, cause: Optional[Exception] = None):
+
+    def __init__(self, widget_name: str, cause: Optional[Exception] = None) -> None:
         message = f"Failed to initialize widget: {widget_name}"
         if cause:
             message += f" ({str(cause)})"

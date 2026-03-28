@@ -2,11 +2,15 @@
 Auto-staging utility for markdown files.
 Handles automatic staging of edited markdown files in git repository.
 """
+
+# standard library imports
 import logging
-from pathlib import Path
 from typing import Optional, Callable
+
+# third-party imports
 from PyQt6.QtCore import QTimer, QObject, pyqtSignal
 
+# local imports
 from utils.git import GitHelper
 from utils.exceptions import GitRepositoryNotFoundError, GitLibraryNotAvailableError
 
@@ -30,7 +34,7 @@ class MarkdownAutoStager(QObject):
     staging_failed = pyqtSignal(str, str)  # file_path, error
     
     def __init__(self, repo_path: Optional[str] = None, 
-                 auto_stage_delay: int = 1000):
+                 auto_stage_delay: int = 1000) -> None:
         """
         Initialize the auto-stager.
         
@@ -75,7 +79,7 @@ class MarkdownAutoStager(QObject):
     
     def set_callbacks(self, 
                      on_success: Optional[Callable[[str, str], None]] = None,
-                     on_failure: Optional[Callable[[str, str], None]] = None):
+                     on_failure: Optional[Callable[[str, str], None]] = None) -> None:
         """
         Set callback functions for staging events.
         

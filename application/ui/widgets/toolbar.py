@@ -1,27 +1,31 @@
 """
 Application toolbar with file operations and git controls.
 """
-from typing import Optional
-from pathlib import Path
 
+# standard library imports
+from pathlib import Path
+from typing import Optional
+
+# third-party imports
 from PyQt6.QtWidgets import (
     QToolBar, QMessageBox, QInputDialog, 
     QProgressDialog, QApplication
 )
 from PyQt6.QtCore import pyqtSignal, Qt, QTimer
-from PyQt6.QtGui import QIcon, QAction
+from PyQt6.QtGui import QAction
 
+# local imports
 from core.config import Config
 from utils.git import GitHelper, GitWorker
-from utils.file import FileHelper
+from application.utils.file_helper import FileHelper
 
 
 class Toolbar(QToolBar):
     """Application toolbar with file and git operations."""
     
     file_selected = pyqtSignal(str)  # Signal emitted when file is selected
-    
-    def __init__(self):
+
+    def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("Main Toolbar")
         self.current_git_worker: Optional[GitWorker] = None
@@ -34,8 +38,8 @@ class Toolbar(QToolBar):
         self.git_helper: Optional[GitHelper] = None
         self._init_git_helper()
         self._setup_actions()
-    
-    def _init_git_helper(self):
+
+    def _init_git_helper(self) -> None:
         """Initialize git helper if repository is available."""
         try:
             print(f"DEBUG: Initializing GitHelper with path: {Config.get_base_path()}")
@@ -45,8 +49,8 @@ class Toolbar(QToolBar):
             # No git repository available
             print(f"DEBUG: Failed to initialize GitHelper: {e}")
             self.git_helper = None
-    
-    def _setup_actions(self):
+
+    def _setup_actions(self) -> None:
         """Set up toolbar actions."""
         # File operations section
         self._add_file_actions()
@@ -54,8 +58,8 @@ class Toolbar(QToolBar):
         
         # Git operations section
         self._add_git_actions()
-    
-    def _add_file_actions(self):
+
+    def _add_file_actions(self) -> None:
         """Add file-related actions to toolbar."""
         # Open markdown file action
         self.open_file_action = QAction("📁 Open File", self)
@@ -63,8 +67,8 @@ class Toolbar(QToolBar):
         self.open_file_action.triggered.connect(self._open_file_dialog)
         self.addAction(self.open_file_action)
 
-    
-    def _add_git_actions(self):
+
+    def _add_git_actions(self) -> None:
         """Add git-related actions to toolbar."""
         # Git fetch action
         self.git_fetch_action = QAction("🔄 Fetch", self)
@@ -108,8 +112,8 @@ class Toolbar(QToolBar):
         # Enable/disable based on git availability
         git_available = self.git_helper is not None
         self.enable_git_actions(git_available)
-    
-    def _open_file_dialog(self):
+
+    def _open_file_dialog(self) -> None:
         """Open file dialog to select markdown file."""
         file_path = self.file_helper.select_markdown_file(
             parent=self,
@@ -118,8 +122,8 @@ class Toolbar(QToolBar):
         
         if file_path:
             self.file_selected.emit(file_path)
-    
-    def _execute_git_command(self, operation: str, success_message: str, **kwargs):
+
+    def _execute_git_command(self, operation: str, success_message: str, **kwargs) -> None:
         """Execute git command in background thread."""
         print(f"DEBUG: _execute_git_command called with operation: {operation}")
         # remember what operation we're starting
@@ -163,8 +167,8 @@ class Toolbar(QToolBar):
         self.progress_dialog.canceled.connect(self._cancel_git_operation)
         print("DEBUG: Starting GitWorker thread")
         self.current_git_worker.start()
-    
-    def _on_git_operation_finished(self, success: bool, message: str, success_message: str):
+
+    def _on_git_operation_finished(self, success: bool, message: str, success_message: str) -> None:
         """Handle completion of git operation."""
         print(f"DEBUG: _on_git_operation_finished called - success: {success}")
         
@@ -298,8 +302,8 @@ class Toolbar(QToolBar):
         
         # Clear last_operation after handling (if not already cleared)
         self._last_operation = None
-    
-    def _cancel_git_operation(self):
+
+    def _cancel_git_operation(self) -> None:
         """Cancel current git operation."""
         if self.current_git_worker and self.current_git_worker.isRunning():
             self.current_git_worker.terminate()
@@ -315,12 +319,12 @@ class Toolbar(QToolBar):
                 print(f"DEBUG: Error closing progress dialog in cancel: {e}")
             finally:
                 self.progress_dialog = None
-    
-    def _git_fetch(self):
+
+    def _git_fetch(self) -> None:
         """Execute git fetch command."""
         self._execute_git_command("fetch", "Successfully fetched latest changes from remote.")
-    
-    def _git_pull(self):
+
+    def _git_pull(self) -> None:
         """Execute git pull command."""
         reply = QMessageBox.question(
             self,
@@ -332,13 +336,13 @@ class Toolbar(QToolBar):
         
         if reply == QMessageBox.StandardButton.Yes:
             self._execute_git_command("pull", "Successfully pulled changes from remote.")
-    
-    def _git_stage_all(self):
+
+    def _git_stage_all(self) -> None:
         """Stage all changes."""
         # Stage only markdown files
         self._execute_git_command("stage_markdown", "Successfully staged markdown files.")
-    
-    def _git_unstage_all(self):
+
+    def _git_unstage_all(self) -> None:
         """Unstage all changes."""
         reply = QMessageBox.question(
             self,
@@ -350,8 +354,8 @@ class Toolbar(QToolBar):
         
         if reply == QMessageBox.StandardButton.Yes:
             self._execute_git_command("unstage_all", "Successfully unstaged all changes.")
-    
-    def _git_commit(self):
+
+    def _git_commit(self) -> None:
         """Commit markdown files with a focused workflow."""
         # This toolbar action performs commit AND push
         self._push_after_commit = True
@@ -461,8 +465,8 @@ class Toolbar(QToolBar):
                 "Error",
                 f"Failed to check git status: {str(e)}"
             )
-    
-    def _stage_markdown_files_and_commit(self, md_files: list, commit_message: str):
+
+    def _stage_markdown_files_and_commit(self, md_files: list, commit_message: str) -> None:
         """Stage specific markdown files and then commit."""
         # Create progress dialog for the two-step process
         self.progress_dialog = QProgressDialog(
@@ -491,8 +495,8 @@ class Toolbar(QToolBar):
         )
         self.progress_dialog.canceled.connect(self._cancel_git_operation)
         self.current_git_worker.start()
-    
-    def _on_markdown_staging_finished(self, success: bool, message: str, commit_message: str):
+
+    def _on_markdown_staging_finished(self, success: bool, message: str, commit_message: str) -> None:
         """Handle completion of markdown file staging."""
         print(f"DEBUG: _on_markdown_staging_finished called - success: {success}")
         
@@ -558,8 +562,8 @@ class Toolbar(QToolBar):
             )
         )
         self.current_git_worker.start()
-    
-    def _git_status(self):
+
+    def _git_status(self) -> None:
         """Show git repository status."""
         if not self.git_helper or not self.git_helper.is_repo_available():
             QMessageBox.warning(
@@ -625,8 +629,8 @@ class Toolbar(QToolBar):
                 "Error",
                 f"Failed to get git status: {str(e)}"
             )
-    
-    def enable_git_actions(self, enabled: bool = True):
+
+    def enable_git_actions(self, enabled: bool = True) -> None:
         """Enable or disable git actions."""
         self.git_fetch_action.setEnabled(enabled)
         self.git_pull_action.setEnabled(enabled)
@@ -634,28 +638,28 @@ class Toolbar(QToolBar):
         self.git_unstage_all_action.setEnabled(enabled)
         self.git_status_action.setEnabled(enabled)
         self.git_commit_action.setEnabled(enabled)
-    
-    def enable_file_actions(self, enabled: bool = True):
+
+    def enable_file_actions(self, enabled: bool = True) -> None:
         """Enable or disable file actions."""
         self.open_file_action.setEnabled(enabled)
         self.recent_files_action.setEnabled(enabled)
-    
-    def _show_recent_files(self): # asdsadasdasd
-        """Show recent files menu (placeholder)."""
-        # TODO: Implement recent files functionality
-        recent_files = self.file_helper.get_recent_files()
+
+    # def _show_recent_files(self) -> None:
+    #     """Show recent files menu (placeholder)."""
+    #     # TODO: Implement recent files functionality
+    #     recent_files = self.file_helper.get_recent_files()
         
-        if recent_files:
-            # For now, just show a simple message with the files
-            file_list = "\n".join(f"• {Path(f).name}" for f in recent_files[:5])
-            QMessageBox.information(
-                self,
-                "Recent Files",
-                f"Recent files:\n\n{file_list}\n\n(Selection from list not yet implemented)"
-            )
-        else:
-            QMessageBox.information(
-                self,
-                "Recent Files", 
-                "No recent files found."
-            )
+    #     if recent_files:
+    #         # For now, just show a simple message with the files
+    #         file_list = "\n".join(f"• {Path(f).name}" for f in recent_files[:5])
+    #         QMessageBox.information(
+    #             self,
+    #             "Recent Files",
+    #             f"Recent files:\n\n{file_list}\n\n(Selection from list not yet implemented)"
+    #         )
+    #     else:
+    #         QMessageBox.information(
+    #             self,
+    #             "Recent Files", 
+    #             "No recent files found."
+    #         )

@@ -3,8 +3,12 @@ ASWI - Markdown Analyzer Application
 
 A PyQt6 application for analyzing consistency of markdown files and checking link validity.
 """
-import sys
+
+# standard library imports
 import logging
+import sys
+
+# local imports
 from core.application import Application
 
 
