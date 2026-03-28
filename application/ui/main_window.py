@@ -1,8 +1,11 @@
 """
 Main application window.
 """
+
+# third-party imports
 from PyQt6.QtWidgets import (QMainWindow, QVBoxLayout, QWidget, QApplication)
 
+# local imports
 from ui.widgets.markdown_viewer import MarkdownViewer
 from ui.widgets.analysis_panel import AnalysisPanel
 from ui.widgets.toolbar import Toolbar
@@ -11,13 +14,13 @@ from core.config import Config
 
 class MainWindow(QMainWindow):
     """Main application window."""
-    
-    def __init__(self):
+
+    def __init__(self) -> None:
         super().__init__()
         self._setup_ui()
         self._connect_signals()
-    
-    def _setup_ui(self):
+
+    def _setup_ui(self) -> None:
         """Set up the user interface."""
         # Window configuration
         self.setWindowTitle(Config.APP_NAME)
@@ -42,15 +45,15 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.markdown_viewer)
         main_layout.addWidget(self.analysis_panel)
 
-    
-    def _connect_signals(self):
+
+    def _connect_signals(self) -> None:
         """Connect widget signals."""
         # Connect markdown viewer content changes to analysis updates
         self.markdown_viewer.content_changed.connect(self._on_content_changed)
         
         # File selection from toolbar is handled directly by the Application class
-    
-    def _on_content_changed(self, content: str):
+
+    def _on_content_changed(self, content: str) -> None:
         """Handle markdown content changes."""
         # This could trigger re-analysis in the future
         pass

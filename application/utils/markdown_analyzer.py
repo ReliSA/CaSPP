@@ -1,16 +1,22 @@
-import re
+"""
+Markdown file analyzer module.
+"""
+
+# standard library imports
+import logging
 import os
 from pathlib import Path
+import re
 from typing import List, Dict, Tuple
-import logging
 
+# local imports
 from core.constants import FileConstants
 from utils.exceptions import FileNotFoundError, FileReadError, InvalidInputError
 
 logger = logging.getLogger(__name__)
 
 class MarkdownAnalyzer:
-    def __init__(self, base_path: str = None):
+    def __init__(self, base_path: str = None) -> None:
         """
         Initialize the analyzer.
         

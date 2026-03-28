@@ -1,23 +1,26 @@
 """
 File operations helper module.
 """
+
+# standard library imports
 import os
 from pathlib import Path
 from typing import Optional, List, Tuple
 
+# third-party imports
 from PyQt6.QtWidgets import QFileDialog, QMessageBox, QWidget
 
+# local imports
 from core.constants import FileConstants
 from utils.exceptions import (
     FileNotFoundError, FileReadError, FileWriteError, 
     InvalidFileTypeError, FileSizeError, FileAccessError
 )
 
-
 class FileHelper:
     """Helper class for file operations."""
-    
-    def __init__(self, base_path: Optional[str] = None):
+
+    def __init__(self, base_path: Optional[str] = None) -> None:
         """
         Initialize file helper.
         
@@ -152,16 +155,23 @@ class FileHelper:
             logger = logging.getLogger(__name__)
             logger.warning(f"File validation failed for '{file_path}': {e}")
             return None
-    
-    def _show_error(self, parent: Optional[QWidget], title: str, message: str):
+
+    def validate_file(self, file_path: str) -> Optional[str]:
+        """Public wrapper for validating a file path.
+
+        Returns the resolved path if valid, otherwise None.
+        """
+        return self._validate_file(file_path)
+
+    def _show_error(self, parent: Optional[QWidget], title: str, message: str) -> None:
         """Show error message dialog."""
         QMessageBox.critical(parent, title, message)
-    
-    def _show_warning(self, parent: Optional[QWidget], title: str, message: str):
-        """Show warning message dialog.""" 
+
+    def _show_warning(self, parent: Optional[QWidget], title: str, message: str) -> None:
+        """Show warning message dialog."""
         QMessageBox.warning(parent, title, message)
-    
-    def _show_info(self, parent: Optional[QWidget], title: str, message: str):
+
+    def _show_info(self, parent: Optional[QWidget], title: str, message: str) -> None:
         """Show information message dialog."""
         QMessageBox.information(parent, title, message)
     
@@ -197,33 +207,33 @@ class FileHelper:
             logger.warning(f"Error finding markdown files in '{search_dir}': {e}")
             return []
     
-    def get_recent_files(self, max_count: int = 10) -> List[str]:
-        """
-        Get list of recently accessed files.
-        This is a placeholder - in a real app, you'd store this in settings.
+    # def get_recent_files(self, max_count: int = 10) -> List[str]:
+    #     """
+    #     Get list of recently accessed files.
+    #     This is a placeholder - in a real app, you'd store this in settings.
         
-        Args:
-            max_count: Maximum number of recent files to return
+    #     Args:
+    #         max_count: Maximum number of recent files to return
         
-        Returns:
-            List of recent file paths
-        """
-        # TODO: Implement actual recent files tracking using QSettings
-        # For now, return some common files from the project
-        recent_files = []
+    #     Returns:
+    #         List of recent file paths
+    #     """
+    #     # TODO: Implement actual recent files tracking using QSettings
+    #     # For now, return some common files from the project
+    #     recent_files = []
         
-        # Look for common markdown files
-        common_names = FileConstants.COMMON_MARKDOWN_FILES
+    #     # Look for common markdown files
+    #     common_names = FileConstants.COMMON_MARKDOWN_FILES
         
-        for name in common_names:
-            file_path = self.base_path / name
-            if file_path.exists():
-                recent_files.append(str(file_path))
+    #     for name in common_names:
+    #         file_path = self.base_path / name
+    #         if file_path.exists():
+    #             recent_files.append(str(file_path))
             
-            if len(recent_files) >= max_count:
-                break
+    #         if len(recent_files) >= max_count:
+    #             break
         
-        return recent_files
+    #     return recent_files
     
     def save_file(self, content: str, file_path: Optional[str] = None, 
                   parent: Optional[QWidget] = None) -> Optional[str]:

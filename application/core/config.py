@@ -1,8 +1,10 @@
 """
 Configuration settings for the application.
 """
-import os
+# standard library imports
 from pathlib import Path
+
+# local imports
 from .constants import AppConstants, UIConstants
 
 class Config:
