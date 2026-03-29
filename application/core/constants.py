@@ -4,6 +4,8 @@ Application constants and configuration values.
 This module contains all magic values and constants used throughout the application
 to improve maintainability and reduce hardcoded values.
 """
+import re
+from typing import List, Set
 
 # Git-related constants
 class GitConstants:
@@ -43,6 +45,7 @@ class FileConstants:
     ALL_FILES_FILTER = "All Files (*)"
 
     TEMPLATES_PATH = "templates"
+    CATALOGUE_PATH = "catalogue"
 
 
 # UI-related constants
@@ -120,3 +123,65 @@ class ValidationConstants:
     # URL validation
     VALID_URL_SCHEMES = ['http', 'https', 'ftp', 'ftps']
     MAX_URL_LENGTH = 2048
+
+class LoaderConstants:
+    """Constants for template and document loading."""
+    # Heading line:  ### Some text
+    RE_HEADING = re.compile(r'^(#{1,6})\s+(.+)$')
+
+    # Markdown link anywhere in a string:  [label](url)
+    RE_LINK = re.compile(r'\[([^\]]*)\]\(([^)]*)\)')
+
+    # Italic placeholder wrapping the *whole* remaining text, or inline:  *Name*
+    RE_ITALIC = re.compile(r'\*([^*]+)\*')
+
+    # Optional marker in template headings:  *(optional)* or (optional)
+    RE_OPTIONAL = re.compile(r'\s*\*?\(optional\)\*?', re.IGNORECASE)
+
+    # H1 prefix before a colon:  "Category: …" or "Project Methodology: …"
+    RE_H1_PREFIX = re.compile(r'^([A-Za-z][A-Za-z ]+?):\s*(.*)$')
+
+    # Table separator row:  |---|---|
+    RE_TABLE_SEP = re.compile(r'^\|[-:\s|]+\|$')
+
+    # Bullet / unordered list item:  - … or * …
+    RE_BULLET = re.compile(r'^[-*]\s+')
+
+    # Parenthesised bullet prefix:  - (+) …  or  - (-) …
+    RE_BULLET_PREFIX = re.compile(r'^[-*]\s+(\([^)]+\))')
+
+    # Exact link-style list prefix:  - [Label](url): …
+    RE_EXACT_LIST_PREFIX = re.compile(r'^[-*]\s+(\[[^\]]+\]\([^)]+\):)')
+
+    # Horizontal rule:  ---  ___  ***  (optionally wrapped in asterisks in templates)
+    RE_HR_TEMPLATE = re.compile(r'^\*?(---|___|\*\*\*)\*?$')
+    RE_HR_DOCUMENT = re.compile(r'^(---|___|\*\*\*)$')
+
+    # Footnote definition:  [^1]: …  (optionally wrapped in asterisks in templates)
+    RE_FOOTNOTE_TEMPLATE = re.compile(r'^\*?\[\^[^\]]+\]:')
+    RE_FOOTNOTE_DOCUMENT = re.compile(r'^\[\^[^\]]+\]:')
+
+    # Image:  ![alt](url)
+    RE_IMAGE = re.compile(r'^!\[')
+
+    # Breadcrumb line guard — italic-only lines are template instructions, not breadcrumbs
+    RE_ITALIC_ONLY = re.compile(r'^\*[^*].*[^*]\*$|^\*[^*]\*$')
+
+    # Content-type string constants — single source of truth for the vocabulary
+    # used in both ContentRules.expected_types and ContentInfo.found_types.
+    CT_TEXT = 'text'
+    CT_BULLET_LIST = 'bullet_list'
+    CT_TABLE = 'table'
+    CT_HORIZONTAL_RULE = 'horizontal_rule'
+    CT_FOOTNOTE = 'footnote'
+    CT_LINKS = 'links'
+    CT_IMAGE = 'image'
+
+    # Settings for alphabetical grouping
+    ALPHABET_LABELS: List[str] = ["0-9"] + [chr(c) for c in range(ord("A"), ord("Z") + 1)]
+    ALPHABET_SET: Set[str] = set(ALPHABET_LABELS)
+    MIN_ALPHABET_RUN = 5
+
+    # Minimum number of breadcrumb items to trigger breadcrumb analysis — avoids false positives from short lists of links
+    BREADCRUMBS_MIN_LENGTH = 2
+
