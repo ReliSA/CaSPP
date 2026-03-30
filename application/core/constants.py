@@ -120,3 +120,10 @@ class ValidationConstants:
     # URL validation
     VALID_URL_SCHEMES = ['http', 'https', 'ftp', 'ftps']
     MAX_URL_LENGTH = 2048
+
+class FileMatcherConstants:
+    """Constants for FileMatcher"""
+    CATALOGUE_PARENT_FOLDER = "catalogue"
+    MIN_PATH_PARTS = 2
+    PARENT_DIR_INDEX = -2
+
