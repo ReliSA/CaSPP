@@ -15,15 +15,11 @@ from utils.md_parser import (
     parse_breadcrumbs,
     parse_heading_line,
     split_h1,
-    RE_HEADING,
 )
+from core.constants import LoaderConstants
 
 logger = logging.getLogger(__name__)
 
-# NOTE: move these to constants please
-_ALPHABET_LABELS: List[str] = ["0-9"] + [chr(c) for c in range(ord("A"), ord("Z") + 1)]
-_ALPHABET_SET: Set[str] = set(_ALPHABET_LABELS)
-_MIN_ALPHABET_RUN = 5
 
 @dataclass
 class DocumentRules:
@@ -54,6 +50,11 @@ class ContentRules:
     table_headers: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return a JSON-serializable representation of the content rules.
+
+        Returns:
+            Dict[str, Any]: Dictionary with primitive types suitable for JSON.
+        """
         return {
             "expected_types": sorted(self.expected_types),
             "bullet_prefixes": sorted(self.bullet_prefixes),
@@ -92,7 +93,12 @@ class HeadingRules:
     content_rules: ContentRules = field(default_factory=ContentRules)
 
     def to_dict(self) -> Dict[str, Any]:
-        dictionary = {
+        """Return a JSON-serializable representation of the heading rules.
+
+        Returns:
+            Dict[str, Any]: Dictionary suitable for JSON and debugging dumps.
+        """
+        dictionary: Dict[str, Any] = {
             "level": self.level,
             "text": self.text,
             "optional": self.optional,
@@ -121,6 +127,11 @@ class TemplateRules:
     headings: List[HeadingRules] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return a JSON-serializable representation of the template rules.
+
+        Returns:
+            Dict[str, Any]: Dictionary that includes document rules and heading rules.
+        """
         return {
             "document_rules": {
                 "breadcrumbs": self.document_rules.breadcrumbs,
@@ -130,24 +141,44 @@ class TemplateRules:
         }
 
 
-def _detect_and_collapse_alphabet_groups(headings: List[HeadingRules]) -> List[HeadingRules]: # NOTE: missing information about the argument and return value
-    """Replace runs of A–Z / 0-9 sibling headings with a single is_group=True entry."""
+def _detect_and_collapse_alphabet_groups(headings: List[HeadingRules]) -> List[HeadingRules]:
+    """Detect and collapse A–Z / 0-9 heading runs into a single grouped rule.
+
+    Many templates contain an alphabet index where sibling headings are single
+    letters (or '0-9') and repeat for a long sequence. To simplify downstream
+    validation, this function replaces qualifying runs with a single synthetic
+    heading rule:
+
+    * text is set to "[A-Z]"
+    * is_group is set to True
+    * group_members contains the original run members
+
+    Content rules for the whole group are taken from the first member.
+
+    Args:
+        headings (List[HeadingRules]): Heading rules extracted from the template
+            in the original order.
+
+    Returns:
+        List[HeadingRules]: New list of heading rules where qualifying alphabet
+        runs are replaced by a single grouped heading.
+    """
     result: List[HeadingRules] = []
     i = 0
     while i < len(headings):
         heading = headings[i]
-        if heading.text not in _ALPHABET_SET:
+        if heading.text not in LoaderConstants.ALPHABET_SET:
             result.append(heading)
             i += 1
             continue
 
         run: List[HeadingRules] = [heading]
         j = i + 1
-        while j < len(headings) and headings[j].text in _ALPHABET_SET and headings[j].level == heading.level:
+        while j < len(headings) and headings[j].text in LoaderConstants.ALPHABET_SET and headings[j].level == heading.level:
             run.append(headings[j])
             j += 1
 
-        if len(run) >= _MIN_ALPHABET_RUN:
+        if len(run) >= LoaderConstants.MIN_ALPHABET_RUN:
             result.append(HeadingRules(
                 level=heading.level,
                 text="[A-Z]",
@@ -165,14 +196,19 @@ def _detect_and_collapse_alphabet_groups(headings: List[HeadingRules]) -> List[H
 
 
 class TemplateLoader:
-    """Parse every .md template file in a directory into :class:TemplateRules.
+    """Parse every .md template file in a directory into TemplateRules.
 
-    All regex and classification logic lives in :mod:md_parser; this class
+    All regex and classification logic lives in LoaderConstant; this class
     only handles file I/O and maps parsed primitives onto template-specific
     data classes.
     """
 
     def __init__(self, templates_dir: str) -> None:
+        """Create a new loader bound to *templates_dir*.
+
+        Args:
+            templates_dir (str): Directory containing Markdown template files.
+        """
         self.templates_dir = templates_dir
         self.templates: Dict[str, TemplateRules] = {}
         self._loaded: bool = False
@@ -181,7 +217,8 @@ class TemplateLoader:
         """Load (or reload) all templates from *templates_dir*.
 
         Args:
-            force: Re-parse even if templates were already loaded.
+            force (bool, optional): Re-parse even if templates were already loaded.
+                Defaults to False.
         """
         if self._loaded and not force:
             return
@@ -203,15 +240,32 @@ class TemplateLoader:
                     logger.error("Failed to load template %s: %s", name, exc)
 
         self._loaded = True
-        self.dump_json("output")
         logger.info("Loaded %d template(s) from %s", len(self.templates), self.templates_dir)
 
     def get_template(self, name: str) -> TemplateRules:
+        """Return rules for a single named template.
+
+        If templates were not loaded yet, they are loaded lazily.
+
+        Args:
+            name (str): Template name (filename without the .md extension).
+
+        Returns:
+            TemplateRules: Parsed rules of the template. Returns an empty
+            TemplateRules instance if *name* is unknown.
+        """
         if not self._loaded:
             self.load()
         return self.templates.get(name, TemplateRules())
 
     def get_all_templates(self) -> Dict[str, TemplateRules]:
+        """Return mapping of all loaded templates.
+
+        If templates were not loaded yet, they are loaded lazily.
+
+        Returns:
+            Dict[str, TemplateRules]: Mapping of template name → parsed rules.
+        """
         if not self._loaded:
             self.load()
         return self.templates
@@ -249,6 +303,14 @@ class TemplateLoader:
         logger.debug("Debug JSON written: %s", dest)
 
     def _parse_template(self, filepath: str) -> TemplateRules:
+        """Parse a single template Markdown file.
+
+        Args:
+            filepath (str): Absolute path to a .md template file.
+
+        Returns:
+            TemplateRules: Parsed template rules extracted from the file.
+        """
         document_rules = DocumentRules()
         raw_headings: List[HeadingRules] = []
         current: Optional[HeadingRules] = None
@@ -260,7 +322,7 @@ class TemplateLoader:
                     continue
 
                 # Heading
-                match = RE_HEADING.match(line)
+                match = LoaderConstants.RE_HEADING.match(line)
                 if match:
                     ph = parse_heading_line(match.group(1), match.group(2), is_template=True)
                     current = HeadingRules(
