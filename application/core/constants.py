@@ -124,6 +124,7 @@ class ValidationConstants:
     VALID_URL_SCHEMES = ['http', 'https', 'ftp', 'ftps']
     MAX_URL_LENGTH = 2048
 
+<<<<<<< task_#13085_document_loader
 class LoaderConstants:
     """Constants for template and document loading."""
     # Heading line:  ### Some text
@@ -184,4 +185,11 @@ class LoaderConstants:
 
     # Minimum number of breadcrumb items to trigger breadcrumb analysis — avoids false positives from short lists of links
     BREADCRUMBS_MIN_LENGTH = 2
+=======
+class FileMatcherConstants:
+    """Constants for FileMatcher"""
+    CATALOGUE_PARENT_FOLDER = "catalogue"
+    MIN_PATH_PARTS = 2
+    PARENT_DIR_INDEX = -2
+>>>>>>> dev-branch
 
