@@ -4,7 +4,7 @@ File-related operations extracted from Application.
 # local imports
 from ui.main_window import MainWindow
 from utils.markdown_analyzer import MarkdownAnalyzer
-from application.utils.file_helper import FileHelper
+from utils.file_helper import FileHelper
 
 
 class FileManager:

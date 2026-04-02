@@ -50,10 +50,10 @@ class UIConstants:
     """Constants for user interface."""
     
     # Window dimensions
-    MIN_WINDOW_WIDTH = 500
-    MIN_WINDOW_HEIGHT = 500
-    DEFAULT_WINDOW_WIDTH = 800
-    DEFAULT_WINDOW_HEIGHT = 600
+    MIN_WINDOW_WIDTH = 800
+    MIN_WINDOW_HEIGHT = 600
+    DEFAULT_WINDOW_WIDTH = 1000
+    DEFAULT_WINDOW_HEIGHT = 700
     
     # Panel dimensions
     ANALYSIS_PANEL_MAX_HEIGHT = 200
@@ -65,6 +65,69 @@ class UIConstants:
     # Timeouts (milliseconds)
     DEFAULT_TIMEOUT_MS = 30000
     PROGRESS_UPDATE_INTERVAL_MS = 100
+
+    # Window title
+    APP_WINDOW_TITLE = "Markdown Analyzer"
+
+    # Top bar item names
+    TOP_BAR_FILE_MENU_NAME = "File"
+    TOP_BAR_GIT_MENU_NAME = "Git"
+
+    # File menu action names
+    OPEN_FILE_ACTION_NAME = "Open File"
+    SAVE_FILE_ACTION_NAME = "Save File"
+    OPEN_EXPLORER_ACTION_NAME = "Open Explorer"
+    SHOW_LIVE_PREVIEW_ACTION_NAME = "Show Live Preview"
+    SHOW_ANALYZER_OUTPUT_ACTION_NAME = "Show Analyzer Output"
+
+    # Git menu action names
+    STATUS_ACTION_NAME = "Status"
+    FETCH_ACTION_NAME = "Fetch"
+    PULL_ACTION_NAME = "Pull"
+    PUSH_ACTION_NAME = "Push"
+
+    # File menu action shortcuts
+    OPEN_FILE_ACTION_SHORTCUT = "Ctrl+O"
+    SAVE_FILE_ACTION_SHORTCUT = "Ctrl+S"
+    OPEN_EXPLORER_ACTION_SHORTCUT = "Ctrl+E"
+    SHOW_LIVE_PREVIEW_ACTION_SHORTCUT = "Ctrl+P"
+    SHOW_ANALYZER_OUTPUT_ACTION_SHORTCUT = "Ctrl+A"
+
+    # Git menu action shortcuts
+    STATUS_ACTION_SHORTCUT = "Ctrl+Shift+S"
+    FETCH_ACTION_SHORTCUT = "Ctrl+Shift+F"
+    PULL_ACTION_SHORTCUT = "Ctrl+Shift+L"
+    PUSH_ACTION_SHORTCUT = "Ctrl+Shift+P"
+
+    # Markdown scene element constants
+    EXPLORER_LABEL = "Explorer"
+    OPEN_EXPLORER_BUTTON_LABEL = "Open Explorer"
+    SAVE_CHANGES_BUTTON_LABEL = "Save Changes"
+    LIVE_PREVIEW_CHECK_BOX_LABEL = "Live Preview"
+    ANALYZER_CHECK_BOX_LABEL = "Analyzer"
+
+    # Git scene element constants
+    STATUS_BUTTON_LABEL = "Status"
+    FETCH_BUTTON_LABEL = "Fetch"
+    PULL_BUTTON_LABEL = "Pull"
+    PUSH_BUTTON_LABEL = "Push"
+
+
+class AssetsConstants:
+    """Constants for asstest."""
+
+    # Sidebar icon paths
+    SIDEBAR_MARKDOWN_SCENE_ICON_PATH = "application/ui/assets/icons/LucideFolderOpen.svg"
+    SIDEBAR_GIT_SCENE_ICON_PATH = "application/ui/assets/icons/LucideGithub.svg"
+
+    # Markdonw scene icon paths
+    CLOSE_FILE_EXPLORER_ICON_PATH = "application/ui/assets/icons/LucideX.svg"
+
+    # Git scene icon paths
+    STATUS_BUTTON_ICON_PATH = "application/ui/assets/icons/LucideBarChartBig.svg"
+    FETCH_BUTTON_ICON_PATH = "application/ui/assets/icons/LucideRefreshCw.svg"
+    PULL_BUTTON_ICON_PATH = "application/ui/assets/icons/LucideArrowDownToLine.svg"
+    PUSH_BUTTON_ICON_PATH = "application/ui/assets/icons/LucideArrowUpFromLine.svg"
 
 
 # Application constants
@@ -94,7 +157,6 @@ class LogConstants:
     
     LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     LOG_DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
-
 
 # Network constants
 class NetworkConstants:

@@ -1,71 +1,59 @@
-"""
-Main application window.
-"""
+from PyQt6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QStackedWidget
 
-# third-party imports
-from PyQt6.QtWidgets import (QMainWindow, QVBoxLayout, QWidget, QApplication)
-
-# local imports
-from ui.widgets.markdown_viewer import MarkdownViewer
-from ui.widgets.analysis_panel import AnalysisPanel
-from ui.widgets.toolbar import Toolbar
-from core.config import Config
-
+from ui.components.top_menu import TopMenuBar
+from ui.components.sidebar import SidebarMenu
+from ui.components.md_scene import MarkdownScene
+from ui.components.git_scene import GitScene
+from core.constants import UIConstants
 
 class MainWindow(QMainWindow):
-    """Main application window."""
+    """Handles main window layout setup."""
 
     def __init__(self) -> None:
+        """
+        Initializes main window.
+        """
         super().__init__()
-        self._setup_ui()
-        self._connect_signals()
 
-    def _setup_ui(self) -> None:
-        """Set up the user interface."""
-        # Window configuration
-        self.setWindowTitle(Config.APP_NAME)
-        self.setMinimumSize(Config.WINDOW_MIN_WIDTH, Config.WINDOW_MIN_HEIGHT)
-        self.resize(Config.WINDOW_DEFAULT_WIDTH, Config.WINDOW_DEFAULT_HEIGHT)
-        
-        # Create toolbar
-        self.toolbar = Toolbar()
-        self.addToolBar(self.toolbar)
-        
-        # Create central widget and main layout
+        self.setWindowTitle(UIConstants.APP_WINDOW_TITLE)
+        self.setMinimumSize(UIConstants.MIN_WINDOW_WIDTH, UIConstants.MIN_WINDOW_HEIGHT)
+        self.resize(UIConstants.DEFAULT_WINDOW_WIDTH, UIConstants.DEFAULT_WINDOW_HEIGHT)
+
+        # Top menu setup
+        self.top_menu = TopMenuBar(self)
+        self.setMenuBar(self.top_menu)
+
+        # Central widget and layout setup
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        
-        main_layout = QVBoxLayout(central_widget)
-        
-        # Create widgets
-        self.markdown_viewer = MarkdownViewer()
-        self.analysis_panel = AnalysisPanel()
-        
-        # Add widgets to main layout
-        main_layout.addWidget(self.markdown_viewer)
-        main_layout.addWidget(self.analysis_panel)
+        main_layout = QHBoxLayout(central_widget)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
 
+        # Components setup
+        self.sidebar = SidebarMenu()
+        self.md_scene = MarkdownScene()
+        self.git_scene = GitScene()
 
-    def _connect_signals(self) -> None:
-        """Connect widget signals."""
-        # Connect markdown viewer content changes to analysis updates
-        self.markdown_viewer.content_changed.connect(self._on_content_changed)
-        
-        # File selection from toolbar is handled directly by the Application class
+        self.stacked_scenes = QStackedWidget()
+        self.stacked_scenes.addWidget(self.md_scene)
+        self.stacked_scenes.addWidget(self.git_scene)
 
-    def _on_content_changed(self, content: str) -> None:
-        """Handle markdown content changes."""
-        # This could trigger re-analysis in the future
-        pass
-    
-    def get_toolbar(self) -> Toolbar:
-        """Get the toolbar widget."""
-        return self.toolbar
-    
-    def get_markdown_viewer(self) -> MarkdownViewer:
-        """Get the markdown viewer widget."""
-        return self.markdown_viewer
-    
-    def get_analysis_panel(self) -> AnalysisPanel:
-        """Get the analysis panel widget."""
-        return self.analysis_panel
+        main_layout.addWidget(self.sidebar)
+        main_layout.addWidget(self.stacked_scenes)
+
+        # Sidebar scene switch setup
+        self.sidebar.btn_md.clicked.connect(lambda: self.stacked_scenes.setCurrentIndex(0))
+        self.sidebar.btn_git.clicked.connect(lambda: self.stacked_scenes.setCurrentIndex(1))
+
+    def get_toolbar(self) -> TopMenuBar:
+        """
+        Returns top menu.
+        """
+        return self.top_menu
+
+    def get_markdown_viewer(self) -> MarkdownScene:
+        """
+        Returns markdown scene.
+        """
+        return self.md_scene
