@@ -17,7 +17,7 @@ except ImportError:
     GIT_AVAILABLE = False
 
 # local imports
-from core.constants import GitConstants
+from core.constants import GitConstants, FileConstants
 from utils.exceptions import (
     GitLibraryNotAvailableError, GitRepositoryNotFoundError, GitOperationError,
     GitRemoteError, GitDirtyWorkingTreeError, InvalidInputError
@@ -107,14 +107,15 @@ class GitWorker(QThread):
             stage_all = self.kwargs.get('stage_all', False)
             return helper.commit(commit_message, stage_all)
         elif self.operation == "push":
-            # allow caller to provide remote and branch via kwargs
+            # stage+commit markdown changes, then push
             remote = self.kwargs.get('remote')
             branch = self.kwargs.get('branch')
-            return helper.push(remote, branch)
+            commit_message = self.kwargs.get('message', GitConstants.DEFAULT_COMMIT_MESSAGE)
+            return helper.push_markdown_changes(commit_message, remote, branch)
         elif self.operation == "status":
-            return helper.get_status_detailed()
+            return helper.get_status_detailed(markdown_only=True)
         elif self.operation == "stage_all":
-            return helper.stage_all()
+            return helper.stage_markdown_files()
         elif self.operation == "unstage_all":
             return helper.unstage_all()
         elif self.operation == "stage_file":
@@ -164,6 +165,10 @@ class GitHelper:
                 logger.warning(f"Error during GitHelper cleanup: {e}")
             finally:
                 self.repo = None
+
+    def _is_markdown_file(self, file_path: str) -> bool:
+        """Return True if path points to supported markdown extension."""
+        return file_path.lower().endswith(tuple(FileConstants.MARKDOWN_EXTENSIONS))
     
     def _find_and_validate_repo(self) -> None:
         """Find and validate the git repository."""
@@ -255,7 +260,7 @@ class GitHelper:
                 logger.warning(f"Error checking untracked files: {e}")
                 return False, False
     
-    def get_status(self) -> Dict[str, List[str]]:
+    def get_status(self, markdown_only: bool = False) -> Dict[str, List[str]]:
         """
         Get repository status.
         
@@ -273,22 +278,36 @@ class GitHelper:
                 'deleted': [],
                 'untracked': self.repo.untracked_files
             }
+
+            if markdown_only:
+                status['untracked'] = [path for path in status['untracked'] if self._is_markdown_file(path)]
             
             # Check unstaged changes
             for diff in self.repo.index.diff(None):
+                path = diff.a_path or diff.b_path
+                if not path:
+                    continue
                 if diff.change_type == GitConstants.CHANGE_TYPE_MODIFIED:
-                    status['modified'].append(diff.a_path)
+                    if not markdown_only or self._is_markdown_file(path):
+                        status['modified'].append(path)
                 elif diff.change_type == GitConstants.CHANGE_TYPE_DELETED:
-                    status['deleted'].append(diff.a_path)
-            
+                    if not markdown_only or self._is_markdown_file(path):
+                        status['deleted'].append(path)
+
             # Check staged changes
             for diff in self.repo.index.diff(GitConstants.DEFAULT_BRANCH_HEAD):
+                path = diff.a_path or diff.b_path
+                if not path:
+                    continue
                 if diff.change_type == GitConstants.CHANGE_TYPE_ADDED:
-                    status['added'].append(diff.a_path)
-                elif diff.change_type == GitConstants.CHANGE_TYPE_MODIFIED and diff.a_path not in status['modified']:
-                    status['modified'].append(diff.a_path)
-                elif diff.change_type == GitConstants.CHANGE_TYPE_DELETED and diff.a_path not in status['deleted']:
-                    status['deleted'].append(diff.a_path)
+                    if not markdown_only or self._is_markdown_file(path):
+                        status['added'].append(path)
+                elif diff.change_type == GitConstants.CHANGE_TYPE_MODIFIED and path not in status['modified']:
+                    if not markdown_only or self._is_markdown_file(path):
+                        status['modified'].append(path)
+                elif diff.change_type == GitConstants.CHANGE_TYPE_DELETED and path not in status['deleted']:
+                    if not markdown_only or self._is_markdown_file(path):
+                        status['deleted'].append(path)
             
             return status
         
@@ -296,7 +315,7 @@ class GitHelper:
             logger.warning(f"Error getting repository status: {e}")
             return empty_status
     
-    def get_status_detailed(self) -> Tuple[bool, str]:
+    def get_status_detailed(self, markdown_only: bool = False) -> Tuple[bool, str]:
         """
         Get detailed status information as a formatted string.
         
@@ -308,7 +327,7 @@ class GitHelper:
                 return False, "No git repository found"
             
             branch = self.get_current_branch()
-            status = self.get_status()
+            status = self.get_status(markdown_only=markdown_only)
             
             message_lines = [f"Branch: {branch}", ""]
             
@@ -343,7 +362,10 @@ class GitHelper:
                 has_any_changes = True
             
             if not has_any_changes:
-                message_lines.append("Working directory clean - no changes to commit.")
+                if markdown_only:
+                    message_lines.append("No markdown changes (.md/.markdown) in working directory.")
+                else:
+                    message_lines.append("Working directory clean - no changes to commit.")
             
             return True, "\n".join(message_lines)
         
@@ -507,9 +529,9 @@ class GitHelper:
                 status = self.get_status()
                 md_files = []
                 
-                # Collect all .md files that have changes
+                # Collect all markdown files that have changes
                 for file_list in [status['modified'], status['deleted'], status['untracked']]:
-                    md_files.extend([f for f in file_list if f.endswith('.md')])
+                    md_files.extend([f for f in file_list if self._is_markdown_file(f)])
                 
                 file_paths = md_files
             
@@ -518,7 +540,7 @@ class GitHelper:
             
             # Stage each markdown file
             for file_path in file_paths:
-                if file_path.endswith('.md'):
+                if self._is_markdown_file(file_path):
                     success, msg = self.stage_file(file_path)
                     if success:
                         staged_files.append(file_path)
@@ -620,6 +642,54 @@ class GitHelper:
         except Exception as e:
             logger.exception(f"Unexpected error during push: {e}")
             raise GitRemoteError(remote_name, "push", e) from e
+
+    def push_markdown_changes(
+        self,
+        commit_message: Optional[str] = None,
+        remote_name: Optional[str] = None,
+        branch: Optional[str] = None,
+    ) -> Tuple[bool, str]:
+        """Stage markdown changes, commit them, then push."""
+        if not self.is_repo_available():
+            raise GitRepositoryNotFoundError()
+
+        message = (commit_message or GitConstants.DEFAULT_COMMIT_MESSAGE).strip()
+        if not message:
+            message = GitConstants.DEFAULT_COMMIT_MESSAGE
+
+        markdown_status = self.get_status(markdown_only=True)
+        markdown_paths = sorted(
+            set(
+                markdown_status['modified']
+                + markdown_status['added']
+                + markdown_status['deleted']
+                + markdown_status['untracked']
+            )
+        )
+
+        result_lines = []
+
+        if markdown_paths:
+            stage_success, stage_message = self.stage_markdown_files(markdown_paths)
+            if not stage_success:
+                return False, stage_message
+            result_lines.append(stage_message)
+
+            try:
+                self.repo.git.commit('-m', message, '--', *markdown_paths)
+                result_lines.append(f"Committed markdown changes with message: {message}")
+            except GitCommandError as e:
+                commit_error = str(e)
+                if "nothing to commit" in commit_error.lower():
+                    result_lines.append("No markdown commit created (nothing to commit).")
+                else:
+                    raise GitOperationError("commit", e) from e
+
+        push_success, push_message = self.push(remote_name, branch)
+        if not push_success:
+            return False, "\n".join(result_lines + [push_message])
+
+        return True, "\n".join(result_lines + [push_message]) if result_lines else push_message
     
     def commit(self, message: str, stage_all: bool = False) -> Tuple[bool, str]:
         """
@@ -651,12 +721,12 @@ class GitHelper:
         try:
             # Stage all changes if requested
             if stage_all:
-                logger.info("Staging all changes before commit...")
-                stage_success, stage_msg = self.stage_all()
+                logger.info("Staging markdown changes before commit...")
+                stage_success, stage_msg = self.stage_markdown_files()
                 if not stage_success:
                     logger.error(f"Failed to stage changes: {stage_msg}")
                     raise GitOperationError("stage", Exception(stage_msg))
-                logger.info("Successfully staged all changes")
+                logger.info("Successfully staged markdown changes")
             
             # Check if there are staged changes
             unstaged, has_staged = self.has_changes()

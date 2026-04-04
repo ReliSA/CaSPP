@@ -4,6 +4,7 @@ Application constants and configuration values.
 This module contains all magic values and constants used throughout the application
 to improve maintainability and reduce hardcoded values.
 """
+import os
 import re
 from typing import List, Set
 
@@ -120,17 +121,17 @@ class AssetsConstants:
     """Constants for asstest."""
 
     # Sidebar icon paths
-    SIDEBAR_MARKDOWN_SCENE_ICON_PATH = "application/ui/assets/icons/LucideFolderOpen.svg"
-    SIDEBAR_GIT_SCENE_ICON_PATH = "application/ui/assets/icons/LucideGithub.svg"
+    SIDEBAR_MARKDOWN_SCENE_ICON_PATH = os.path.join("application", "ui", "assets", "icons", "LucideFolderOpen.svg")
+    SIDEBAR_GIT_SCENE_ICON_PATH = os.path.join("application", "ui", "assets", "icons", "LucideGithub.svg")
 
-    # Markdonw scene icon paths
-    CLOSE_FILE_EXPLORER_ICON_PATH = "application/ui/assets/icons/LucideX.svg"
+    # Markdown scene icon paths
+    CLOSE_FILE_EXPLORER_ICON_PATH = os.path.join("application", "ui", "assets", "icons", "LucideX.svg")
 
     # Git scene icon paths
-    STATUS_BUTTON_ICON_PATH = "application/ui/assets/icons/LucideBarChartBig.svg"
-    FETCH_BUTTON_ICON_PATH = "application/ui/assets/icons/LucideRefreshCw.svg"
-    PULL_BUTTON_ICON_PATH = "application/ui/assets/icons/LucideArrowDownToLine.svg"
-    PUSH_BUTTON_ICON_PATH = "application/ui/assets/icons/LucideArrowUpFromLine.svg"
+    STATUS_BUTTON_ICON_PATH = os.path.join("application", "ui", "assets", "icons", "LucideBarChartBig.svg")
+    FETCH_BUTTON_ICON_PATH = os.path.join("application", "ui", "assets", "icons", "LucideRefreshCw.svg")
+    PULL_BUTTON_ICON_PATH = os.path.join("application", "ui", "assets", "icons", "LucideArrowDownToLine.svg")
+    PUSH_BUTTON_ICON_PATH = os.path.join("application", "ui", "assets", "icons", "LucideArrowUpFromLine.svg")
 
 
 # Application constants
@@ -186,7 +187,6 @@ class ValidationConstants:
     VALID_URL_SCHEMES = ['http', 'https', 'ftp', 'ftps']
     MAX_URL_LENGTH = 2048
 
-<<<<<<< task_#13085_document_loader
 class LoaderConstants:
     """Constants for template and document loading."""
     # Heading line:  ### Some text
@@ -247,11 +247,10 @@ class LoaderConstants:
 
     # Minimum number of breadcrumb items to trigger breadcrumb analysis — avoids false positives from short lists of links
     BREADCRUMBS_MIN_LENGTH = 2
-=======
+
 class FileMatcherConstants:
     """Constants for FileMatcher"""
     CATALOGUE_PARENT_FOLDER = "catalogue"
     MIN_PATH_PARTS = 2
     PARENT_DIR_INDEX = -2
->>>>>>> dev-branch
 

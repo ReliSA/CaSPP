@@ -13,6 +13,7 @@ from PyQt6.QtCore import QTimer, QObject, pyqtSignal
 # local imports
 from utils.git import GitHelper
 from utils.exceptions import GitRepositoryNotFoundError, GitLibraryNotAvailableError
+from core.constants import FileConstants
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +73,10 @@ class MarkdownAutoStager(QObject):
         except Exception as e:
             logger.warning(f"Error checking git availability: {e}")
             return False
+
+    def _is_markdown_file(self, file_path: str) -> bool:
+        """Return True if path points to supported markdown extension."""
+        return file_path.lower().endswith(tuple(FileConstants.MARKDOWN_EXTENSIONS))
     
     def is_available(self) -> bool:
         """Check if auto-staging is available."""
@@ -101,7 +106,7 @@ class MarkdownAutoStager(QObject):
             logger.debug(f"Git not available, skipping staging of {file_path}")
             return
         
-        if not file_path.endswith('.md'):
+        if not self._is_markdown_file(file_path):
             logger.debug(f"Not a markdown file, skipping staging of {file_path}")
             return
         
@@ -124,7 +129,7 @@ class MarkdownAutoStager(QObject):
             logger.debug(f"Git not available, skipping staging of {file_path}")
             return
         
-        if not file_path.endswith('.md'):
+        if not self._is_markdown_file(file_path):
             logger.debug(f"Not a markdown file, skipping staging of {file_path}")
             return
         

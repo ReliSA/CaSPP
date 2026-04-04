@@ -52,3 +52,20 @@ class GitScene(QWidget):
 
         # Adding chnaged file list to the main layout
         self.layout.addWidget(self.list_git_files)
+
+    def set_output(self, message: str) -> None:
+        """Replace git output list with new message lines."""
+        self.list_git_files.clear()
+        lines = message.splitlines() if message else ["No output."]
+        self.list_git_files.addItems(lines)
+
+    def append_output(self, message: str) -> None:
+        """Append a single git output line."""
+        self.list_git_files.addItem(message)
+
+    def set_controls_enabled(self, enabled: bool) -> None:
+        """Enable or disable git action buttons."""
+        self.btn_status.setEnabled(enabled)
+        self.btn_fetch.setEnabled(enabled)
+        self.btn_pull.setEnabled(enabled)
+        self.btn_push.setEnabled(enabled)
