@@ -1,0 +1,178 @@
+"""
+File-related operations extracted from Application.
+"""
+from typing import Optional
+
+# local imports
+from PyQt6.QtCore import Qt
+
+from ui.main_window import MainWindow
+from utils.markdown_analyzer import MarkdownAnalyzer
+from utils.file_helper import FileHelper
+from core.constants import FileConstants
+from utils.markdown_auto_stager import MarkdownAutoStager
+
+
+class FileManager:
+    """Handles loading and analyzing markdown files and related file events."""
+
+    def __init__(
+        self,
+        main_window: MainWindow,
+        markdown_analyzer: MarkdownAnalyzer,
+        file_helper: FileHelper,
+        auto_stager: Optional[MarkdownAutoStager] = None,
+    ) -> None:
+        """Initialize FileManager with required collaborators.
+
+        Args:
+            main_window: The application's MainWindow instance used to access
+                UI components (viewer, analysis panel, toolbar, etc.).
+            markdown_analyzer: Analyzer responsible for analyzing markdown
+                content and producing reports.
+            file_helper: Utility for validating and performing file I/O and
+                dialogs.
+        """
+        self.main_window = main_window
+        self.markdown_analyzer = markdown_analyzer
+        self.file_helper = file_helper
+        self.auto_stager = auto_stager
+        self.current_file_path: Optional[str] = None
+        self._is_loading_file = False
+        self._is_dirty = False
+
+    def load_markdown_file(self, file_path: str) -> None:
+        """Load a markdown file into the viewer and analyze it.
+
+        Args:
+            file_path: Path to the markdown file to load and analyze.
+
+        Returns:
+            None. Updates the UI (viewer and analysis panel) or shows an
+            error message on failure.
+        """
+        # Validate the file first using the FileHelper
+        validated = self.file_helper.validate_file(file_path)
+        if not validated:
+            self.main_window.get_markdown_viewer().set_error(
+                "Cannot analyze - file not found or inaccessible."
+            )
+            return
+
+        self._is_loading_file = True
+        success = self.main_window.get_markdown_viewer().load_file(validated)
+        self._is_loading_file = False
+        if success:
+            self.current_file_path = validated
+            self._is_dirty = False
+            self.main_window.get_markdown_viewer().set_active_tab_file(validated)
+            self.main_window.get_markdown_viewer().set_tab_dirty(False)
+            self._analyze_current_file(validated)
+        else:
+            self.main_window.get_markdown_viewer().set_error(
+                "Cannot analyze - failed to load file in viewer."
+            )
+
+    def _analyze_current_file(self, file_path: str) -> None:
+        """Analyze the currently loaded markdown file and update the analysis panel.
+
+        Args:
+            file_path: Path to the markdown file to analyze. The file is assumed
+                to already be loaded into the viewer.
+
+        Returns:
+            None. Updates analysis panel with loading state, analysis results
+            or error message on exception.
+        """
+        try:
+            self.main_window.get_markdown_viewer().set_loading()
+
+            # Use the analyzer which expects a file path
+            analysis = self.markdown_analyzer.analyze_markdown_file(file_path)
+            report = self.markdown_analyzer.generate_report(analysis)
+
+            self.main_window.get_markdown_viewer().set_analysis(report)
+
+        except Exception as e:
+            error_msg = f"Error during analysis: {str(e)}"
+            self.main_window.get_markdown_viewer().set_error(error_msg)
+
+    def on_file_saved(self, file_path: str) -> None:
+        """Handle file saved events and re-run analysis for markdown files.
+
+        Args:
+            file_path: Path to the file that was saved. If it ends with
+                '.md' and is valid, the file will be re-analyzed.
+
+        Returns:
+            None. Triggers analysis when appropriate.
+        """
+        # Validate before analyzing
+        if file_path.lower().endswith(tuple(FileConstants.MARKDOWN_EXTENSIONS)) and self.file_helper.validate_file(file_path):
+            self.current_file_path = file_path
+            self._analyze_current_file(file_path)
+
+            if self.auto_stager and self.auto_stager.is_available():
+                self.auto_stager.stage_file_delayed(file_path)
+
+    def on_file_staged(self, file_path: str, message: str) -> None:
+        """Handle file staged events (UI notification / logging).
+
+        Args:
+            file_path: Path to the staged file.
+            message: Commit/stage message or description associated with the staging action.
+
+        Returns:
+            None. Currently logs to stdout; can be extended to show UI notifications.
+        """
+        self.main_window.get_git_viewer().append_output(
+            f"Auto-staged: {file_path} ({message})"
+        )
+
+    def save_current_markdown_file(self) -> None:
+        """Save current editor content and run post-save hooks."""
+        markdown_viewer = self.main_window.get_markdown_viewer()
+        content = markdown_viewer.get_editor_content()
+
+        saved_file = self.file_helper.save_file(
+            content=content,
+            file_path=self.current_file_path,
+            parent=self.main_window,
+        )
+
+        if saved_file:
+            self.current_file_path = saved_file
+            self._is_dirty = False
+            markdown_viewer.set_active_tab_file(saved_file)
+            markdown_viewer.set_tab_dirty(False)
+            self.on_file_saved(saved_file)
+
+    def on_editor_text_changed(self) -> None:
+        """Mark current tab dirty when user edits loaded content."""
+        if self._is_loading_file:
+            return
+
+        if not self._is_dirty:
+            self._is_dirty = True
+            self.main_window.get_markdown_viewer().set_tab_dirty(True)
+
+    def open_explorer_dialog(self) -> None:
+        """Open folder picker and populate explorer with markdown files only."""
+        selected_directory = self.file_helper.select_directory(
+            parent=self.main_window,
+            title="Open Explorer"
+        )
+
+        if not selected_directory:
+            return
+
+        self.main_window.get_markdown_viewer().populate_explorer(
+            selected_directory,
+            tuple(FileConstants.MARKDOWN_EXTENSIONS),
+        )
+
+    def on_explorer_item_activated(self, item, _column: int) -> None:
+        """Open markdown file when a file item is activated in explorer."""
+        file_path = item.data(0, Qt.ItemDataRole.UserRole)
+        if file_path:
+            self.load_markdown_file(file_path)
