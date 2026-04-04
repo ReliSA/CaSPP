@@ -107,10 +107,11 @@ class GitWorker(QThread):
             stage_all = self.kwargs.get('stage_all', False)
             return helper.commit(commit_message, stage_all)
         elif self.operation == "push":
-            # allow caller to provide remote and branch via kwargs
+            # stage+commit markdown changes, then push
             remote = self.kwargs.get('remote')
             branch = self.kwargs.get('branch')
-            return helper.push(remote, branch)
+            commit_message = self.kwargs.get('message', GitConstants.DEFAULT_COMMIT_MESSAGE)
+            return helper.push_markdown_changes(commit_message, remote, branch)
         elif self.operation == "status":
             return helper.get_status_detailed(markdown_only=True)
         elif self.operation == "stage_all":
@@ -641,6 +642,54 @@ class GitHelper:
         except Exception as e:
             logger.exception(f"Unexpected error during push: {e}")
             raise GitRemoteError(remote_name, "push", e) from e
+
+    def push_markdown_changes(
+        self,
+        commit_message: Optional[str] = None,
+        remote_name: Optional[str] = None,
+        branch: Optional[str] = None,
+    ) -> Tuple[bool, str]:
+        """Stage markdown changes, commit them, then push."""
+        if not self.is_repo_available():
+            raise GitRepositoryNotFoundError()
+
+        message = (commit_message or GitConstants.DEFAULT_COMMIT_MESSAGE).strip()
+        if not message:
+            message = GitConstants.DEFAULT_COMMIT_MESSAGE
+
+        markdown_status = self.get_status(markdown_only=True)
+        markdown_paths = sorted(
+            set(
+                markdown_status['modified']
+                + markdown_status['added']
+                + markdown_status['deleted']
+                + markdown_status['untracked']
+            )
+        )
+
+        result_lines = []
+
+        if markdown_paths:
+            stage_success, stage_message = self.stage_markdown_files(markdown_paths)
+            if not stage_success:
+                return False, stage_message
+            result_lines.append(stage_message)
+
+            try:
+                self.repo.git.commit('-m', message, '--', *markdown_paths)
+                result_lines.append(f"Committed markdown changes with message: {message}")
+            except GitCommandError as e:
+                commit_error = str(e)
+                if "nothing to commit" in commit_error.lower():
+                    result_lines.append("No markdown commit created (nothing to commit).")
+                else:
+                    raise GitOperationError("commit", e) from e
+
+        push_success, push_message = self.push(remote_name, branch)
+        if not push_success:
+            return False, "\n".join(result_lines + [push_message])
+
+        return True, "\n".join(result_lines + [push_message]) if result_lines else push_message
     
     def commit(self, message: str, stage_all: bool = False) -> Tuple[bool, str]:
         """
