@@ -98,36 +98,35 @@ class GitWorker(QThread):
         Returns:
             Tuple of (success, message)
         """
-        if self.operation == "fetch":
-            return helper.fetch()
-        elif self.operation == "pull":
-            return helper.pull()
-        elif self.operation == "commit":
-            commit_message = self.kwargs.get('message', GitConstants.DEFAULT_COMMIT_MESSAGE)
-            stage_all = self.kwargs.get('stage_all', False)
-            return helper.commit(commit_message, stage_all)
-        elif self.operation == "push":
-            # stage+commit markdown changes, then push
-            remote = self.kwargs.get('remote')
-            branch = self.kwargs.get('branch')
-            commit_message = self.kwargs.get('message', GitConstants.DEFAULT_COMMIT_MESSAGE)
-            return helper.push_markdown_changes(commit_message, remote, branch)
-        elif self.operation == "status":
-            return helper.get_status_detailed(markdown_only=True)
-        elif self.operation == "stage_all":
-            return helper.stage_markdown_files()
-        elif self.operation == "unstage_all":
-            return helper.unstage_all()
-        elif self.operation == "stage_file":
+        operations = {
+            "fetch": lambda: helper.fetch(),
+            "pull": lambda: helper.pull(),
+            "commit": lambda: helper.commit(
+                self.kwargs.get('message', GitConstants.DEFAULT_COMMIT_MESSAGE),
+                self.kwargs.get('stage_all', False),
+            ),
+            "push": lambda: helper.push_markdown_changes(
+                self.kwargs.get('message', GitConstants.DEFAULT_COMMIT_MESSAGE),
+                self.kwargs.get('remote'),
+                self.kwargs.get('branch'),
+            ),
+            "status": lambda: helper.get_status_detailed(markdown_only=True),
+            "stage_all": lambda: helper.stage_markdown_files(),
+            "unstage_all": lambda: helper.unstage_all(),
+            "stage_markdown": lambda: helper.stage_markdown_files(self.kwargs.get('file_paths')),
+        }
+
+        if self.operation == "stage_file":
             file_path = self.kwargs.get('file_path')
             if not file_path:
                 return False, "No file path provided for staging"
             return helper.stage_file(file_path)
-        elif self.operation == "stage_markdown":
-            file_paths = self.kwargs.get('file_paths')
-            return helper.stage_markdown_files(file_paths)
-        else:
+
+        operation_handler = operations.get(self.operation)
+        if not operation_handler:
             return False, f"Unknown operation: {self.operation}"
+
+        return operation_handler()
 
 
 class GitHelper:
@@ -169,6 +168,48 @@ class GitHelper:
     def _is_markdown_file(self, file_path: str) -> bool:
         """Return True if path points to supported markdown extension."""
         return file_path.lower().endswith(tuple(FileConstants.MARKDOWN_EXTENSIONS))
+
+    def _collect_markdown_changed_paths(self) -> List[str]:
+        """Collect changed markdown paths from working tree and index."""
+        status = self.get_status(markdown_only=True)
+        return sorted(
+            set(
+                status['modified']
+                + status['added']
+                + status['deleted']
+                + status['untracked']
+            )
+        )
+
+    def _collect_staged_markdown_paths(self) -> List[str]:
+        """Collect staged markdown paths currently present in index diff."""
+        if not self.is_repo_available():
+            return []
+
+        staged_paths: List[str] = []
+        try:
+            for diff in self.repo.index.diff(GitConstants.DEFAULT_BRANCH_HEAD):
+                path = diff.a_path or diff.b_path
+                if path and self._is_markdown_file(path) and path not in staged_paths:
+                    staged_paths.append(path)
+        except (GitCommandError, git.exc.BadName):
+            return []
+
+        return staged_paths
+
+    def _commit_paths(self, message: str, file_paths: List[str]) -> Tuple[bool, str]:
+        """Commit only provided paths."""
+        if not file_paths:
+            return False, "No markdown files to commit"
+
+        try:
+            self.repo.git.commit('-m', message, '--', *file_paths)
+            return True, f"Committed markdown changes with message: {message}"
+        except GitCommandError as e:
+            commit_error = str(e)
+            if "nothing to commit" in commit_error.lower():
+                return False, "No markdown commit created (nothing to commit)."
+            raise GitOperationError("commit", e) from e
     
     def _find_and_validate_repo(self) -> None:
         """Find and validate the git repository."""
@@ -205,18 +246,6 @@ class GitHelper:
         """
         if not self.is_repo_available():
             raise GitRepositoryNotFoundError(f"Cannot perform {operation_name}")
-    
-    def _safe_repo_operation(self, operation_name: str, default_return=None):
-        """
-        Decorator-like helper for safe repository operations.
-        
-        Args:
-            operation_name: Name of operation for logging
-            default_return: Value to return if repo is not available
-        """
-        if not self.is_repo_available():
-            logger.warning(f"Repository not available for {operation_name}")
-            return default_return
     
     def get_repo_root(self) -> str:
         """Get the root path of the git repository."""
@@ -490,10 +519,7 @@ class GitHelper:
                     return False, f"File is not within repository: {file_path}"
             else:
                 file_to_stage = file_path
-                # Check if file exists in repo
-                full_path = repo_root / file_to_stage
-                if not full_path.exists():
-                    return False, f"File not found: {file_path}"
+                # Keep relative path as provided; deleted tracked paths may not exist on disk.
             
             # Stage the file
             self.repo.git.add(file_to_stage)
@@ -521,25 +547,15 @@ class GitHelper:
             if not self.is_repo_available():
                 return False, "No git repository found"
             
-            staged_files = []
-            failed_files = []
-            
-            if file_paths is None:
-                # Get all modified .md files
-                status = self.get_status()
-                md_files = []
-                
-                # Collect all markdown files that have changes
-                for file_list in [status['modified'], status['deleted'], status['untracked']]:
-                    md_files.extend([f for f in file_list if self._is_markdown_file(f)])
-                
-                file_paths = md_files
-            
-            if not file_paths:
+            staged_files: List[str] = []
+            failed_files: List[str] = []
+
+            target_paths = file_paths if file_paths is not None else self._collect_markdown_changed_paths()
+            if not target_paths:
                 return True, "No markdown files to stage"
-            
+
             # Stage each markdown file
-            for file_path in file_paths:
+            for file_path in sorted(set(target_paths)):
                 if self._is_markdown_file(file_path):
                     success, msg = self.stage_file(file_path)
                     if success:
@@ -632,8 +648,20 @@ class GitHelper:
             logger.info(f"Pushing branch '{branch}' to remote '{remote_name}'")
             result = remote.push(branch)
 
-            # result is a list of PushInfo objects; we treat absence of exception as success
+            failures: List[str] = []
+            for info in result:
+                flags = getattr(info, 'flags', 0)
+                summary = getattr(info, 'summary', str(info))
+                error_flags = 0
+                for flag_name in ('ERROR', 'REJECTED', 'REMOTE_REJECTED', 'REMOTE_FAILURE'):
+                    error_flags |= getattr(info, flag_name, 0)
+                if flags & error_flags:
+                    failures.append(summary)
+
             logger.info(f"Push result: {result}")
+            if failures:
+                return False, f"Push failed for {branch}: {'; '.join(failures)}"
+
             return True, f"Successfully pushed {branch} to {remote_name}"
 
         except GitCommandError as e:
@@ -653,19 +681,9 @@ class GitHelper:
         if not self.is_repo_available():
             raise GitRepositoryNotFoundError()
 
-        message = (commit_message or GitConstants.DEFAULT_COMMIT_MESSAGE).strip()
-        if not message:
-            message = GitConstants.DEFAULT_COMMIT_MESSAGE
+        message = (commit_message or GitConstants.DEFAULT_COMMIT_MESSAGE).strip() or GitConstants.DEFAULT_COMMIT_MESSAGE
 
-        markdown_status = self.get_status(markdown_only=True)
-        markdown_paths = sorted(
-            set(
-                markdown_status['modified']
-                + markdown_status['added']
-                + markdown_status['deleted']
-                + markdown_status['untracked']
-            )
-        )
+        markdown_paths = self._collect_markdown_changed_paths()
 
         result_lines = []
 
@@ -675,15 +693,10 @@ class GitHelper:
                 return False, stage_message
             result_lines.append(stage_message)
 
-            try:
-                self.repo.git.commit('-m', message, '--', *markdown_paths)
-                result_lines.append(f"Committed markdown changes with message: {message}")
-            except GitCommandError as e:
-                commit_error = str(e)
-                if "nothing to commit" in commit_error.lower():
-                    result_lines.append("No markdown commit created (nothing to commit).")
-                else:
-                    raise GitOperationError("commit", e) from e
+            commit_success, commit_message_result = self._commit_paths(message, markdown_paths)
+            result_lines.append(commit_message_result)
+            if not commit_success and "nothing to commit" not in commit_message_result.lower():
+                return False, "\n".join(result_lines)
 
         push_success, push_message = self.push(remote_name, branch)
         if not push_success:
@@ -722,27 +735,23 @@ class GitHelper:
             # Stage all changes if requested
             if stage_all:
                 logger.info("Staging markdown changes before commit...")
-                stage_success, stage_msg = self.stage_markdown_files()
+                markdown_paths = self._collect_markdown_changed_paths()
+                if not markdown_paths:
+                    return False, "No markdown changes to commit."
+
+                stage_success, stage_msg = self.stage_markdown_files(markdown_paths)
                 if not stage_success:
                     logger.error(f"Failed to stage changes: {stage_msg}")
                     raise GitOperationError("stage", Exception(stage_msg))
                 logger.info("Successfully staged markdown changes")
-            
-            # Check if there are staged changes
-            unstaged, has_staged = self.has_changes()
-            logger.debug(f"Repository state - Unstaged changes: {unstaged}, Staged changes: {has_staged}")
-            
-            if not has_staged:
-                if unstaged:
-                    return False, "No staged changes to commit. Use 'Stage All' first or enable 'Stage All' option."
-                else:
-                    return False, "No changes to commit - working directory is clean."
-            
-            # Commit the changes
-            logger.info(f"Committing changes with message: {message[:GitConstants.LOG_MESSAGE_TRUNCATE]}...")
-            commit = self.repo.index.commit(message.strip())
-            logger.info(f"Successfully committed: {commit.hexsha[:GitConstants.COMMIT_HASH_DISPLAY_LENGTH]}")
-            return True, f"Successfully committed changes: {commit.hexsha[:GitConstants.COMMIT_HASH_DISPLAY_LENGTH]}"
+
+                return self._commit_paths(message.strip(), markdown_paths)
+
+            staged_markdown_paths = self._collect_staged_markdown_paths()
+            if not staged_markdown_paths:
+                return False, "No staged markdown changes to commit."
+
+            return self._commit_paths(message.strip(), staged_markdown_paths)
         
         except GitCommandError as e:
             logger.error(f"Git commit failed: {e}")
