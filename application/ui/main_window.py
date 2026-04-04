@@ -57,3 +57,7 @@ class MainWindow(QMainWindow):
         Returns markdown scene.
         """
         return self.md_scene
+
+    def get_git_viewer(self) -> GitScene:
+        """Returns git scene."""
+        return self.git_scene
