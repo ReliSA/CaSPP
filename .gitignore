@@ -9,3 +9,4 @@ app.log
 *build
 *dist
 */main.spec
+*output

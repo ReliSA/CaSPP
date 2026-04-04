@@ -14,7 +14,7 @@ from utils.document_loader import DocumentLoader
 from utils.markdown_analyzer import MarkdownAnalyzer
 from utils.template_loader import TemplateLoader
 from core.config import Config
-from application.utils.file_helper import FileHelper
+from utils.file_helper import FileHelper
 from core.file_manager import FileManager
 
 
@@ -44,16 +44,11 @@ class Application:
 
     def _setup_application(self) -> None:
         """Set up the application."""
-        # Set up toolbar file selection signal
-        self.main_window.get_toolbar().file_selected.connect(self.file_manager.load_markdown_file)
-        
         # Set up markdown viewer signals for auto-staging
         markdown_viewer = self.main_window.get_markdown_viewer()
-        markdown_viewer.file_saved.connect(self.file_manager.on_file_saved)
-        markdown_viewer.file_staged.connect(self.file_manager.on_file_staged)
         
         # Load default markdown file
-        self.file_manager.load_markdown_file(Config.get_default_markdown_path())
+        #self.file_manager.load_markdown_file(Config.get_default_markdown_path())
     
     def run(self) -> int:
         """
