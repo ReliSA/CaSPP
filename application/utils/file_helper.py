@@ -5,7 +5,7 @@ File operations helper module.
 # standard library imports
 import os
 from pathlib import Path
-from typing import Optional, List, Tuple
+from typing import Optional, List
 
 # third-party imports
 from PyQt6.QtWidgets import QFileDialog, QMessageBox, QWidget
