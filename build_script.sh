@@ -9,6 +9,7 @@ APP_NAME="markdown_analyzer"
 ENTRY_POINT="application/main.py"
 REQUIREMENTS="application/requirements.txt"
 VENV_DIR="application/venv"
+ASSETS_DIR="application/ui/assets"
 
 # --- ENSURE ROOT ---
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -42,6 +43,7 @@ pyinstaller \
     --name "$APP_NAME" \
     --onefile \
     --noconfirm \
+    --add-data "$ASSETS_DIR:application/ui/assets" \
     "$ENTRY_POINT"
 
 echo "Build finished."

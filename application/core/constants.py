@@ -4,8 +4,9 @@ Application constants and configuration values.
 This module contains all magic values and constants used throughout the application
 to improve maintainability and reduce hardcoded values.
 """
-import os
 import re
+import sys
+from pathlib import Path
 from typing import List, Set
 
 # Git-related constants
@@ -120,18 +121,20 @@ class UIConstants:
 class AssetsConstants:
     """Constants for asstest."""
 
+    _RUNTIME_ROOT = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[2]))
+
     # Sidebar icon paths
-    SIDEBAR_MARKDOWN_SCENE_ICON_PATH = os.path.join("application", "ui", "assets", "icons", "LucideFolderOpen.svg")
-    SIDEBAR_GIT_SCENE_ICON_PATH = os.path.join("application", "ui", "assets", "icons", "LucideGithub.svg")
+    SIDEBAR_MARKDOWN_SCENE_ICON_PATH = str(_RUNTIME_ROOT.joinpath("application", "ui", "assets", "icons", "LucideFolderOpen.svg"))
+    SIDEBAR_GIT_SCENE_ICON_PATH = str(_RUNTIME_ROOT.joinpath("application", "ui", "assets", "icons", "LucideGithub.svg"))
 
     # Markdown scene icon paths
-    CLOSE_FILE_EXPLORER_ICON_PATH = os.path.join("application", "ui", "assets", "icons", "LucideX.svg")
+    CLOSE_FILE_EXPLORER_ICON_PATH = str(_RUNTIME_ROOT.joinpath("application", "ui", "assets", "icons", "LucideX.svg"))
 
     # Git scene icon paths
-    STATUS_BUTTON_ICON_PATH = os.path.join("application", "ui", "assets", "icons", "LucideBarChartBig.svg")
-    FETCH_BUTTON_ICON_PATH = os.path.join("application", "ui", "assets", "icons", "LucideRefreshCw.svg")
-    PULL_BUTTON_ICON_PATH = os.path.join("application", "ui", "assets", "icons", "LucideArrowDownToLine.svg")
-    PUSH_BUTTON_ICON_PATH = os.path.join("application", "ui", "assets", "icons", "LucideArrowUpFromLine.svg")
+    STATUS_BUTTON_ICON_PATH = str(_RUNTIME_ROOT.joinpath("application", "ui", "assets", "icons", "LucideBarChartBig.svg"))
+    FETCH_BUTTON_ICON_PATH = str(_RUNTIME_ROOT.joinpath("application", "ui", "assets", "icons", "LucideRefreshCw.svg"))
+    PULL_BUTTON_ICON_PATH = str(_RUNTIME_ROOT.joinpath("application", "ui", "assets", "icons", "LucideArrowDownToLine.svg"))
+    PUSH_BUTTON_ICON_PATH = str(_RUNTIME_ROOT.joinpath("application", "ui", "assets", "icons", "LucideArrowUpFromLine.svg"))
 
 
 # Application constants
@@ -253,4 +256,3 @@ class FileMatcherConstants:
     CATALOGUE_PARENT_FOLDER = "catalogue"
     MIN_PATH_PARTS = 2
     PARENT_DIR_INDEX = -2
-
