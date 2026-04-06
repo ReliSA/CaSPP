@@ -118,7 +118,7 @@ class MarkdownAnalyzer:
             logger.warning(f"File '{file_path}' is not a markdown file")
         
         try:
-            with open(file_path, 'r', encoding=FileConstants.ENCODING_UTF8) as file:
+            with open(file_path, 'r', encoding=FileConstants.ENCODING_UTF8, errors="replace") as file:
                 content = file.read()
                 
         except (OSError, UnicodeDecodeError) as e:
