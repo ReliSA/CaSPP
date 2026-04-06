@@ -5,6 +5,7 @@ from typing import Optional
 
 # local imports
 from PyQt6.QtCore import Qt
+import traceback
 
 from ui.main_window import MainWindow
 from utils.markdown_analyzer import MarkdownAnalyzer
@@ -22,6 +23,8 @@ class FileManager:
         markdown_analyzer: MarkdownAnalyzer,
         file_helper: FileHelper,
         auto_stager: Optional[MarkdownAutoStager] = None,
+        template_loader = None,
+        document_loader = None
     ) -> None:
         """Initialize FileManager with required collaborators.
 
@@ -40,6 +43,8 @@ class FileManager:
         self.current_file_path: Optional[str] = None
         self._is_loading_file = False
         self._is_dirty = False
+        self.template_loader = template_loader
+        self.document_loader = document_loader
 
     def load_markdown_file(self, file_path: str) -> None:
         """Load a markdown file into the viewer and analyze it.
@@ -89,11 +94,22 @@ class FileManager:
 
             # Use the analyzer which expects a file path
             analysis = self.markdown_analyzer.analyze_markdown_file(file_path)
-            report = self.markdown_analyzer.generate_report(analysis)
+            
+            if self.document_loader and self.template_loader:
+                parsed_doc = self.document_loader.load(file_path)
+                all_templates = self.template_loader.get_all_templates()
 
+                if all_templates:
+                    template = list(all_templates.values())[0]
+
+                struct_results = self.markdown_analyzer.validate_structure(parsed_doc, template)
+                analysis['structure_results'] = struct_results
+            
+            report = self.markdown_analyzer.generate_report(analysis)
             self.main_window.get_markdown_viewer().set_analysis(report)
 
         except Exception as e:
+            traceback.print_exc()
             error_msg = f"Error during analysis: {str(e)}"
             self.main_window.get_markdown_viewer().set_error(error_msg)
 

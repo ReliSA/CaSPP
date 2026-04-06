@@ -46,6 +46,8 @@ class Application:
             self.markdown_analyzer,
             self.file_helper,
             self.auto_stager,
+            self.template_loader,
+            self.document_loader
         )
         self.git_worker: Optional[GitWorker] = None
 
