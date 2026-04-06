@@ -12,6 +12,7 @@ from utils.markdown_analyzer import MarkdownAnalyzer
 from utils.file_helper import FileHelper
 from core.constants import FileConstants
 from utils.markdown_auto_stager import MarkdownAutoStager
+from utils.file_matcher import FileMatcher
 
 
 class FileManager:
@@ -45,6 +46,7 @@ class FileManager:
         self._is_dirty = False
         self.template_loader = template_loader
         self.document_loader = document_loader
+        self.file_matcher = FileMatcher(self.template_loader) if self.template_loader else None
 
     def load_markdown_file(self, file_path: str) -> None:
         """Load a markdown file into the viewer and analyze it.
@@ -97,14 +99,14 @@ class FileManager:
             
             if self.document_loader and self.template_loader:
                 parsed_doc = self.document_loader.load(file_path)
-                all_templates = self.template_loader.get_all_templates()
 
-                if all_templates:
-                    template = list(all_templates.values())[0]
+                template = self.file_matcher.match(file_path) if self.file_matcher else None
+                if not template:
+                    raise ValueError("Nenalezena odpovídající šablona pro tento soubor.")
 
                 struct_results = self.markdown_analyzer.validate_structure(parsed_doc, template)
                 analysis['structure_results'] = struct_results
-            
+
             report = self.markdown_analyzer.generate_report(analysis)
             self.main_window.get_markdown_viewer().set_analysis(report)
 
