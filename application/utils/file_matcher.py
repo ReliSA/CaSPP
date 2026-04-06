@@ -3,7 +3,7 @@ import os
 from typing import Optional
 
 from core.constants import FileMatcherConstants
-from template_loader import TemplateLoader
+from utils.template_loader import TemplateLoader
 
 class FileMatcher:
     """
@@ -48,7 +48,7 @@ class FileMatcher:
         path_parts = normalized_path.split("/")
         if len(path_parts) < FileMatcherConstants.MIN_PATH_PARTS:
             return None
-        
+
         parent_folder = path_parts[FileMatcherConstants.PARENT_DIR_INDEX]
         
         if parent_folder == FileMatcherConstants.CATALOGUE_PARENT_FOLDER:

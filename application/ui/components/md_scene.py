@@ -114,7 +114,7 @@ class MarkdownScene(QWidget):
     def load_file(self, file_path: str) -> bool:
         """Load a markdown file into the editor."""
         try:
-            with open(file_path, 'r', encoding=FileConstants.ENCODING_UTF8) as file:
+            with open(file_path, 'r', encoding=FileConstants.ENCODING_UTF8, errors="replace") as file:
                 self.editor.setPlainText(file.read())
             return True
         except (OSError, UnicodeDecodeError):
