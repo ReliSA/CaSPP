@@ -17,6 +17,7 @@ from utils.template_loader import TemplateLoader
 from core.config import Config
 from utils.file_helper import FileHelper
 from core.file_manager import FileManager
+from core.editor_manager import EditorManager
 from utils.git import GitWorker
 from utils.markdown_auto_stager import MarkdownAutoStager
 
@@ -49,6 +50,11 @@ class Application:
             self.template_loader,
             self.document_loader
         )
+
+        self.editor_manager = EditorManager(
+            self.main_window.get_markdown_viewer()
+        )
+
         self.git_worker: Optional[GitWorker] = None
 
         # Set up application logic and signal connections
@@ -71,6 +77,14 @@ class Application:
         )
         markdown_viewer.file_tree_widget.itemDoubleClicked.connect(
             self.file_manager.on_explorer_item_activated
+        )
+
+        markdown_viewer.live_preview_check_box.stateChanged.connect(
+            self.editor_manager.live_preview_check_box_state_changed
+        )
+
+        markdown_viewer.analyzer_check_box.stateChanged.connect(
+            self.editor_manager.markdown_analyzer_check_box_state_changed
         )
 
         toolbar.action_open_explorer.triggered.connect(
@@ -96,7 +110,7 @@ class Application:
                 f"Auto-stage failed for {file_path}: {error}"
             )
         )
-        
+
         # Load default markdown file
         #self.file_manager.load_markdown_file(Config.get_default_markdown_path())
     
