@@ -92,10 +92,13 @@ class MarkdownScene(QWidget):
         
         self.editor = QPlainTextEdit()
         self.preview = QTextBrowser()
+        self.preview.setVisible(False)
+
         self.horiz_splitter.addWidget(self.editor)
         self.horiz_splitter.addWidget(self.preview)
 
         self.analyzer_list = QListWidget()
+        self.analyzer_list.setVisible(False)
 
         self.vert_splitter.addWidget(self.horiz_splitter)
         self.vert_splitter.addWidget(self.analyzer_list)
