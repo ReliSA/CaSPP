@@ -194,3 +194,28 @@ class FileManager:
         file_path = item.data(0, Qt.ItemDataRole.UserRole)
         if file_path:
             self.load_markdown_file(file_path)
+
+
+    def on_open_explorer_button_pressed(self) -> None:
+        """Button listener for opening explorer."""
+        self.open_explorer()
+
+    def on_close_explorer_button_pressed(self) -> None:
+        """Button listener for closing explorer."""
+        self.close_explorer()
+
+    def open_explorer(self) -> None:
+        """Sets visibility of ui elements for open file explorer."""
+        markdown_scene = self.main_window.get_markdown_viewer()
+        markdown_scene.close_explorer_button.setVisible(True)
+        markdown_scene.open_explorer_button.setVisible(False)
+        markdown_scene.file_explorer_widget.setVisible(True)
+    
+    def close_explorer(self) -> None:
+        """Sets visibility of ui elements for closed file explorer."""
+        markdown_scene = self.main_window.get_markdown_viewer()
+        markdown_scene.close_explorer_button.setVisible(False)
+        markdown_scene.open_explorer_button.setVisible(True)
+        markdown_scene.file_explorer_widget.setVisible(False)
+
+
