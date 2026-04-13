@@ -81,6 +81,7 @@ class UIConstants:
     # File menu action names
     OPEN_FILE_ACTION_NAME = "Open File"
     SAVE_FILE_ACTION_NAME = "Save File"
+    OPEN_FOLDER_ACTION_NAME = "Open Folder"
     OPEN_EXPLORER_ACTION_NAME = "Open Explorer"
     SHOW_LIVE_PREVIEW_ACTION_NAME = "Show Live Preview"
     SHOW_ANALYZER_OUTPUT_ACTION_NAME = "Show Analyzer Output"
@@ -94,6 +95,7 @@ class UIConstants:
     # File menu action shortcuts
     OPEN_FILE_ACTION_SHORTCUT = "Ctrl+O"
     SAVE_FILE_ACTION_SHORTCUT = "Ctrl+S"
+    OPEN_FOLDER_ACTION_SHORTCUT = "Ctrl+F"
     OPEN_EXPLORER_ACTION_SHORTCUT = "Ctrl+E"
     SHOW_LIVE_PREVIEW_ACTION_SHORTCUT = "Ctrl+P"
     SHOW_ANALYZER_OUTPUT_ACTION_SHORTCUT = "Ctrl+A"

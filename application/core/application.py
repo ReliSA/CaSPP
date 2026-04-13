@@ -94,6 +94,14 @@ class Application:
             self.file_manager.save_current_markdown_file
         )
 
+        toolbar.action_live_preview.triggered.connect(
+            markdown_viewer.live_preview_check_box.toggle
+        )
+
+        toolbar.action_show_analyzer.triggered.connect(
+            markdown_viewer.analyzer_check_box.toggle
+        )
+
         git_viewer = self.main_window.get_git_viewer()
         git_viewer.btn_status.clicked.connect(lambda: self._start_git_operation("status"))
         git_viewer.btn_fetch.clicked.connect(lambda: self._start_git_operation("fetch"))
