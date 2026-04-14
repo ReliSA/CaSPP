@@ -66,6 +66,8 @@ class MarkdownScene(QWidget):
         self.md_control_panel.setContentsMargins(-1, 0, -1, 0)
 
         self.open_explorer_button = QPushButton(UIConstants.OPEN_EXPLORER_BUTTON_LABEL)
+        self.open_explorer_button.setVisible(False)
+
         spacer_md = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         self.save_changes_button = QPushButton(UIConstants.SAVE_CHANGES_BUTTON_LABEL)
         self.live_preview_check_box = QCheckBox(UIConstants.LIVE_PREVIEW_CHECK_BOX_LABEL)

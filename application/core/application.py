@@ -67,7 +67,10 @@ class Application:
         toolbar = self.main_window.get_toolbar()
 
         markdown_viewer.open_explorer_button.clicked.connect(
-            self.file_manager.open_explorer_dialog
+            self.file_manager.on_open_explorer_button_pressed
+        )
+        markdown_viewer.close_explorer_button.clicked.connect(
+            self.file_manager.on_close_explorer_button_pressed
         )
         markdown_viewer.editor.textChanged.connect(
             self.file_manager.on_editor_text_changed
@@ -95,10 +98,13 @@ class Application:
         )
 
         toolbar.action_open_explorer.triggered.connect(
-            self.file_manager.open_explorer_dialog
+            self.file_manager.open_explorer
         )
         toolbar.action_save_file.triggered.connect(
             self.file_manager.save_current_markdown_file
+        )
+        toolbar.action_open_folder.triggered.connect(
+            self.file_manager.open_explorer_dialog
         )
 
         toolbar.action_live_preview.triggered.connect(
