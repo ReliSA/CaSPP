@@ -1,7 +1,10 @@
 from PyQt6.QtCore import Qt
 import markdown
+from pymdownx import tilde, caret, mark, tasklist, emoji, superfences, highlight
+from pymdownx.emoji import twemoji, to_alt
 
 from ui.components.md_scene import MarkdownScene
+from core.constants import MarkdownPreviewConstants
 
 class EditorManager:
     """Handles actions done in the markdown editor."""
@@ -54,14 +57,23 @@ class EditorManager:
         html_content = markdown.markdown(
             content, 
             extensions=[
-                'extra',
-                'sane_lists',
-                'pymdownx.tilde',
-                'pymdownx.caret',
-                'pymdownx.mark',
-                'pymdownx.tasklist',
-                'pymdownx.emoji'
-            ]
+                'extra', 'sane_lists', 'pymdownx.tilde', 'pymdownx.caret',
+                'pymdownx.mark', 'pymdownx.tasklist', 'pymdownx.emoji',
+                'pymdownx.superfences',
+                'pymdownx.highlight'
+            ],
+            extension_configs={
+                'pymdownx.emoji': {
+                    'emoji_index': twemoji,
+                    'emoji_generator': to_alt
+                }
+            }
         )
+        styled_html = f"""
+        <style>
+           {MarkdownPreviewConstants.DEFAULT_CSS}
+        </style>
+        {html_content}
+        """
         
-        self.markdown_scene.preview.setHtml(html_content)
+        self.markdown_scene.preview.setHtml(styled_html)
