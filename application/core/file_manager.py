@@ -174,8 +174,20 @@ class FileManager:
             self._is_dirty = True
             self.main_window.get_markdown_viewer().set_tab_dirty(True)
 
-    def open_explorer_dialog(self) -> None:
-        """Open folder picker and populate explorer with markdown files only."""
+    def open_explorer_dialog(self, selection_mode: str = "directory") -> None:
+        """Open directory explorer or select and open a single markdown file."""
+        if selection_mode == "file":
+            selected_file = self.file_helper.select_markdown_file(
+                parent=self.main_window,
+                title="Open File"
+            )
+
+            if not selected_file:
+                return
+
+            self.load_markdown_file(selected_file)
+            return
+
         selected_directory = self.file_helper.select_directory(
             parent=self.main_window,
             title="Open Explorer"
@@ -217,5 +229,4 @@ class FileManager:
         markdown_scene.close_explorer_button.setVisible(False)
         markdown_scene.open_explorer_button.setVisible(True)
         markdown_scene.file_explorer_widget.setVisible(False)
-
 
