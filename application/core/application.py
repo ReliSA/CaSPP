@@ -97,9 +97,11 @@ class Application:
             self.file_manager.save_current_markdown_file
         )
         toolbar.action_open_folder.triggered.connect(
-            self.file_manager.open_explorer_dialog
+            lambda _checked=False: self.file_manager.open_explorer_dialog("directory")
         )
-
+        toolbar.action_open_file.triggered.connect(
+            lambda _checked=False: self.file_manager.open_explorer_dialog("file")
+        )
         toolbar.action_live_preview.triggered.connect(
             markdown_viewer.live_preview_check_box.toggle
         )
