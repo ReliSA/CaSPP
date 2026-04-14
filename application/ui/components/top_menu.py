@@ -27,6 +27,9 @@ class TopMenuBar(QMenuBar):
         self.action_save_file = QAction(UIConstants.SAVE_FILE_ACTION_NAME, self)
         self.action_save_file.setShortcut(UIConstants.SAVE_FILE_ACTION_SHORTCUT)
         
+        self.action_open_folder = QAction(UIConstants.OPEN_FOLDER_ACTION_NAME)
+        self.action_open_folder.setShortcut(UIConstants.OPEN_FOLDER_ACTION_SHORTCUT)
+
         self.action_open_explorer = QAction(UIConstants.OPEN_EXPLORER_ACTION_NAME, self)
         self.action_open_explorer.setShortcut(UIConstants.OPEN_EXPLORER_ACTION_SHORTCUT)
         
@@ -39,6 +42,7 @@ class TopMenuBar(QMenuBar):
         # Adding Actions to the File Menu
         self.menu_file.addAction(self.action_open_file)
         self.menu_file.addAction(self.action_save_file)
+        self.menu_file.addAction(self.action_open_folder)
         self.menu_file.addSeparator()
         self.menu_file.addAction(self.action_open_explorer)
         self.menu_file.addAction(self.action_live_preview)
