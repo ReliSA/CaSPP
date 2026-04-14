@@ -11,6 +11,7 @@ from utils.md_parser import (
     split_h1,
 )
 from core.constants import LoaderConstants
+from utils.file_helper import FileHelper
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +56,7 @@ class ContentInfo:
     table_headers: List[str] = field(default_factory=list)
     is_empty: bool = True
     first_content_line: int = 0
+    raw_lines: List[Dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
         """Return a JSON-serializable representation of the content info.
@@ -72,6 +74,7 @@ class ContentInfo:
             "table_headers": self.table_headers,
             "is_empty": self.is_empty,
             "first_content_line": self.first_content_line,
+            "raw_lines": self.raw_lines,
         }
 
 
@@ -235,6 +238,7 @@ def _merge_content(infos: List[ContentInfo]) -> ContentInfo:
             merged.table_headers = info.table_headers
         if info.first_content_line and not merged.first_content_line:
             merged.first_content_line = info.first_content_line
+        merged.raw_lines.extend(info.raw_lines)
     merged.is_empty = not bool(merged.found_types)
     return merged
 
@@ -246,9 +250,17 @@ class DocumentLoader:
 
     * Alphabet heading runs are collapsed to is_group=True entries.
     * All regex / classification logic is shared via md_parser.
+
+    Args:
+        file_helper: FileHelper instance used for reading files and
+                     discovering .md files in directories.
     """
 
-    def load(self, filepath: str) -> ParsedDocument:
+    def __init__(self, files_dir: str, file_helper: FileHelper) -> None:
+        self._file_helper = file_helper
+        self.files_dir = files_dir
+
+    def parse_file(self, filepath: str) -> ParsedDocument:
         """Parse a single Markdown file.
 
         Args:
@@ -261,13 +273,14 @@ class DocumentLoader:
             FileNotFoundError: If filepath does not exist.
         """
         filepath = os.path.abspath(filepath)
-        if not os.path.isfile(filepath):
+        content = self._file_helper.read_file(filepath)
+        if content is None:
             raise FileNotFoundError(f"Document not found: {filepath}")
-        doc = self._parse(filepath)
+        doc = self._parse(filepath, content)
         logger.debug("Loaded document: %s  (%d heading(s))", filepath, len(doc.headings))
         return doc
 
-    def load_dir(self, directory: str) -> Dict[str, ParsedDocument]:
+    def parse_dir(self) -> Dict[str, ParsedDocument]:
         """Parse every .md file in directory recursively.
 
         Args:
@@ -278,25 +291,21 @@ class DocumentLoader:
             .md) → ParsedDocument.
         """
         results: Dict[str, ParsedDocument] = {}
-        if not os.path.isdir(directory):
-            logger.warning("Directory not found: %s", directory)
+        filepaths = sorted(self._file_helper.find_markdown_files(self.files_dir))
+        if not filepaths:
+            logger.warning("No markdown files found in: %s", self.files_dir)
             return results
 
-        for root, dirs, files in os.walk(directory):
-            for filename in sorted(files):
-                if not filename.endswith(".md"):
-                    continue
+        for filepath in filepaths:
+            rel_path = os.path.relpath(filepath, self.files_dir)
+            stem = os.path.splitext(rel_path)[0].replace(os.sep, '/')
+            try:
+                results[stem] = self.parse_file(filepath)
+                self.dump_json(results[stem], "output/debug_docs")
+            except Exception as exc:  # noqa: BLE001
+                logger.error("Failed to load %s: %s", filepath, exc)
 
-                filepath = os.path.join(root, filename)
-                rel_path = os.path.relpath(filepath, directory)
-                stem = os.path.splitext(rel_path)[0].replace(os.sep, '/')
-
-                try:
-                    results[stem] = self.load(filepath)
-                except Exception as exc:  # noqa: BLE001
-                    logger.error("Failed to load %s: %s", filepath, exc)
-
-        logger.info("Loaded %d document(s) from %s", len(results), directory)
+        logger.info("Loaded %d document(s) from %s", len(results), self.files_dir)
         return results
 
     def dump_json(self, doc: ParsedDocument, output_dir: str, indent: int = 2) -> None:
@@ -314,11 +323,12 @@ class DocumentLoader:
             json.dump(doc.to_dict(), fh, indent=indent, ensure_ascii=False)
         logger.debug("Debug JSON written: %s", dest)
 
-    def _parse(self, filepath: str) -> ParsedDocument:
-        """Internal parser that reads filepath and constructs ParsedDocument.
+    def _parse(self, filepath: str, content: str) -> ParsedDocument:
+        """Internal parser that constructs a ParsedDocument from already-read content.
 
         Args:
-            filepath (str): Absolute path to the Markdown file.
+            filepath (str): Absolute path to the source file (used for metadata only).
+            content (str): Full text of the Markdown file.
 
         Returns:
             ParsedDocument: Parsed representation including meta and headings.
@@ -328,53 +338,53 @@ class DocumentLoader:
         current: Optional[HeadingInfo] = None
         pre_heading = True
 
-        with open(filepath, encoding="utf-8",  errors="replace") as fh:
-            for lineno, raw_line in enumerate(fh, start=1):
-                line = raw_line.strip()
-                if not line:
-                    continue
+        for line_num, raw_line in enumerate(content.splitlines(), start=1):
+            line = raw_line.strip()
+            if not line:
+                continue
 
-                # Heading
-                match = LoaderConstants.RE_HEADING.match(line)
-                if match:
-                    ph = parse_heading_line(match.group(1), match.group(2), is_template=False)
-                    current = HeadingInfo(
-                        level=ph.level,
-                        text=ph.text,
-                        raw_text=ph.raw_text,
-                        line_number=lineno,
-                        is_link=ph.is_link,
-                        link_target=ph.link_target,
-                    )
-                    raw_headings.append(current)
-                    pre_heading = False
+            # Heading
+            match = LoaderConstants.RE_HEADING.match(line)
+            if match:
+                ph = parse_heading_line(match.group(1), match.group(2), is_template=False)
+                current = HeadingInfo(
+                    level=ph.level,
+                    text=ph.text,
+                    raw_text=ph.raw_text,
+                    line_number=line_num,
+                    is_link=ph.is_link,
+                    link_target=ph.link_target,
+                )
+                raw_headings.append(current)
+                pre_heading = False
 
-                    if current.level == 1 and meta.h1_value is None:
-                        meta.h1_prefix, meta.h1_value = split_h1(current.text)
-                    continue
+                if current.level == 1 and meta.h1_value is None:
+                    meta.h1_prefix, meta.h1_value = split_h1(current.text)
+                continue
 
-                # Preamble
-                if pre_heading:
-                    parts = parse_breadcrumbs(line)
-                    if parts:
-                        meta.breadcrumbs = parts
-                    continue
+            # Preamble
+            if pre_heading:
+                parts = parse_breadcrumbs(line)
+                if parts:
+                    meta.breadcrumbs = parts
+                continue
 
-                # Content
-                if current is not None:
-                    info = current.content
-                    if info.is_empty:
-                        info.first_content_line = lineno
-                    info.is_empty = False
+            # Content
+            if current is not None:
+                info = current.content
+                if info.is_empty:
+                    info.first_content_line = line_num
+                info.is_empty = False
+                info.raw_lines.append({"line": line_num, "content": line})
 
-                    types, bp, elp, headers = classify_content_line(line, is_template=False)
-                    info.found_types.update(types)
-                    if bp:
-                        info.bullet_prefixes.add(bp)
-                    if elp:
-                        info.exact_list_prefixes.add(elp)
-                    if headers and not info.table_headers:
-                        info.table_headers = headers
+                types, bp, elp, headers = classify_content_line(line, is_template=False)
+                info.found_types.update(types)
+                if bp:
+                    info.bullet_prefixes.add(bp)
+                if elp:
+                    info.exact_list_prefixes.add(elp)
+                if headers and not info.table_headers:
+                    info.table_headers = headers
 
         # Collapse alphabet runs
         headings = _collapse_alphabet_groups(raw_headings)

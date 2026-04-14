@@ -3,7 +3,7 @@ import os
 from typing import Optional
 
 from core.constants import FileMatcherConstants
-from utils.template_loader import TemplateLoader
+from utils.template_parser import TemplateLoader
 
 class FileMatcher:
     """

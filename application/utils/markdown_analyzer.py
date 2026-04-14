@@ -6,8 +6,8 @@ import logging
 
 from core.constants import FileConstants
 from utils.exceptions import FileNotFoundError, FileReadError, InvalidInputError
-from utils.document_loader import ParsedDocument
-from utils.template_loader import TemplateRules
+from utils.markdown_parser import ParsedDocument
+from utils.template_parser import TemplateRules
 
 logger = logging.getLogger(__name__)
 

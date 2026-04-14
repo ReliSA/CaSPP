@@ -17,6 +17,7 @@ from utils.md_parser import (
     split_h1,
 )
 from core.constants import LoaderConstants
+from utils.file_helper import FileHelper
 
 logger = logging.getLogger(__name__)
 
@@ -203,17 +204,20 @@ class TemplateLoader:
     data classes.
     """
 
-    def __init__(self, templates_dir: str) -> None:
+    def __init__(self, templates_dir: str, file_helper: FileHelper) -> None:
         """Create a new loader bound to *templates_dir*.
 
         Args:
             templates_dir (str): Directory containing Markdown template files.
+            file_helper (FileHelper): FileHelper instance used for reading files
+                                      and discovering templates in the directory.
         """
         self.templates_dir = templates_dir
+        self._file_helper = file_helper
         self.templates: Dict[str, TemplateRules] = {}
         self._loaded: bool = False
 
-    def load(self, force: bool = False) -> None:
+    def parse(self, force: bool = False) -> None:
         """Load (or reload) all templates from *templates_dir*.
 
         Args:
@@ -225,21 +229,21 @@ class TemplateLoader:
 
         self.templates = {}
 
-        if not os.path.isdir(self.templates_dir):
-            logger.warning("Templates directory not found: %s", self.templates_dir)
+        filepaths = sorted(self._file_helper.find_markdown_files(self.templates_dir, recursive=False))
+        if not filepaths:
+            logger.warning("No templates found in: %s", self.templates_dir)
             return
 
-        for filename in sorted(os.listdir(self.templates_dir)):
-            if filename.endswith(".md"):
-                filepath = os.path.join(self.templates_dir, filename)
-                name = os.path.splitext(filename)[0]
-                try:
-                    self.templates[name] = self._parse_template(filepath)
-                    logger.debug("Loaded template: %s", name)
-                except Exception as exc:  # noqa: BLE001
-                    logger.error("Failed to load template %s: %s", name, exc)
+        for filepath in filepaths:
+            name = os.path.splitext(os.path.basename(filepath))[0]
+            try:
+                self.templates[name] = self._parse_template(filepath)
+                logger.debug("Loaded template: %s", name)
+            except Exception as exc:  # noqa: BLE001
+                logger.error("Failed to load template %s: %s", name, exc)
 
         self._loaded = True
+        self.dump_json("output/templates_debug")
         logger.info("Loaded %d template(s) from %s", len(self.templates), self.templates_dir)
 
     def get_template(self, name: str) -> TemplateRules:
@@ -255,7 +259,7 @@ class TemplateLoader:
             TemplateRules instance if *name* is unknown.
         """
         if not self._loaded:
-            self.load()
+            self.parse()
         return self.templates.get(name, TemplateRules())
 
     def get_all_templates(self) -> Dict[str, TemplateRules]:
@@ -267,7 +271,7 @@ class TemplateLoader:
             Dict[str, TemplateRules]: Mapping of template name → parsed rules.
         """
         if not self._loaded:
-            self.load()
+            self.parse()
         return self.templates
 
     def dump_json(self, output_dir: str, indent: int = 2) -> None:
@@ -278,7 +282,7 @@ class TemplateLoader:
             indent:     JSON indentation spaces.
         """
         if not self._loaded:
-            self.load()
+            self.parse()
         os.makedirs(output_dir, exist_ok=True)
         for name, rules in self.templates.items():
             dest = os.path.join(output_dir, f"{name}.json")
@@ -315,49 +319,53 @@ class TemplateLoader:
         raw_headings: List[HeadingRules] = []
         current: Optional[HeadingRules] = None
 
-        with open(filepath, encoding="utf-8") as fh:
-            for raw_line in fh:
-                line = raw_line.strip()
-                if not line:
-                    continue
+        content = self._file_helper.read_file(filepath)
+        if content is None:
+            logger.error("Failed to read template: %s", filepath)
+            return TemplateRules()
 
-                # Heading
-                match = LoaderConstants.RE_HEADING.match(line)
-                if match:
-                    ph = parse_heading_line(match.group(1), match.group(2), is_template=True)
-                    current = HeadingRules(
-                        level=ph.level,
-                        text=ph.text,
-                        optional=ph.is_optional,
-                        is_variable=ph.is_variable,
-                        variable_part=ph.variable_part,
-                        is_link=ph.is_link,
-                        link_target=ph.link_target,
-                    )
-                    raw_headings.append(current)
+        for raw_line in content.splitlines():
+            line = raw_line.strip()
+            if not line:
+                continue
 
-                    if current.level == 1 and document_rules.h1_prefix is None:
-                        prefix, _ = split_h1(current.text)
-                        document_rules.h1_prefix = prefix
-                    continue
+            # Heading
+            match = LoaderConstants.RE_HEADING.match(line)
+            if match:
+                ph = parse_heading_line(match.group(1), match.group(2), is_template=True)
+                current = HeadingRules(
+                    level=ph.level,
+                    text=ph.text,
+                    optional=ph.is_optional,
+                    is_variable=ph.is_variable,
+                    variable_part=ph.variable_part,
+                    is_link=ph.is_link,
+                    link_target=ph.link_target,
+                )
+                raw_headings.append(current)
 
-                # Preamble
-                if current is None:
-                    parts = parse_breadcrumbs(line)
-                    if parts:
-                        document_rules.breadcrumbs = parts
-                    continue
+                if current.level == 1 and document_rules.h1_prefix is None:
+                    prefix, _ = split_h1(current.text)
+                    document_rules.h1_prefix = prefix
+                continue
 
-                # Content
-                types, bp, elp, headers = classify_content_line(line, is_template=True)
-                cr = current.content_rules
-                cr.expected_types.update(types)
-                if bp:
-                    cr.bullet_prefixes.add(bp)
-                if elp:
-                    cr.exact_list_prefixes.add(elp)
-                if headers and not cr.table_headers:
-                    cr.table_headers = headers
+            # Preamble
+            if current is None:
+                parts = parse_breadcrumbs(line)
+                if parts:
+                    document_rules.breadcrumbs = parts
+                continue
+
+            # Content
+            types, bp, elp, headers = classify_content_line(line, is_template=True)
+            cr = current.content_rules
+            cr.expected_types.update(types)
+            if bp:
+                cr.bullet_prefixes.add(bp)
+            if elp:
+                cr.exact_list_prefixes.add(elp)
+            if headers and not cr.table_headers:
+                cr.table_headers = headers
 
         return TemplateRules(
             document_rules=document_rules,
