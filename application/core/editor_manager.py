@@ -1,4 +1,5 @@
 from PyQt6.QtCore import Qt
+import markdown
 
 from ui.components.md_scene import MarkdownScene
 
@@ -24,7 +25,7 @@ class EditorManager:
         """
         is_visible = (state == Qt.CheckState.Checked.value)
         self.markdown_scene.preview.setVisible(is_visible)
-        
+        self.update_live_preview()
 
     def markdown_analyzer_check_box_state_changed(self, state: int) -> None:
         """Update visibility of the analyzer list.
@@ -37,3 +38,30 @@ class EditorManager:
         """
         is_visible = (state == Qt.CheckState.Checked.value)
         self.markdown_scene.analyzer_list.setVisible(is_visible)
+        self.update_live_preview()
+
+    def update_live_preview(self) -> None:
+        """Converts the editor's markdown to HTML and updates the live preview panel.
+        
+        Returns:
+            None.
+        """
+        if not self.markdown_scene.preview.isVisible():
+            return
+            
+        content = self.markdown_scene.get_editor_content()
+        
+        html_content = markdown.markdown(
+            content, 
+            extensions=[
+                'extra',
+                'sane_lists',
+                'pymdownx.tilde',
+                'pymdownx.caret',
+                'pymdownx.mark',
+                'pymdownx.tasklist',
+                'pymdownx.emoji'
+            ]
+        )
+        
+        self.markdown_scene.preview.setHtml(html_content)

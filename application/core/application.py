@@ -72,6 +72,9 @@ class Application:
         markdown_viewer.editor.textChanged.connect(
             self.file_manager.on_editor_text_changed
         )
+        markdown_viewer.editor.textChanged.connect(
+            self.editor_manager.update_live_preview
+        )
         markdown_viewer.save_changes_button.clicked.connect(
             self.file_manager.save_current_markdown_file
         )
@@ -85,6 +88,10 @@ class Application:
 
         markdown_viewer.analyzer_check_box.stateChanged.connect(
             self.editor_manager.markdown_analyzer_check_box_state_changed
+        )
+
+        markdown_viewer.preview.anchorClicked.connect(
+            self.file_manager.handle_link_clicked
         )
 
         toolbar.action_open_explorer.triggered.connect(

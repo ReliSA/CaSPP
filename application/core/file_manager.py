@@ -4,7 +4,8 @@ File-related operations extracted from Application.
 from typing import Optional
 
 # local imports
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QUrl
+from PyQt6.QtGui import QDesktopServices
 import traceback
 
 from ui.main_window import MainWindow
@@ -194,3 +195,26 @@ class FileManager:
         file_path = item.data(0, Qt.ItemDataRole.UserRole)
         if file_path:
             self.load_markdown_file(file_path)
+
+    def handle_link_clicked(self, url: QUrl) -> None:
+        """Handle link clicks from the markdown preview."""
+        if not self.current_file_path:
+            return
+
+        if url.scheme() in ('http', 'https'):
+            QDesktopServices.openUrl(url)
+            return
+        
+        link_path = url.toString()
+
+        target_path = self.file_helper.resolve_relative_markdown_link(
+            self.current_file_path, 
+            link_path
+        )
+
+        if target_path:
+            self.load_markdown_file(target_path)
+        else:
+            self.main_window.get_markdown_viewer().set_error(
+                f"Could not open link. File not found or invalid: {link_path}"
+            )
