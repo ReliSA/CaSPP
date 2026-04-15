@@ -196,7 +196,7 @@ def _detect_and_collapse_alphabet_groups(headings: List[HeadingRules]) -> List[H
     return result
 
 
-class TemplateLoader:
+class TemplateParser:
     """Parse every .md template file in a directory into TemplateRules.
 
     All regex and classification logic lives in LoaderConstant; this class

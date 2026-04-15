@@ -243,7 +243,7 @@ def _merge_content(infos: List[ContentInfo]) -> ContentInfo:
     return merged
 
 
-class DocumentLoader:
+class MarkdownParser:
     """Parse Markdown files into ParsedDocument objects for validation.
 
     The parsed structure mirrors the shape produced by TemplateLoader:
@@ -302,7 +302,7 @@ class DocumentLoader:
             try:
                 results[stem] = self.parse_file(filepath)
                 self.dump_json(results[stem], "output/debug_docs")
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.error("Failed to load %s: %s", filepath, exc)
 
         logger.info("Loaded %d document(s) from %s", len(results), self.files_dir)

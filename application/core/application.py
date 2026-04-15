@@ -11,9 +11,9 @@ from PyQt6.QtWidgets import QApplication
 # local imports
 from ui.main_window import MainWindow
 from core.constants import FileConstants
-from utils.markdown_parser import DocumentLoader
+from utils.markdown_parser import MarkdownParser
 from utils.markdown_analyzer import MarkdownAnalyzer
-from utils.template_parser import TemplateLoader
+from utils.template_parser import TemplateParser
 from core.config import Config
 from utils.file_helper import FileHelper
 from core.file_manager import FileManager
@@ -35,9 +35,9 @@ class Application:
         # Initialize core components
         self.markdown_analyzer = MarkdownAnalyzer(str(Config.get_base_path()))
         self.file_helper = FileHelper(str(Config.get_base_path()))
-        self.template_loader = TemplateLoader(str(Config.get_base_path() / FileConstants.TEMPLATES_PATH), self.file_helper)
+        self.template_loader = TemplateParser(str(Config.get_base_path() / FileConstants.TEMPLATES_PATH), self.file_helper)
         self.template_loader.parse()
-        self.document_loader = DocumentLoader(str(Config.get_base_path() / FileConstants.CATALOGUE_PATH), self.file_helper)
+        self.document_loader = MarkdownParser(str(Config.get_base_path() / FileConstants.CATALOGUE_PATH), self.file_helper)
         self.document_loader.parse_dir()
         self.auto_stager = MarkdownAutoStager(str(Config.get_base_path()))
         self.file_manager = FileManager(

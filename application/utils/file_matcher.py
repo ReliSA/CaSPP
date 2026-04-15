@@ -3,7 +3,7 @@ import os
 from typing import Optional
 
 from core.constants import FileMatcherConstants
-from utils.template_parser import TemplateLoader
+from utils.template_parser import TemplateParser
 
 class FileMatcher:
     """
@@ -18,7 +18,7 @@ class FileMatcher:
         """Initializes FileMatcher with a template loader.
 
         Args:
-            loader (TemplateLoader): An instance of TemplateLoader used to fetch template objects.
+            loader (TemplateParser): An instance of TemplateLoader used to fetch template objects.
         """
         self.loader = loader
 
