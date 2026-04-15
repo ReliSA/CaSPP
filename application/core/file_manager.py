@@ -110,8 +110,7 @@ class FileManager:
                 if not template:
                     raise ValueError("Template matching failed for the document.")
 
-                struct_results = self.markdown_analyzer.validate_structure(parsed_doc, template)
-                analysis['structure_results'] = struct_results
+                analysis = self.markdown_analyzer.validate_structure(parsed_doc, template)
 
             report = self.markdown_analyzer.generate_report(analysis)
             self.tab_manager.set_analysis(report)
