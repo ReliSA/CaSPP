@@ -24,9 +24,12 @@ class MarkdownScene(QWidget):
         self.layout = QHBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
+        # Main layout splitter
+        self.main_splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.layout.addWidget(self.main_splitter)
+
         # File explorer setup
         self.file_explorer_widget = QWidget()
-        self.file_explorer_widget.setMaximumSize(QSize(206, 16777215))
         
         self.file_explorer_layout = QVBoxLayout(self.file_explorer_widget)
         self.file_explorer_layout.setContentsMargins(1, -1, 1, -1)
@@ -54,8 +57,8 @@ class MarkdownScene(QWidget):
         self.file_explorer_layout.addLayout(self.file_explorer_control_layout)
         self.file_explorer_layout.addWidget(self.file_tree_widget)
 
-        # Adding left side to main layout
-        self.layout.addWidget(self.file_explorer_widget)
+        # Adding left side to main splitter
+        self.main_splitter.addWidget(self.file_explorer_widget)
 
         # Markdown editor setup
         self.md_editor_widget = QWidget()
@@ -88,6 +91,12 @@ class MarkdownScene(QWidget):
         
         self.md_scene_layout.addWidget(self.tabs)
         self.layout.addWidget(self.md_editor_widget)
+        
+        self.md_scene_layout.addWidget(self.tabs)
+
+        # Adding right side to the main splitter
+        self.main_splitter.addWidget(self.md_editor_widget)
+        self.main_splitter.setSizes([UIConstants.FILE_EXPLORER_INIT_WIDTH, UIConstants.FILE_EXPLORER_INIT_HEIGHT])
 
     def populate_explorer(self, root_directory: str, markdown_extensions: Tuple[str, ...]) -> int:
         """Populate explorer tree with markdown files from a directory."""

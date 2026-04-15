@@ -11,9 +11,9 @@ from PyQt6.QtWidgets import QApplication
 # local imports
 from ui.main_window import MainWindow
 from core.constants import FileConstants
-from utils.document_loader import DocumentLoader
+from utils.markdown_parser import MarkdownParser
 from utils.markdown_analyzer import MarkdownAnalyzer
-from utils.template_loader import TemplateLoader
+from utils.template_parser import TemplateParser
 from core.config import Config
 from utils.file_helper import FileHelper
 from core.file_manager import FileManager
@@ -35,16 +35,16 @@ class Application:
 
         # Initialize core components
         self.markdown_analyzer = MarkdownAnalyzer(str(Config.get_base_path()))
-        self.template_loader = TemplateLoader(str(Config.get_base_path() / FileConstants.TEMPLATES_PATH))
-        self.template_loader.load()
-        self.document_loader = DocumentLoader()
-        self.document_loader.load_dir(str(Config.get_base_path() / FileConstants.CATALOGUE_PATH))
-
+        
         # Initialize tab manager
         self.tab_manager = TabManager(self.main_window.get_markdown_viewer())
 
         # Initialize file helper and file manager
         self.file_helper = FileHelper(str(Config.get_base_path()))
+        self.template_loader = TemplateParser(str(Config.get_base_path() / FileConstants.TEMPLATES_PATH), self.file_helper)
+        self.template_loader.parse()
+        self.document_loader = MarkdownParser(str(Config.get_base_path() / FileConstants.CATALOGUE_PATH), self.file_helper)
+        self.document_loader.parse_dir()
         self.auto_stager = MarkdownAutoStager(str(Config.get_base_path()))
         self.file_manager = FileManager(
             self.main_window,
@@ -78,6 +78,12 @@ class Application:
         markdown_viewer.close_explorer_button.clicked.connect(
             self.file_manager.on_close_explorer_button_pressed
         )
+        markdown_viewer.editor.textChanged.connect(
+            self.file_manager.on_editor_text_changed
+        )
+        markdown_viewer.editor.textChanged.connect(
+            self.editor_manager.update_live_preview
+        )
         markdown_viewer.save_changes_button.clicked.connect(
             self.file_manager.save_current_markdown_file
         )
@@ -100,6 +106,9 @@ class Application:
             self.file_manager.on_tab_changed
         )
         self.tab_manager.on_editor_text_changed_callback = self.file_manager.on_editor_text_changed
+        markdown_viewer.preview.anchorClicked.connect(
+            self.file_manager.handle_link_clicked
+        )
 
         toolbar.action_open_explorer.triggered.connect(
             self.file_manager.open_explorer

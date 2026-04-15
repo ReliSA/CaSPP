@@ -63,6 +63,10 @@ class UIConstants:
     # Panel dimensions
     ANALYSIS_PANEL_MAX_HEIGHT = 200
     ANALYSIS_PANEL_MIN_HEIGHT = 100
+
+    # File explorer init size
+    FILE_EXPLORER_INIT_WIDTH = 206
+    FILE_EXPLORER_INIT_HEIGHT = 800
     
     # Message box limits
     MAX_ERROR_MESSAGE_LENGTH = 500
@@ -122,6 +126,56 @@ class UIConstants:
     # Tab constants
     UNTITLED_TAB_NAME = "Untitled"
 
+class MarkdownPreviewConstants:
+    """Constants for Markdown live preview CSS styling."""
+    
+    # Base document and light-mode override
+    CSS_BASE = """
+        body { 
+            font-family: sans-serif; 
+            line-height: 1.5; 
+            background-color: #ffffff; 
+            color: #000000; 
+        }
+    """
+    
+    # Extended typography (Strikethrough, Highlight, Abbreviations)
+    CSS_TYPOGRAPHY = """
+        del { text-decoration: line-through; }
+        mark { background-color: #fffb00; color: black; }
+        abbr { text-decoration: underline; }
+    """
+    
+    # Table styles
+    CSS_TABLES = """
+        table { border-collapse: collapse; width: 100%; margin-bottom: 15px; }
+        th, td { border: 1px solid #d0d7de; padding: 6px 13px; text-align: left; }
+        th { background-color: #f6f8fa; font-weight: bold; color: #000000; }
+    """
+    
+    # Blockquote styles
+    CSS_BLOCKQUOTES = """
+        blockquote { 
+            border-left: 4px solid #d0d7de; 
+            margin-left: 0; 
+            padding-left: 15px; 
+            color: #656d76; 
+        }
+    """
+    
+    # Code block styles
+    CSS_CODE = """
+        pre { background-color: #f6f8fa; padding: 12px; border: 1px solid #d0d7de; }
+        code { font-family: monospace; background-color: #f6f8fa; padding: 2px 4px; color: #000000; }
+    """
+    
+    # List and Tasklist styles
+    CSS_LISTS = """
+        .task-list { padding-left: 0; }
+    """
+    
+    # Combined master CSS
+    DEFAULT_CSS = f"{CSS_BASE}{CSS_TYPOGRAPHY}{CSS_TABLES}{CSS_BLOCKQUOTES}{CSS_CODE}{CSS_LISTS}"
 
 class AssetsConstants:
     """Constants for asstest."""
