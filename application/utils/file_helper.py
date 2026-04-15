@@ -309,7 +309,7 @@ class FileHelper:
                 # _validate_file already logs the specific error
                 return None
             
-            with open(validated_path, 'r', encoding=FileConstants.ENCODING_UTF8, errors="replace") as f:
+            with open(validated_path, 'r', encoding=FileConstants.ENCODING_UTF8, errors='replace') as f:
                 content = f.read()
                 
             # Check for reasonable file size
@@ -360,4 +360,31 @@ class FileHelper:
             import logging
             logger = logging.getLogger(__name__)
             logger.warning(f"Failed to get file info for '{file_path}': {e}")
+            return None
+        
+    def resolve_relative_markdown_link(self, current_file_path: str, link_path: str) -> Optional[str]:
+        """
+        Resolve a relative link from a markdown file to an absolute path.
+        
+        Args:
+            current_file_path: The absolute path of the currently open markdown file.
+            link_path: The relative path from the link (e.g., "facets/facets.md").
+            
+        Returns:
+            The resolved absolute file path if it exists and is a markdown file, otherwise None.
+        """
+        try:
+            current_dir = Path(current_file_path).parent
+            target_path = (current_dir / link_path).resolve()
+            
+            # Check if the file exists and has a markdown extension
+            if target_path.exists() and target_path.suffix.lower() in FileConstants.MARKDOWN_EXTENSIONS:
+                return str(target_path)
+                
+            return None
+            
+        except (ValueError, OSError) as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Failed to resolve path '{link_path}' from '{current_file_path}': {e}")
             return None

@@ -1,17 +1,21 @@
 from PyQt6.QtCore import Qt
+import markdown
+from pymdownx import tilde, caret, mark, tasklist, emoji, superfences, highlight
+from pymdownx.emoji import twemoji, to_alt
 
-from ui.components.md_scene import MarkdownScene
+from core.tab_manager import TabManager
+from core.constants import MarkdownPreviewConstants
 
 class EditorManager:
     """Handles actions done in the markdown editor."""
 
-    def __init__(self, markdown_scene: MarkdownScene) -> None:
+    def __init__(self, tab_manager: TabManager) -> None:
         """Initialize EditorManager with required collaborators.
 
         Args:
             markdown_scene: Markdown scene containing ui components for markdown file editation.
         """
-        self.markdown_scene = markdown_scene
+        self.tab_manager = tab_manager
 
     def live_preview_check_box_state_changed(self, state: int) -> None:
         """Update visibility of the markdown preview.
@@ -23,9 +27,11 @@ class EditorManager:
             None.
         """
         is_visible = (state == Qt.CheckState.Checked.value)
-        self.markdown_scene.preview.setVisible(is_visible)
-        
-
+        for tab in self.tab_manager.tab_states.keys():
+            tab.preview.setVisible(is_visible)
+            if is_visible:
+                self._update_tab_preview(tab)
+            
     def markdown_analyzer_check_box_state_changed(self, state: int) -> None:
         """Update visibility of the analyzer list.
 
@@ -36,4 +42,46 @@ class EditorManager:
             None.
         """
         is_visible = (state == Qt.CheckState.Checked.value)
-        self.markdown_scene.analyzer_list.setVisible(is_visible)
+        for tab in self.tab_manager.tab_states.keys():
+            tab.analyzer_list.setVisible(is_visible)
+
+    def update_live_preview(self) -> None:
+        """Converts the current editor's markdown to HTML (used when typing)."""
+        self._update_tab_preview(self.tab_manager.get_current_tab())
+
+    def _update_tab_preview(self, tab) -> None:
+        """Converts the editor's markdown to HTML and updates the live preview panel.
+        
+        Returns:
+            None.
+        """
+        tab = self.tab_manager.get_current_tab()
+
+        if not tab or not tab.preview.isVisible():
+            return
+            
+        content = self.tab_manager.get_editor_content()
+        
+        html_content = markdown.markdown(
+            content, 
+            extensions=[
+                'extra', 'sane_lists', 'pymdownx.tilde', 'pymdownx.caret',
+                'pymdownx.mark', 'pymdownx.tasklist', 'pymdownx.emoji',
+                'pymdownx.superfences',
+                'pymdownx.highlight'
+            ],
+            extension_configs={
+                'pymdownx.emoji': {
+                    'emoji_index': twemoji,
+                    'emoji_generator': to_alt
+                }
+            }
+        )
+        styled_html = f"""
+        <style>
+           {MarkdownPreviewConstants.DEFAULT_CSS}
+        </style>
+        {html_content}
+        """
+        
+        tab.preview.setHtml(styled_html)

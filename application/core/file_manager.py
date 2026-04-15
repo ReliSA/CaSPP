@@ -4,13 +4,15 @@ File-related operations extracted from Application.
 from typing import Optional
 
 # local imports
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QUrl
+from PyQt6.QtGui import QDesktopServices
 import traceback
 
 from ui.main_window import MainWindow
 from utils.markdown_analyzer import MarkdownAnalyzer
 from utils.file_helper import FileHelper
 from core.constants import FileConstants
+from core.tab_manager import TabManager
 from utils.markdown_auto_stager import MarkdownAutoStager
 from utils.file_matcher import FileMatcher
 
@@ -21,6 +23,7 @@ class FileManager:
     def __init__(
         self,
         main_window: MainWindow,
+        tab_manager: TabManager,
         markdown_analyzer: MarkdownAnalyzer,
         file_helper: FileHelper,
         auto_stager: Optional[MarkdownAutoStager] = None,
@@ -32,12 +35,14 @@ class FileManager:
         Args:
             main_window: The application's MainWindow instance used to access
                 UI components (viewer, analysis panel, toolbar, etc.).
+            tab_manager: Manager for open tabs of markdown files.
             markdown_analyzer: Analyzer responsible for analyzing markdown
                 content and producing reports.
             file_helper: Utility for validating and performing file I/O and
                 dialogs.
         """
         self.main_window = main_window
+        self.tab_manager = tab_manager
         self.markdown_analyzer = markdown_analyzer
         self.file_helper = file_helper
         self.auto_stager = auto_stager
@@ -49,36 +54,37 @@ class FileManager:
         self.file_matcher = FileMatcher(self.template_loader) if self.template_loader else None
 
     def load_markdown_file(self, file_path: str) -> None:
-        """Load a markdown file into the viewer and analyze it.
+        """Load a markdown file into the tab manager and analyze it.
 
         Args:
             file_path: Path to the markdown file to load and analyze.
 
         Returns:
-            None. Updates the UI (viewer and analysis panel) or shows an
+            None. Updates the UI (tab and analysis panel) or shows an
             error message on failure.
         """
         # Validate the file first using the FileHelper
         validated = self.file_helper.validate_file(file_path)
         if not validated:
-            self.main_window.get_markdown_viewer().set_error(
+            self.tab_manager.set_error(
                 "Cannot analyze - file not found or inaccessible."
             )
             return
 
         self._is_loading_file = True
-        success = self.main_window.get_markdown_viewer().load_file(validated)
-        self._is_loading_file = False
-        if success:
+        try:
+            content = self.file_helper.read_file(validated)
+            self.tab_manager.load_file_into_tab(validated, content)
+            
             self.current_file_path = validated
             self._is_dirty = False
-            self.main_window.get_markdown_viewer().set_active_tab_file(validated)
-            self.main_window.get_markdown_viewer().set_tab_dirty(False)
+            self.tab_manager.set_active_tab_file(validated)
+            self.tab_manager.set_tab_dirty(False)
             self._analyze_current_file(validated)
-        else:
-            self.main_window.get_markdown_viewer().set_error(
-                "Cannot analyze - failed to load file in viewer."
-            )
+        except Exception:
+            self.tab_manager.set_error("Cannot analyze - failed to load file in viewer.")
+        finally:
+            self._is_loading_file = False
 
     def _analyze_current_file(self, file_path: str) -> None:
         """Analyze the currently loaded markdown file and update the analysis panel.
@@ -92,7 +98,10 @@ class FileManager:
             or error message on exception.
         """
         try:
-            self.main_window.get_markdown_viewer().set_loading()
+            self.tab_manager.set_loading()
+
+            # Use the analyzer which expects a file path
+            analysis = self.markdown_analyzer.analyze_markdown_file(file_path)
             
             if self.document_loader and self.template_loader:
                 parsed_doc = self.document_loader.parse_file(file_path)
@@ -104,12 +113,12 @@ class FileManager:
                 analysis = self.markdown_analyzer.validate_structure(parsed_doc, template)
 
             report = self.markdown_analyzer.generate_report(analysis)
-            self.main_window.get_markdown_viewer().set_analysis(report)
+            self.tab_manager.set_analysis(report)
 
         except Exception as e:
             traceback.print_exc()
             error_msg = f"Error during analysis: {str(e)}"
-            self.main_window.get_markdown_viewer().set_error(error_msg)
+            self.tab_manager.set_analysis(error_msg)
 
     def on_file_saved(self, file_path: str) -> None:
         """Handle file saved events and re-run analysis for markdown files.
@@ -145,8 +154,7 @@ class FileManager:
 
     def save_current_markdown_file(self) -> None:
         """Save current editor content and run post-save hooks."""
-        markdown_viewer = self.main_window.get_markdown_viewer()
-        content = markdown_viewer.get_editor_content()
+        content = self.tab_manager.get_editor_content()
 
         saved_file = self.file_helper.save_file(
             content=content,
@@ -157,8 +165,8 @@ class FileManager:
         if saved_file:
             self.current_file_path = saved_file
             self._is_dirty = False
-            markdown_viewer.set_active_tab_file(saved_file)
-            markdown_viewer.set_tab_dirty(False)
+            self.tab_manager.set_active_tab_file(saved_file)
+            self.tab_manager.set_tab_dirty(False)
             self.on_file_saved(saved_file)
 
     def on_editor_text_changed(self) -> None:
@@ -168,7 +176,7 @@ class FileManager:
 
         if not self._is_dirty:
             self._is_dirty = True
-            self.main_window.get_markdown_viewer().set_tab_dirty(True)
+            self.tab_manager.set_tab_dirty(True)
 
     def open_explorer_dialog(self, selection_mode: str = "directory") -> None:
         """Open directory explorer or select and open a single markdown file."""
@@ -203,6 +211,28 @@ class FileManager:
         if file_path:
             self.load_markdown_file(file_path)
 
+    def handle_link_clicked(self, url: QUrl) -> None:
+        """Handle link clicks from the markdown preview."""
+        if not self.current_file_path:
+            return
+
+        if url.scheme() in ('http', 'https'):
+            QDesktopServices.openUrl(url)
+            return
+        
+        link_path = url.toString()
+
+        target_path = self.file_helper.resolve_relative_markdown_link(
+            self.current_file_path, 
+            link_path
+        )
+
+        if target_path:
+            self.load_markdown_file(target_path)
+        else:
+            self.main_window.get_markdown_viewer().set_error(
+                f"Could not open link. File not found or invalid: {link_path}"
+            )
 
     def on_open_explorer_button_pressed(self) -> None:
         """Button listener for opening explorer."""
@@ -226,3 +256,10 @@ class FileManager:
         markdown_scene.open_explorer_button.setVisible(True)
         markdown_scene.file_explorer_widget.setVisible(False)
 
+    def on_tab_changed(self) -> None:
+        """Syncs the FileManager's tracked file path and save state with the currently focused tab."""
+        state = self.tab_manager.get_current_state()
+        if not state:
+            return
+        self.current_file_path = state.file_path
+        self._is_dirty = state.is_dirty
