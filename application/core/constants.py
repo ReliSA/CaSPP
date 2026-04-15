@@ -63,6 +63,10 @@ class UIConstants:
     # Panel dimensions
     ANALYSIS_PANEL_MAX_HEIGHT = 200
     ANALYSIS_PANEL_MIN_HEIGHT = 100
+
+    # File explorer init size
+    FILE_EXPLORER_INIT_WIDTH = 206
+    FILE_EXPLORER_INIT_HEIGHT = 800
     
     # Message box limits
     MAX_ERROR_MESSAGE_LENGTH = 500
