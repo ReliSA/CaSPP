@@ -4,7 +4,7 @@ Markdown scene.
 from pathlib import Path
 from typing import Dict, Tuple
 
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QSplitter, QPlainTextEdit, QTextBrowser, QListWidget, QTabWidget, QPushButton, QCheckBox, QSpacerItem, QSizePolicy, QLabel, QTreeWidget)
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QPushButton, QCheckBox, QSpacerItem, QSizePolicy, QLabel, QTreeWidget)
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QTreeWidgetItem
@@ -86,86 +86,17 @@ class MarkdownScene(QWidget):
 
         # Tab setup
         self.tabs = QTabWidget()
-        self._tab_base_title = "Untitled"
-        self._tab_dirty = False
+        self.tabs.setUsesScrollButtons(True)
+        self.tabs.setTabsClosable(True)
         
-        self.tab_1 = QWidget()
-        self.tab_1_layout = QHBoxLayout(self.tab_1)
-
-        self.vert_splitter = QSplitter(Qt.Orientation.Vertical)
-        self.horiz_splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.md_scene_layout.addWidget(self.tabs)
+        self.layout.addWidget(self.md_editor_widget)
         
-        self.editor = QPlainTextEdit()
-        self.preview = QTextBrowser()
-        self.preview.setVisible(False)
-        self.preview.setOpenExternalLinks(False)
-        self.preview.setOpenLinks(False)
-
-        self.horiz_splitter.addWidget(self.editor)
-        self.horiz_splitter.addWidget(self.preview)
-
-        self.analyzer_list = QListWidget()
-        self.analyzer_list.setVisible(False)
-
-        self.vert_splitter.addWidget(self.horiz_splitter)
-        self.vert_splitter.addWidget(self.analyzer_list)
-
-        self.tab_1_layout.addWidget(self.vert_splitter)
-        self.tabs.addTab(self.tab_1, self._tab_base_title)
-
-        self.empty_tab = QWidget()
-        self.tabs.addTab(self.empty_tab, "Tab 2")
-
         self.md_scene_layout.addWidget(self.tabs)
 
         # Adding right side to the main splitter
         self.main_splitter.addWidget(self.md_editor_widget)
         self.main_splitter.setSizes([UIConstants.FILE_EXPLORER_INIT_WIDTH, UIConstants.FILE_EXPLORER_INIT_HEIGHT])
-
-    def load_file(self, file_path: str) -> bool:
-        """Load a markdown file into the editor."""
-        try:
-            with open(file_path, 'r', encoding=FileConstants.ENCODING_UTF8, errors="replace") as file:
-                self.editor.setPlainText(file.read())
-            return True
-        except (OSError, UnicodeDecodeError):
-            return False
-
-    def set_loading(self) -> None:
-        """Display loading state in analyzer output list."""
-        self.analyzer_list.clear()
-        self.analyzer_list.addItem("Analyzing...")
-
-    def set_analysis(self, report: str) -> None:
-        """Display analyzer report in analyzer output list."""
-        self.analyzer_list.clear()
-        lines = report.splitlines() if report else ["No analysis output."]
-        self.analyzer_list.addItems(lines)
-
-    def set_error(self, message: str) -> None:
-        """Display error in analyzer output list."""
-        self.analyzer_list.clear()
-        self.analyzer_list.addItem(f"Error: {message}")
-
-    def get_editor_content(self) -> str:
-        """Return current markdown editor content."""
-        return self.editor.toPlainText()
-
-    def set_active_tab_file(self, file_path: str) -> None:
-        """Set the active markdown tab title based on file name."""
-        self._tab_base_title = Path(file_path).name
-        self._tab_dirty = False
-        self._refresh_active_tab_title()
-
-    def set_tab_dirty(self, dirty: bool) -> None:
-        """Mark active markdown tab as dirty or clean."""
-        self._tab_dirty = dirty
-        self._refresh_active_tab_title()
-
-    def _refresh_active_tab_title(self) -> None:
-        """Refresh tab title with optional unsaved marker."""
-        title = self._tab_base_title + (" *" if self._tab_dirty else "")
-        self.tabs.setTabText(0, title)
 
     def populate_explorer(self, root_directory: str, markdown_extensions: Tuple[str, ...]) -> int:
         """Populate explorer tree with markdown files from a directory."""

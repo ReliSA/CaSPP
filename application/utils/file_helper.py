@@ -309,7 +309,7 @@ class FileHelper:
                 # _validate_file already logs the specific error
                 return None
             
-            with open(validated_path, 'r', encoding=FileConstants.ENCODING_UTF8, errors="replace") as f:
+            with open(validated_path, 'r', encoding=FileConstants.ENCODING_UTF8, errors='replace') as f:
                 content = f.read()
                 
             # Check for reasonable file size

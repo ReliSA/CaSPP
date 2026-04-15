@@ -18,6 +18,7 @@ from core.config import Config
 from utils.file_helper import FileHelper
 from core.file_manager import FileManager
 from core.editor_manager import EditorManager
+from core.tab_manager import TabManager
 from utils.git import GitWorker
 from utils.markdown_auto_stager import MarkdownAutoStager
 
@@ -34,6 +35,11 @@ class Application:
 
         # Initialize core components
         self.markdown_analyzer = MarkdownAnalyzer(str(Config.get_base_path()))
+        
+        # Initialize tab manager
+        self.tab_manager = TabManager(self.main_window.get_markdown_viewer())
+
+        # Initialize file helper and file manager
         self.file_helper = FileHelper(str(Config.get_base_path()))
         self.template_loader = TemplateParser(str(Config.get_base_path() / FileConstants.TEMPLATES_PATH), self.file_helper)
         self.template_loader.parse()
@@ -42,6 +48,7 @@ class Application:
         self.auto_stager = MarkdownAutoStager(str(Config.get_base_path()))
         self.file_manager = FileManager(
             self.main_window,
+            self.tab_manager,
             self.markdown_analyzer,
             self.file_helper,
             self.auto_stager,
@@ -49,8 +56,9 @@ class Application:
             self.document_loader
         )
 
+        # Initialize editor manager
         self.editor_manager = EditorManager(
-            self.main_window.get_markdown_viewer()
+            self.tab_manager
         )
 
         self.git_worker: Optional[GitWorker] = None
@@ -91,6 +99,13 @@ class Application:
             self.editor_manager.markdown_analyzer_check_box_state_changed
         )
 
+        markdown_viewer.tabs.tabCloseRequested.connect(
+            self.tab_manager.close_tab
+        )
+        markdown_viewer.tabs.currentChanged.connect(
+            self.file_manager.on_tab_changed
+        )
+        self.tab_manager.on_editor_text_changed_callback = self.file_manager.on_editor_text_changed
         markdown_viewer.preview.anchorClicked.connect(
             self.file_manager.handle_link_clicked
         )
