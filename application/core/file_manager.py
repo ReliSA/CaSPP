@@ -47,6 +47,7 @@ class FileManager:
         self.file_helper = file_helper
         self.auto_stager = auto_stager
         self.current_file_path: Optional[str] = None
+        self.current_file_content: Optional[str] = None
         self._is_loading_file = False
         self._is_dirty = False
         self.template_loader = template_loader
@@ -74,24 +75,30 @@ class FileManager:
         self._is_loading_file = True
         try:
             content = self.file_helper.read_file(validated)
+            if content is None:
+                self.tab_manager.set_error("Cannot analyze - failed to read file content.")
+                return
+
             self.tab_manager.load_file_into_tab(validated, content)
             
             self.current_file_path = validated
+            self.current_file_content = content
             self._is_dirty = False
             self.tab_manager.set_active_tab_file(validated)
             self.tab_manager.set_tab_dirty(False)
-            self._analyze_current_file(validated)
+            self._analyze_current_file(validated, content)
         except Exception:
             self.tab_manager.set_error("Cannot analyze - failed to load file in viewer.")
         finally:
             self._is_loading_file = False
 
-    def _analyze_current_file(self, file_path: str) -> None:
+    def _analyze_current_file(self, file_path: str, content: str) -> None:
         """Analyze the currently loaded markdown file and update the analysis panel.
 
         Args:
             file_path: Path to the markdown file to analyze. The file is assumed
                 to already be loaded into the viewer.
+            content: In-memory markdown content supplied by FileManager.
 
         Returns:
             None. Updates analysis panel with loading state, analysis results
@@ -100,9 +107,10 @@ class FileManager:
         try:
             self.tab_manager.set_loading()
 
-            
+            analysis = {"file": file_path, "warnings": [], "passed": []}
+
             if self.document_loader and self.template_loader:
-                parsed_doc = self.document_loader.parse_file(file_path)
+                parsed_doc = self.document_loader.parse_content(file_path, content)
 
                 template = self.file_matcher.match(file_path) if self.file_matcher else None
                 if not template:
@@ -118,20 +126,27 @@ class FileManager:
             error_msg = f"Error during analysis: {str(e)}"
             self.tab_manager.set_analysis(error_msg)
 
-    def on_file_saved(self, file_path: str) -> None:
+    def on_file_saved(self, file_path: str, content: Optional[str] = None) -> None:
         """Handle file saved events and re-run analysis for markdown files.
 
         Args:
             file_path: Path to the file that was saved. If it ends with
                 '.md' and is valid, the file will be re-analyzed.
+            content: Optional in-memory content of the active editor.
 
         Returns:
             None. Triggers analysis when appropriate.
         """
         # Validate before analyzing
         if file_path.lower().endswith(tuple(FileConstants.MARKDOWN_EXTENSIONS)) and self.file_helper.validate_file(file_path):
+            file_content = content if content is not None else self.file_helper.read_file(file_path)
+            if file_content is None:
+                self.tab_manager.set_analysis("Cannot analyze - failed to read saved file content.")
+                return
+
             self.current_file_path = file_path
-            self._analyze_current_file(file_path)
+            self.current_file_content = file_content
+            self._analyze_current_file(file_path, file_content)
 
             if self.auto_stager and self.auto_stager.is_available():
                 self.auto_stager.stage_file_delayed(file_path)
@@ -162,10 +177,11 @@ class FileManager:
 
         if saved_file:
             self.current_file_path = saved_file
+            self.current_file_content = content
             self._is_dirty = False
             self.tab_manager.set_active_tab_file(saved_file)
             self.tab_manager.set_tab_dirty(False)
-            self.on_file_saved(saved_file)
+            self.on_file_saved(saved_file, content)
 
     def on_editor_text_changed(self) -> None:
         """Mark current tab dirty when user edits loaded content."""
@@ -198,9 +214,14 @@ class FileManager:
         if not selected_directory:
             return
 
+        markdown_files = self.file_helper.find_markdown_files(
+            directory=selected_directory,
+            recursive=True,
+        )
+
         self.main_window.get_markdown_viewer().populate_explorer(
             selected_directory,
-            tuple(FileConstants.MARKDOWN_EXTENSIONS),
+            markdown_files,
         )
 
     def on_explorer_item_activated(self, item, _column: int) -> None:
@@ -260,4 +281,5 @@ class FileManager:
         if not state:
             return
         self.current_file_path = state.file_path
+        self.current_file_content = self.tab_manager.get_editor_content() if state.file_path else None
         self._is_dirty = state.is_dirty

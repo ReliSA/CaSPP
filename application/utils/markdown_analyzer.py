@@ -451,8 +451,7 @@ class MarkdownAnalyzer:
         """Generate a human-readable report of the analysis.
 
         Args:
-            analysis: Dict as returned by analyze_markdown_file, optionally
-                      extended with a 'structure_results' key from validate_structure.
+            analysis: Dict returned by validate_structure.
 
         Returns:
             Formatted markdown report string.
@@ -466,12 +465,14 @@ class MarkdownAnalyzer:
         report = "# Markdown Analysis Report\n\n"
 
         if analysis:
+            warnings = analysis.get("warnings", [])
+            passed = analysis.get("passed", [])
             report += "## Structural Validation\n"
-            for warn in analysis["warnings"]:
+            for warn in warnings:
                 report += f"{ReportConstants.ICON_WARNING} (line {warn['line']}): {warn['msg']}\n"
-            for msg in analysis["passed"]:
+            for msg in passed:
                 report += f"{ReportConstants.ICON_OK} {msg}\n"
-            if not analysis["warnings"] and not analysis["passed"]:
+            if not warnings and not passed:
                 report += "No checks were performed.\n"
             report += "\n"
 

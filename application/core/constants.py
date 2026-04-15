@@ -38,7 +38,8 @@ class FileConstants:
     MARKDOWN_EXTENSIONS = ['.md', '.markdown']
     MAX_FILE_SIZE_MB = 50
     ENCODING_UTF8 = 'utf-8'
-    
+    ENCODING_CP1252 = 'cp1252'
+
     # File dialog filters
     MARKDOWN_FILTER = "Markdown Files (*.md *.markdown);;All Files (*)"
     
