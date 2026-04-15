@@ -100,8 +100,6 @@ class FileManager:
         try:
             self.tab_manager.set_loading()
 
-            # Use the analyzer which expects a file path
-            analysis = self.markdown_analyzer.analyze_markdown_file(file_path)
             
             if self.document_loader and self.template_loader:
                 parsed_doc = self.document_loader.parse_file(file_path)
