@@ -18,6 +18,7 @@ from core.config import Config
 from utils.file_helper import FileHelper
 from core.file_manager import FileManager
 from core.editor_manager import EditorManager
+from core.tab_manager import TabManager
 from utils.git import GitWorker
 from utils.markdown_auto_stager import MarkdownAutoStager
 
@@ -39,11 +40,15 @@ class Application:
         self.document_loader = DocumentLoader()
         self.document_loader.load_dir(str(Config.get_base_path() / FileConstants.CATALOGUE_PATH))
 
+        # Initialize tab manager
+        self.tab_manager = TabManager(self.main_window.get_markdown_viewer())
+
         # Initialize file helper and file manager
         self.file_helper = FileHelper(str(Config.get_base_path()))
         self.auto_stager = MarkdownAutoStager(str(Config.get_base_path()))
         self.file_manager = FileManager(
             self.main_window,
+            self.tab_manager,
             self.markdown_analyzer,
             self.file_helper,
             self.auto_stager,
@@ -51,8 +56,9 @@ class Application:
             self.document_loader
         )
 
+        # Initialize editor manager
         self.editor_manager = EditorManager(
-            self.main_window.get_markdown_viewer()
+            self.tab_manager
         )
 
         self.git_worker: Optional[GitWorker] = None
@@ -72,9 +78,6 @@ class Application:
         markdown_viewer.close_explorer_button.clicked.connect(
             self.file_manager.on_close_explorer_button_pressed
         )
-        markdown_viewer.editor.textChanged.connect(
-            self.file_manager.on_editor_text_changed
-        )
         markdown_viewer.save_changes_button.clicked.connect(
             self.file_manager.save_current_markdown_file
         )
@@ -89,6 +92,14 @@ class Application:
         markdown_viewer.analyzer_check_box.stateChanged.connect(
             self.editor_manager.markdown_analyzer_check_box_state_changed
         )
+
+        markdown_viewer.tabs.tabCloseRequested.connect(
+            self.tab_manager.close_tab
+        )
+        markdown_viewer.tabs.currentChanged.connect(
+            self.file_manager.on_tab_changed
+        )
+        self.tab_manager.on_editor_text_changed_callback = self.file_manager.on_editor_text_changed
 
         toolbar.action_open_explorer.triggered.connect(
             self.file_manager.open_explorer

@@ -119,6 +119,9 @@ class UIConstants:
     PULL_BUTTON_LABEL = "Pull"
     PUSH_BUTTON_LABEL = "Push"
 
+    # Tab constants
+    UNTITLED_TAB_NAME = "Untitled"
+
 
 class AssetsConstants:
     """Constants for asstest."""
