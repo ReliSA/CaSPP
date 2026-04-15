@@ -78,12 +78,7 @@ class Application:
         markdown_viewer.close_explorer_button.clicked.connect(
             self.file_manager.on_close_explorer_button_pressed
         )
-        markdown_viewer.editor.textChanged.connect(
-            self.file_manager.on_editor_text_changed
-        )
-        markdown_viewer.editor.textChanged.connect(
-            self.editor_manager.update_live_preview
-        )
+        
         markdown_viewer.save_changes_button.clicked.connect(
             self.file_manager.save_current_markdown_file
         )
@@ -103,13 +98,11 @@ class Application:
             self.tab_manager.close_tab
         )
         markdown_viewer.tabs.currentChanged.connect(
-            self.file_manager.on_tab_changed
+            self._on_tab_switched
         )
-        self.tab_manager.on_editor_text_changed_callback = self.file_manager.on_editor_text_changed
-        markdown_viewer.preview.anchorClicked.connect(
-            self.file_manager.handle_link_clicked
-        )
-
+        self.tab_manager.on_editor_text_changed_callback = self._on_editor_text_changed
+        self.tab_manager.on_preview_anchor_clicked_callback = self.file_manager.handle_link_clicked
+        
         toolbar.action_open_explorer.triggered.connect(
             self.file_manager.open_explorer
         )
@@ -150,6 +143,20 @@ class Application:
         # Load default markdown file
         #self.file_manager.load_markdown_file(Config.get_default_markdown_path())
     
+    def _on_editor_text_changed(self) -> None:
+        """Wrapper to trigger multiple updates when a tab's text changes.
+        
+        Returns:
+            None.
+        """
+        self.file_manager.on_editor_text_changed()
+        self.editor_manager.update_live_preview()
+
+    def _on_tab_switched(self) -> None:
+        """Wrapper to trigger updates when switching between tabs."""
+        self.file_manager.on_tab_changed()
+        self.editor_manager.update_live_preview()
+
     def run(self) -> int:
         """
         Run the application.

@@ -29,9 +29,9 @@ class EditorManager:
         is_visible = (state == Qt.CheckState.Checked.value)
         for tab in self.tab_manager.tab_states.keys():
             tab.preview.setVisible(is_visible)
-        
-        self.update_live_preview()
-
+            if is_visible:
+                self._update_tab_preview(tab)
+            
     def markdown_analyzer_check_box_state_changed(self, state: int) -> None:
         """Update visibility of the analyzer list.
 
@@ -44,18 +44,23 @@ class EditorManager:
         is_visible = (state == Qt.CheckState.Checked.value)
         for tab in self.tab_manager.tab_states.keys():
             tab.analyzer_list.setVisible(is_visible)
-        self.update_live_preview()
 
     def update_live_preview(self) -> None:
+        """Converts the current editor's markdown to HTML (used when typing)."""
+        self._update_tab_preview(self.tab_manager.get_current_tab())
+
+    def _update_tab_preview(self, tab) -> None:
         """Converts the editor's markdown to HTML and updates the live preview panel.
         
         Returns:
             None.
         """
-        if not self.markdown_scene.preview.isVisible():
+        tab = self.tab_manager.get_current_tab()
+
+        if not tab or not tab.preview.isVisible():
             return
             
-        content = self.markdown_scene.get_editor_content()
+        content = self.tab_manager.get_editor_content()
         
         html_content = markdown.markdown(
             content, 
@@ -79,4 +84,4 @@ class EditorManager:
         {html_content}
         """
         
-        self.markdown_scene.preview.setHtml(styled_html)
+        tab.preview.setHtml(styled_html)
