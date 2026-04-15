@@ -98,11 +98,11 @@ class FileManager:
             analysis = self.markdown_analyzer.analyze_markdown_file(file_path)
             
             if self.document_loader and self.template_loader:
-                parsed_doc = self.document_loader.load(file_path)
+                parsed_doc = self.document_loader.parse_file(file_path)
 
                 template = self.file_matcher.match(file_path) if self.file_matcher else None
                 if not template:
-                    raise ValueError("Nenalezena odpovídající šablona pro tento soubor.")
+                    raise ValueError("Template matching failed for the document.")
 
                 struct_results = self.markdown_analyzer.validate_structure(parsed_doc, template)
                 analysis['structure_results'] = struct_results
