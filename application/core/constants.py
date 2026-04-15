@@ -139,6 +139,13 @@ class AssetsConstants:
     PUSH_BUTTON_ICON_PATH = str(_RUNTIME_ROOT.joinpath("application", "ui", "assets", "icons", "LucideArrowUpFromLine.svg"))
 
 
+class ReportConstants:
+    """Constants for validation report output."""
+
+    ICON_OK = "✅"
+    ICON_WARNING = "⚠️"
+
+
 # Application constants
 class AppConstants:
     """General application constants."""
@@ -198,7 +205,7 @@ class LoaderConstants:
     RE_HEADING = re.compile(r'^(#{1,6})\s+(.+)$')
 
     # Markdown link anywhere in a string:  [label](url)
-    RE_LINK = re.compile(r'\[([^\]]*)\]\(([^)]*)\)')
+    RE_LINK = re.compile(r'\[([^\]]*)\]\(([^)]+)\)')
 
     # Italic placeholder wrapping the *whole* remaining text, or inline:  *Name*
     RE_ITALIC = re.compile(r'\*([^*]+)\*')
