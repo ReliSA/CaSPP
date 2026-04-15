@@ -4,12 +4,12 @@ Markdown scene.
 from pathlib import Path
 from typing import Dict, Tuple
 
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QPushButton, QCheckBox, QSpacerItem, QSizePolicy, QLabel, QTreeWidget)
-from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QPushButton, QCheckBox, QSpacerItem, QSizePolicy, QLabel, QTreeWidget, QSplitter)
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QTreeWidgetItem
 
-from core.constants import UIConstants, AssetsConstants, FileConstants
+from core.constants import UIConstants, AssetsConstants
 
 class MarkdownScene(QWidget):
     """Handles markdown scene ui actions."""

@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Optional, Dict
+from PyQt6.QtCore import QUrl
 
 from ui.components.tab_widget import TabWidget
 from ui.components.md_scene import MarkdownScene
@@ -43,6 +44,7 @@ class TabManager:
         self.tab_states: Dict[TabWidget, TabState] = {}
         
         self.on_editor_text_changed_callback = None
+        self.on_preview_anchor_clicked_callback = None
         
         self.add_new_tab()
 
@@ -80,6 +82,7 @@ class TabManager:
         tab.analyzer_list.setVisible(self.scene.analyzer_check_box.isChecked())
 
         tab.editor.textChanged.connect(self._handle_text_changed)
+        tab.preview.anchorClicked.connect(self._handle_anchor_clicked)
 
         index = self.tabs_widget.addTab(tab, state.base_title)
         self.tabs_widget.setCurrentIndex(index)
@@ -214,6 +217,18 @@ class TabManager:
         """
         if self.on_editor_text_changed_callback:
             self.on_editor_text_changed_callback()
+
+    def _handle_anchor_clicked(self, url: QUrl) -> None:
+        """Routes the preview link clicked event to the external application callback.
+        
+        Args:
+            url: Clicked url in markdown preview.
+        
+        Returns:
+            None.
+        """
+        if self.on_preview_anchor_clicked_callback:
+            self.on_preview_anchor_clicked_callback(url)
 
     def set_loading(self) -> None:
         """Displays a loading indicator in the active tab's analyzer panel.
