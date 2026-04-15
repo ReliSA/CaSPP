@@ -276,9 +276,25 @@ class MarkdownParser:
         content = self._file_helper.read_file(filepath)
         if content is None:
             raise FileNotFoundError(f"Document not found: {filepath}")
-        doc = self._parse(filepath, content)
+        doc = self.parse_content(filepath, content)
         logger.debug("Loaded document: %s  (%d heading(s))", filepath, len(doc.headings))
         return doc
+
+    def parse_content(self, filepath: str, content: str) -> ParsedDocument:
+        """Parse a single Markdown document from in-memory content.
+
+        Args:
+            filepath (str): Source path used for metadata and diagnostics.
+            content (str): Full markdown text.
+
+        Returns:
+            ParsedDocument: Parsed representation of the content.
+        """
+        if not isinstance(content, str):
+            raise TypeError("content must be a string")
+
+        normalized_path = os.path.abspath(filepath)
+        return self._parse(normalized_path, content)
 
     def parse_dir(self) -> Dict[str, ParsedDocument]:
         """Parse every .md file in directory recursively.

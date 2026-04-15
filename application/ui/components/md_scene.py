@@ -2,7 +2,7 @@
 Markdown scene.
 """
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, Iterable
 
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QPushButton, QCheckBox, QSpacerItem, QSizePolicy, QLabel, QTreeWidget, QSplitter)
 from PyQt6.QtCore import Qt
@@ -98,25 +98,22 @@ class MarkdownScene(QWidget):
         self.main_splitter.addWidget(self.md_editor_widget)
         self.main_splitter.setSizes([UIConstants.FILE_EXPLORER_INIT_WIDTH, UIConstants.FILE_EXPLORER_INIT_HEIGHT])
 
-    def populate_explorer(self, root_directory: str, markdown_extensions: Tuple[str, ...]) -> int:
-        """Populate explorer tree with markdown files from a directory."""
+    def populate_explorer(self, root_directory: str, markdown_file_paths: Iterable[str]) -> int:
+        """Populate explorer tree from markdown file paths provided by FileManager."""
         root_path = Path(root_directory)
         self.file_tree_widget.clear()
-
-        if not root_path.exists() or not root_path.is_dir():
-            return 0
 
         folder_items: Dict[str, QTreeWidgetItem] = {}
         markdown_files_count = 0
 
-        for file_path in sorted(root_path.rglob("*")):
-            if not file_path.is_file():
+        for file_path in sorted(markdown_file_paths):
+            path_obj = Path(file_path)
+
+            try:
+                relative_parts = path_obj.relative_to(root_path).parts
+            except ValueError:
                 continue
 
-            if file_path.suffix.lower() not in markdown_extensions:
-                continue
-
-            relative_parts = file_path.relative_to(root_path).parts
             parent_item = self.file_tree_widget.invisibleRootItem()
             partial_folder = ""
 
@@ -130,7 +127,7 @@ class MarkdownScene(QWidget):
                 parent_item = folder_items[partial_folder]
 
             file_item = QTreeWidgetItem([relative_parts[-1]])
-            file_item.setData(0, Qt.ItemDataRole.UserRole, str(file_path))
+            file_item.setData(0, Qt.ItemDataRole.UserRole, str(path_obj))
             parent_item.addChild(file_item)
             markdown_files_count += 1
 

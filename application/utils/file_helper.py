@@ -193,13 +193,13 @@ class FileHelper:
             return []
         
         try:
-            if recursive:
-                pattern = f"**/*{FileConstants.MARKDOWN_EXTENSIONS[0]}"
-            else:
-                pattern = f"*{FileConstants.MARKDOWN_EXTENSIONS[0]}"
-            
-            md_files = list(search_dir.glob(pattern))
-            return [str(f.resolve()) for f in md_files if f.is_file()]
+            markdown_files = []
+            for extension in FileConstants.MARKDOWN_EXTENSIONS:
+                pattern = f"**/*{extension}" if recursive else f"*{extension}"
+                markdown_files.extend(search_dir.glob(pattern))
+
+            unique_files = {f.resolve() for f in markdown_files if f.is_file()}
+            return [str(file_path) for file_path in sorted(unique_files)]
         
         except (OSError, ValueError) as e:
             import logging
