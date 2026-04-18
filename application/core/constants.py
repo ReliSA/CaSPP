@@ -196,6 +196,10 @@ class AssetsConstants:
     PULL_BUTTON_ICON_PATH = str(_RUNTIME_ROOT.joinpath("application", "ui", "assets", "icons", "LucideArrowDownToLine.svg"))
     PUSH_BUTTON_ICON_PATH = str(_RUNTIME_ROOT.joinpath("application", "ui", "assets", "icons", "LucideArrowUpFromLine.svg"))
 
+    # File tree icon paths
+    FOLDER_ICON_PATH = str(_RUNTIME_ROOT.joinpath("application", "ui", "assets", "icons", "LucideFolder.svg"))
+    MARKDOWN_FILE_ICON_PATH = str(_RUNTIME_ROOT.joinpath("application", "ui", "assets", "icons", "StreamlineMarkdownDocumentProgrammingRemix.svg"))
+
 
 class ReportConstants:
     """Constants for validation report output."""

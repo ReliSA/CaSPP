@@ -4,10 +4,9 @@ Markdown scene.
 from pathlib import Path
 from typing import Dict, Iterable
 
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QPushButton, QCheckBox, QSpacerItem, QSizePolicy, QLabel, QTreeWidget, QSplitter)
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QPushButton, QCheckBox, QSpacerItem, QSizePolicy, QLabel, QTreeWidget, QTreeWidgetItem, QSplitter)
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QTreeWidgetItem
+from PyQt6.QtGui import QIcon, QPixmap
 
 from core.constants import UIConstants, AssetsConstants
 
@@ -122,12 +121,14 @@ class MarkdownScene(QWidget):
                 if partial_folder not in folder_items:
                     folder_item = QTreeWidgetItem([folder_name])
                     folder_item.setFlags(folder_item.flags() & ~Qt.ItemFlag.ItemIsSelectable)
+                    folder_item.setIcon(0, QIcon(QPixmap(AssetsConstants.FOLDER_ICON_PATH)))
                     parent_item.addChild(folder_item)
                     folder_items[partial_folder] = folder_item
                 parent_item = folder_items[partial_folder]
 
             file_item = QTreeWidgetItem([relative_parts[-1]])
             file_item.setData(0, Qt.ItemDataRole.UserRole, str(path_obj))
+            file_item.setIcon(0, QIcon(QPixmap(AssetsConstants.MARKDOWN_FILE_ICON_PATH)))
             parent_item.addChild(file_item)
             markdown_files_count += 1
 
