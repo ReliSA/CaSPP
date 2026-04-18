@@ -11,8 +11,8 @@ from typing import Optional, Callable
 from PyQt6.QtCore import QTimer, QObject, pyqtSignal
 
 # local imports
-from utils.git import GitHelper
-from utils.exceptions import GitRepositoryNotFoundError, GitLibraryNotAvailableError
+from utils.git.runner import is_repo_available
+from utils.git.stage import stage_file, stage_markdown_files
 from core.constants import FileConstants
 
 logger = logging.getLogger(__name__)
@@ -65,13 +65,9 @@ class MarkdownAutoStager(QObject):
     def _check_git_availability(self) -> bool:
         """Check if git repository is available."""
         try:
-            with GitHelper(self.repo_path) as helper:
-                return helper.is_repo_available()
-        except (GitRepositoryNotFoundError, GitLibraryNotAvailableError):
+            return is_repo_available(self.repo_path)
+        except Exception:
             logger.warning("Git repository not available for auto-staging")
-            return False
-        except Exception as e:
-            logger.warning(f"Error checking git availability: {e}")
             return False
 
     def _is_markdown_file(self, file_path: str) -> bool:
@@ -111,9 +107,8 @@ class MarkdownAutoStager(QObject):
             return
         
         try:
-            with GitHelper(self.repo_path) as helper:
-                success, message = helper.stage_file(file_path)
-                self._on_stage_complete(file_path, success, message)
+            result = stage_file(self.repo_path or "", file_path)
+            self._on_stage_complete(file_path, result.success, result.message)
         except Exception as e:
             logger.error(f"Error staging file immediately: {e}")
             self._on_stage_complete(file_path, False, str(e))
@@ -149,18 +144,15 @@ class MarkdownAutoStager(QObject):
         logger.info(f"Processing {len(files_to_stage)} pending files for staging")
         
         try:
-            with GitHelper(self.repo_path) as helper:
-                success, message = helper.stage_markdown_files(files_to_stage)
-                if success:
-                    logger.info(f"Successfully staged {len(files_to_stage)} markdown files")
-                    # Emit individual file staged signals
-                    for file_path in files_to_stage:
-                        self.file_staged.emit(file_path, f"Staged with {len(files_to_stage)} other files")
-                else:
-                    logger.warning(f"Failed to stage markdown files: {message}")
-                    # Emit failure for all files
-                    for file_path in files_to_stage:
-                        self.staging_failed.emit(file_path, message)
+            result = stage_markdown_files(self.repo_path or "", files_to_stage)
+            if result.success:
+                logger.info(f"Successfully staged {len(files_to_stage)} markdown files")
+                for file_path in files_to_stage:
+                    self.file_staged.emit(file_path, f"Staged with {len(files_to_stage)} other files")
+            else:
+                logger.warning(f"Failed to stage markdown files: {result.message}")
+                for file_path in files_to_stage:
+                    self.staging_failed.emit(file_path, result.message)
         except Exception as e:
             logger.error(f"Error processing pending files: {e}")
             # Emit failure for all files
