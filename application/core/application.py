@@ -3,7 +3,6 @@ Application logic coordinator.
 """
 # standard library imports
 import sys
-from typing import Optional
 
 # third-party imports
 from PyQt6.QtWidgets import QApplication
@@ -19,7 +18,7 @@ from utils.file_helper import FileHelper
 from core.file_manager import FileManager
 from core.editor_manager import EditorManager
 from core.tab_manager import TabManager
-from utils.git import GitWorker
+from core.git_manager import GitManager
 from utils.markdown_auto_stager import MarkdownAutoStager
 
 
@@ -61,7 +60,7 @@ class Application:
             self.tab_manager
         )
 
-        self.git_worker: Optional[GitWorker] = None
+        self.git_manager = GitManager(repo_path=str(Config.get_base_path()))
 
         # Set up application logic and signal connections
         self._setup_application()
@@ -124,14 +123,18 @@ class Application:
         )
 
         git_viewer = self.main_window.get_git_viewer()
-        git_viewer.btn_status.clicked.connect(lambda: self._start_git_operation("status"))
-        git_viewer.btn_fetch.clicked.connect(lambda: self._start_git_operation("fetch"))
-        git_viewer.btn_pull.clicked.connect(lambda: self._start_git_operation("pull"))
-        git_viewer.btn_push.clicked.connect(lambda: self._start_git_operation("push"))
-        toolbar.action_status.triggered.connect(lambda: self._start_git_operation("status"))
-        toolbar.action_fetch.triggered.connect(lambda: self._start_git_operation("fetch"))
-        toolbar.action_pull.triggered.connect(lambda: self._start_git_operation("pull"))
-        toolbar.action_push.triggered.connect(lambda: self._start_git_operation("push"))
+        git_viewer.btn_status.clicked.connect(self.git_manager.status)
+        git_viewer.btn_fetch.clicked.connect(self.git_manager.fetch)
+        git_viewer.btn_pull.clicked.connect(self.git_manager.pull)
+        git_viewer.btn_push.clicked.connect(self.git_manager.push)
+        toolbar.action_status.triggered.connect(self.git_manager.status)
+        toolbar.action_fetch.triggered.connect(self.git_manager.fetch)
+        toolbar.action_pull.triggered.connect(self.git_manager.pull)
+        toolbar.action_push.triggered.connect(self.git_manager.push)
+
+        self.git_manager.operation_started.connect(self._on_git_operation_started)
+        self.git_manager.operation_output.connect(self._on_git_operation_output)
+        self.git_manager.operation_finished.connect(self._on_git_operation_finished)
 
         self.auto_stager.file_staged.connect(self.file_manager.on_file_staged)
         self.auto_stager.staging_failed.connect(
@@ -167,22 +170,16 @@ class Application:
         self.main_window.show()
         return self.app.exec()
 
-    def _start_git_operation(self, operation: str) -> None:
-        """Run git operation in background and display output in git scene."""
+    def _on_git_operation_started(self, operation: str) -> None:
+        """Update UI when git operation starts."""
         git_viewer = self.main_window.get_git_viewer()
-
-        if self.git_worker is not None and self.git_worker.isRunning():
-            git_viewer.append_output("Another git operation is already running.")
-            return
-
         git_viewer.set_controls_enabled(False)
         git_viewer.set_output(f"Running git {operation}...")
 
-        self.git_worker = GitWorker(operation=operation, repo_path=str(Config.get_base_path()))
-        self.git_worker.finished.connect(
-            lambda success, message, op=operation: self._on_git_operation_finished(op, success, message)
-        )
-        self.git_worker.start()
+    def _on_git_operation_output(self, operation: str, message: str) -> None:
+        """Append manager output to git scene."""
+        git_viewer = self.main_window.get_git_viewer()
+        git_viewer.append_output(message)
 
     def _on_git_operation_finished(self, operation: str, success: bool, message: str) -> None:
         """Update git scene after background operation completes."""
@@ -190,7 +187,6 @@ class Application:
         status_prefix = "Success" if success else "Failed"
         git_viewer.set_output(f"{status_prefix}: {operation}\n\n{message}")
         git_viewer.set_controls_enabled(True)
-        self.git_worker = None
     
     def get_main_window(self) -> MainWindow:
         """

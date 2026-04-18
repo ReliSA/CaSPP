@@ -46,9 +46,6 @@ class GitScene(QWidget):
 
         # Changed file list setup
         self.list_git_files = QListWidget()
-        
-        self.list_git_files.addItem("main.py (Modified)")
-        self.list_git_files.addItem("components/md_scene.py (Added)")
 
         # Adding chnaged file list to the main layout
         self.layout.addWidget(self.list_git_files)
