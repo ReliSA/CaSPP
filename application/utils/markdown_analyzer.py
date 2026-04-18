@@ -6,6 +6,7 @@ import logging
 
 from core.constants import FileConstants, LoaderConstants, ReportConstants
 from utils.exceptions import FileNotFoundError, InvalidInputError
+from utils.formatting_validator import FormattingValidator
 from utils.markdown_parser import DocumentMeta, HeadingInfo, ParsedDocument
 from utils.template_parser import ContentRules, DocumentRules, HeadingRules, TemplateRules
 
@@ -46,7 +47,21 @@ class MarkdownAnalyzer:
         """
         self.current_warnings = []
         self.current_passed = []
+  
+        # Formatting
+        all_raw_lines = []
+        for heading in doc.headings:
+            all_raw_lines.extend(heading.content.raw_lines)
 
+        formatting_warnings = FormattingValidator.run_all_checks(
+            full_content=getattr(doc, 'raw_content', ""),
+            raw_lines=all_raw_lines
+        )
+        self.current_warnings.extend(formatting_warnings)
+        
+        if not formatting_warnings:
+            self._add_passed("Formatting (bold, italics, tables, images) is consistent.")    
+        
         # Breadcrumbs
         self._validate_breadcrumbs(doc.meta, template.document_rules)
 
