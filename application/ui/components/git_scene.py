@@ -1,8 +1,18 @@
 """
 Git scene.
 """
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QSpacerItem, QSizePolicy, QListWidget
+from PyQt6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QSpacerItem,
+    QSizePolicy,
+    QListWidget,
+    QInputDialog,
+)
 from PyQt6.QtGui import QIcon
+from typing import Tuple
 
 from core.constants import UIConstants, AssetsConstants
 
@@ -66,3 +76,12 @@ class GitScene(QWidget):
         self.btn_fetch.setEnabled(enabled)
         self.btn_pull.setEnabled(enabled)
         self.btn_push.setEnabled(enabled)
+
+    def ask_push_commit_message(self) -> Tuple[str, bool]:
+        """Ask user for optional commit message during push."""
+        message, accepted = QInputDialog.getText(
+            self,
+            "Push markdown changes",
+            "Commit message (optional):",
+        )
+        return message.strip(), accepted

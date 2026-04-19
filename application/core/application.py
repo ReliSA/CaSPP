@@ -126,11 +126,11 @@ class Application:
         git_viewer.btn_status.clicked.connect(self.git_manager.status)
         git_viewer.btn_fetch.clicked.connect(self.git_manager.fetch)
         git_viewer.btn_pull.clicked.connect(self.git_manager.pull)
-        git_viewer.btn_push.clicked.connect(self.git_manager.push)
+        git_viewer.btn_push.clicked.connect(self._push_with_custom_message)
         toolbar.action_status.triggered.connect(self.git_manager.status)
         toolbar.action_fetch.triggered.connect(self.git_manager.fetch)
         toolbar.action_pull.triggered.connect(self.git_manager.pull)
-        toolbar.action_push.triggered.connect(self.git_manager.push)
+        toolbar.action_push.triggered.connect(self._push_with_custom_message)
 
         self.git_manager.operation_started.connect(self._on_git_operation_started)
         self.git_manager.operation_output.connect(self._on_git_operation_output)
@@ -187,6 +187,16 @@ class Application:
         status_prefix = "Success" if success else "Failed"
         git_viewer.set_output(f"{status_prefix}: {operation}\n\n{message}")
         git_viewer.set_controls_enabled(True)
+
+    def _push_with_custom_message(self) -> None:
+        """Prompt for commit message and run push operation."""
+        git_viewer = self.main_window.get_git_viewer()
+        message, accepted = git_viewer.ask_push_commit_message()
+        if not accepted:
+            git_viewer.append_output("Push cancelled.")
+            return
+
+        self.git_manager.push(message=message)
     
     def get_main_window(self) -> MainWindow:
         """
