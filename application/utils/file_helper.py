@@ -254,7 +254,7 @@ class FileHelper:
         """
         try:
             # Validate content size
-            content_size = len(content.encode(FileConstants.ENCODING_UTF8))
+            content_size = len(content.encode(FileConstants.ENCODING_CP1252))
             max_size = FileConstants.MAX_FILE_SIZE_MB * 1024 * 1024
             if content_size > max_size:
                 raise FileSizeError("content", content_size, max_size)
@@ -274,7 +274,7 @@ class FileHelper:
             Path(file_path).parent.mkdir(parents=True, exist_ok=True)
             
             # Write the file
-            with open(file_path, 'w', encoding=FileConstants.ENCODING_UTF8) as f:
+            with open(file_path, 'w', encoding=FileConstants.ENCODING_CP1252) as f:
                 f.write(content)
             
             return file_path
@@ -309,7 +309,7 @@ class FileHelper:
                 # _validate_file already logs the specific error
                 return None
             
-            with open(validated_path, 'r', encoding=FileConstants.ENCODING_CP1252, errors='replace') as f:
+            with open(validated_path, 'r', encoding=FileConstants.ENCODING_CP1252) as f:
                 content = f.read()
                 
             # Check for reasonable file size
