@@ -5,10 +5,15 @@ File operations helper module.
 # standard library imports
 import os
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 # third-party imports
 from PyQt6.QtWidgets import QFileDialog, QMessageBox, QWidget
+
+try:
+    from charset_normalizer import from_bytes
+except ImportError:
+    from_bytes = None
 
 # local imports
 from core.constants import FileConstants
@@ -28,6 +33,41 @@ class FileHelper:
             base_path: Base directory for file operations
         """
         self.base_path = Path(base_path) if base_path else Path.cwd()
+        self._file_encodings: Dict[str, str] = {}
+
+    def _detect_encoding_from_bytes(self, raw_bytes: bytes) -> str:
+        """Detect text encoding with strict fallbacks."""
+        try:
+            raw_bytes.decode(FileConstants.ENCODING_UTF8)
+            return FileConstants.ENCODING_UTF8
+        except UnicodeDecodeError:
+            pass
+
+        if from_bytes is not None:
+            matches = from_bytes(raw_bytes)
+            best = matches.best()
+            if best and best.encoding:
+                return best.encoding.lower()
+
+        return FileConstants.ENCODING_CP1252
+
+    def _resolve_save_encoding(self, file_path: Optional[str]) -> str:
+        """Resolve output encoding for file writes."""
+        if not file_path:
+            return FileConstants.ENCODING_UTF8
+
+        resolved_path = str(Path(file_path).resolve())
+        if resolved_path in self._file_encodings:
+            return self._file_encodings[resolved_path]
+
+        path_obj = Path(file_path)
+        if path_obj.exists() and path_obj.is_file():
+            raw_bytes = path_obj.read_bytes()
+            encoding = self._detect_encoding_from_bytes(raw_bytes)
+            self._file_encodings[resolved_path] = encoding
+            return encoding
+
+        return FileConstants.ENCODING_UTF8
     
     def select_markdown_file(self, parent: Optional[QWidget] = None, 
                            title: str = "Select Markdown File") -> Optional[str]:
@@ -254,7 +294,8 @@ class FileHelper:
         """
         try:
             # Validate content size
-            content_size = len(content.encode(FileConstants.ENCODING_CP1252))
+            target_encoding = self._resolve_save_encoding(file_path)
+            content_size = len(content.encode(target_encoding))
             max_size = FileConstants.MAX_FILE_SIZE_MB * 1024 * 1024
             if content_size > max_size:
                 raise FileSizeError("content", content_size, max_size)
@@ -273,9 +314,11 @@ class FileHelper:
             # Ensure the directory exists
             Path(file_path).parent.mkdir(parents=True, exist_ok=True)
             
-            # Write the file
-            with open(file_path, 'w', encoding=FileConstants.ENCODING_CP1252) as f:
+            # Write the file using preserved or detected encoding
+            with open(file_path, 'w', encoding=target_encoding) as f:
                 f.write(content)
+
+            self._file_encodings[str(Path(file_path).resolve())] = target_encoding
             
             return file_path
         
@@ -309,8 +352,10 @@ class FileHelper:
                 # _validate_file already logs the specific error
                 return None
             
-            with open(validated_path, 'r', encoding=FileConstants.ENCODING_CP1252) as f:
-                content = f.read()
+            raw_bytes = Path(validated_path).read_bytes()
+            detected_encoding = self._detect_encoding_from_bytes(raw_bytes)
+            content = raw_bytes.decode(detected_encoding)
+            self._file_encodings[str(Path(validated_path).resolve())] = detected_encoding
                 
             # Check for reasonable file size
             if len(content) > FileConstants.MAX_FILE_SIZE_MB * 1024 * 1024:
