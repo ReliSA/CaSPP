@@ -42,11 +42,11 @@ The solution balances working alone and working together. After a quick consulta
     </li>    
     <li><b>Individual preparation</b>      
     <ul>        
-        <li><b><i>Triangulate when you prepare.</i></b> Although holistic is the way to go in establishing the final grade, there are too much ECTS at stake to Ã¢â‚¬â„¢justÃ¢â‚¬â„¢ cast a grade on the basis of the teachers own observations during the project. Validation of observations needs to take place. By triangulating your observations during the project period, with objective metrics and studentÃ¢â‚¬â„¢s accounts for their individual contributions to the project, the teacher will lift their confidence in the judgments they make. These three corners of the triangulation are patterns on their own, see [Lest not forget - Collecting observations](Lest_not_forget.md), [Whodunnit? - Using metrics in a fair way](Whodunnit.md) and [Face their facts - StudentÃ¢â‚¬â„¢s accountability](Face_their_facts.md).          
+        <li><b><i>Triangulate when you prepare.</i></b> Although holistic is the way to go in establishing the final grade, there are too much ECTS at stake to ’just’ cast a grade on the basis of the teachers own observations during the project. Validation of observations needs to take place. By triangulating your observations during the project period, with objective metrics and student’s accounts for their individual contributions to the project, the teacher will lift their confidence in the judgments they make. These three corners of the triangulation are patterns on their own, see [Lest not forget - Collecting observations](Lest_not_forget.md), [Whodunnit? - Using metrics in a fair way](Whodunnit.md) and [Face their facts - Student’s accountability](Face_their_facts.md).          
         <ul>            
             <li>In <b>step 1</b> (see figure 1), <b>the teacher formulates their private opinion</b> on every single student on the basis of their observations during the project. Who stood out, positively as well as negatively? Mind that this is not just a random opinion, or a gut feeling. This opinion is grounded in their observations during the project. [Lest not forget](Lest_not_forget.md), provides a separate pattern for the way this could be established. If an individual student did better or worse than their team mates, formulate: on which points? Was it a quantitative or qualitative difference? Which (mental) notes do you take from this? These notes help you to keep focused during the rest of the grading process.              
             </li>            
-            <li>In <b>step 2</b> the teacher <b>focuses solely on the measured quantity of the studentÃ¢â‚¬â„¢s work.</b> The question is now: "Do the numbers the tool stack provides give reason to dive deeper into the work of any specific student?" Come to a stand-still and decide: which work/students are you in doubt about? Mind again that this doubt can be either positively or negatively: you can very well be in doubt if someone deserves an upgrade. [Whodunnit?](Whodunnit.md), provides a separate pattern for the way to handle quantitative metrics.              
+            <li>In <b>step 2</b> the teacher <b>focuses solely on the measured quantity of the student’s work.</b> The question is now: "Do the numbers the tool stack provides give reason to dive deeper into the work of any specific student?" Come to a stand-still and decide: which work/students are you in doubt about? Mind again that this doubt can be either positively or negatively: you can very well be in doubt if someone deserves an upgrade. [Whodunnit?](Whodunnit.md), provides a separate pattern for the way to handle quantitative metrics.              
             </li>            
             <li>In <b>step 3</b> you <b>check on the information the students provided.</b> You start with the ones you think have performed average. If their information is complete and you do not see any remarkable things, no further work is needed. The doubtful ones need a more thorough look: Does the student proof evidence that they are competent on all desired learning outcomes, including the focus points you decided on in step 1? [Face their facts](Face_their_facts.md), provides a pattern for the way you can get the information you need.              
             </li>        
@@ -58,11 +58,11 @@ The solution balances working alone and working together. After a quick consulta
     </li>    
     <li><b>Teachers meeting</b>      
     <ul>        
-        <li><b>Setting the stage for discussion on Ã¢â‚¬â„¢the doubtful onesÃ¢â‚¬â„¢.</b> Once the teachers meeting starts, first select those students who you are both not in doubt about. This sets the stage for focusing on the cases in which:          
+        <li><b>Setting the stage for discussion on ’the doubtful ones’.</b> Once the teachers meeting starts, first select those students who you are both not in doubt about. This sets the stage for focusing on the cases in which:          
         <ul>            
             <li>(1) Your proposed grades deviate significantly from each other. A rule of thumb for this significance is: a difference of 1 point or more on a 1-10 scale.              
             </li>            
-            <li>(2) One of the teachers thinks a student Ã¢â‚¬â„¢floats aroundÃ¢â‚¬â„¢ the pass/fail point.              
+            <li>(2) One of the teachers thinks a student ’floats around’ the pass/fail point.              
             </li>            
             <li>(3) One of the teachers thinks a student needs to fail.              
             </li>        
@@ -90,7 +90,7 @@ The solution balances working alone and working together. After a quick consulta
 
 |Pattern|Relation type|Relation description|
 |--|--|--|
-|[Face their facts - StudentÃ¢â‚¬â„¢s accountability](Face_their_facts.md)|child|provides a pattern for the way you can get the information about students' experiences you need|
+|[Face their facts - Student’s accountability](Face_their_facts.md)|child|provides a pattern for the way you can get the information about students' experiences you need|
 |[Lest not forget - Collecting observations](Lest_not_forget.md)|child|provides a separate pattern for the way observations on who stood out, positively as well as negatively, could be established|
 |[If all pigs would be equal...](If_all_pigs_would_be_equal.md)|parent|solution to a broader problem|
 |[Whodunnit? - Using metrics in a fair way](Whodunnit.md)|child|provides a separate pattern for the way to handle quantitative metrics|
