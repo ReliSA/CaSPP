@@ -47,23 +47,10 @@ class MarkdownAnalyzer:
         """
         self.current_warnings = []
         self.current_passed = []
-  
-        # Formatting
-        all_raw_lines = []
-        for heading in doc.headings:
-            all_raw_lines.extend(heading.content.raw_lines)
-
-        formatting_warnings = FormattingValidator.run_all_checks(
-            full_content=getattr(doc, 'raw_content', ""),
-            raw_lines=all_raw_lines
-        )
-        self.current_warnings.extend(formatting_warnings)
-        
-        if not formatting_warnings:
-            self._add_passed("Formatting (bold, italics, tables, images) is consistent.")    
         
         # Breadcrumbs
         self._validate_breadcrumbs(doc.meta, template.document_rules)
+        self._check_breadcrumb_links(doc.meta)
 
         # H1 heading
         h1_headings = [h for h in doc.headings if h.level == 1]
@@ -83,13 +70,28 @@ class MarkdownAnalyzer:
         self._check_no_unknown_sections(doc.headings, template)
         self._check_heading_levels(doc_map, non_h1_headings)
 
-        # Content checks per matched section TODO - Need more robust checks
-        # if doc_h1 and template_h1:
-        #     self._check_section_content(doc_h1.content, template_h1.content_rules, doc_h1.line_number, doc_h1.text)
-        # for t_heading in non_h1_headings:
-        #     actual = doc_map.get(t_heading.text)
-        #     if actual:
-        #         self._check_section_content(actual.content, t_heading.content_rules, actual.line_number, actual.text)
+        # Content checks per matched section
+        self._check_mandatory_sections_not_empty(doc_map, non_h1_headings)
+        if doc_h1 and template_h1:
+            self._check_section_content(doc_h1.content, template_h1.content_rules, doc_h1.line_number, doc_h1.text)
+        for t_heading in non_h1_headings:
+            actual = doc_map.get(t_heading.text)
+            if actual:
+                self._check_section_content(actual.content, t_heading.content_rules, actual.line_number, actual.text)
+
+        # Formatting
+        all_raw_lines = []
+        for heading in doc.headings:
+            all_raw_lines.extend(heading.content.raw_lines)
+
+        formatting_warnings = FormattingValidator.run_all_checks(
+            full_content=getattr(doc, 'raw_content', ""),
+            raw_lines=all_raw_lines
+        )
+        self.current_warnings.extend(formatting_warnings)
+
+        if not formatting_warnings:
+            self._add_passed("Formatting (bold, italics, tables, images) is consistent.")
 
         return {
             "file": doc.meta.filepath,
@@ -276,10 +278,6 @@ class MarkdownAnalyzer:
         if len(self.current_warnings) == before:
             self._add_passed("All heading levels match the template.")
 
-    # ------------------------------------------------------------------ #
-    # Breadcrumbs                                                         #
-    # ------------------------------------------------------------------ #
-
     def _validate_breadcrumbs(self, doc_meta: DocumentMeta, doc_rules: DocumentRules) -> None:
         """Validate the breadcrumb navigation line.
 
@@ -327,17 +325,55 @@ class MarkdownAnalyzer:
         if len(self.current_warnings) == before:
             self._add_passed("Breadcrumbs are present and valid.")
 
-    def _check_section_content(
-        self,
-        actual_content,
-        rules: ContentRules,
-        line_num: int,
-        section_name: str = "",
-    ) -> None:
-        """Validate content within a single section.
+    def _check_breadcrumb_links(self, doc_meta: DocumentMeta) -> None:
+        """Validate that every linked part in breadcrumbs points to an existing file.
 
-        Table column headers must match the template exactly and all required
-        list prefixes defined in the template must be present.
+        Args:
+            doc_meta: Metadata extracted from the parsed document.
+
+        Returns:
+            None: Warnings are appended to self.current_warnings.
+        """
+        if not doc_meta.breadcrumbs or not doc_meta.filepath:
+            return
+
+        before = len(self.current_warnings)
+
+        for crumb in doc_meta.breadcrumbs:
+            for match in LoaderConstants.RE_LINK.finditer(crumb):
+                url = match.group(2)
+                exists, _ = self.check_file_exists(url, doc_meta.filepath)
+                if not exists:
+                    self._add_warning(1, f"Breadcrumb link '{url}' does not point to an existing file.")
+
+        if len(self.current_warnings) == before:
+            self._add_passed("All breadcrumb links point to existing files.")
+
+    def _check_mandatory_sections_not_empty(self, doc_map: Dict[str, HeadingInfo], template_headings:
+                                                List[HeadingRules]) -> None:
+        """Non-optional sections must contain at least some content.
+
+        Args:
+            doc_map: Mapping of heading text to HeadingInfo for the document.
+            template_headings: Non-H1 heading rules from the template.
+
+        Returns:
+            None: Warnings are appended to self.current_warnings.
+        """
+        before = len(self.current_warnings)
+        for t_heading in template_headings:
+            if not t_heading.optional:
+                actual = doc_map.get(t_heading.text)
+                if actual and actual.content.is_empty:
+                    self._add_warning(
+                        actual.line_number,
+                        f"Mandatory section '{t_heading.text}' is empty.",
+                    )
+        if len(self.current_warnings) == before:
+            self._add_passed("All mandatory sections have content.")
+
+    def _check_section_content(self, actual_content, rules: ContentRules, line_num: int, section_name: str = "") -> None:
+        """Validate content within a single section.
 
         Args:
             actual_content: Parsed content info for the section being validated.
@@ -346,38 +382,131 @@ class MarkdownAnalyzer:
             section_name: Display name of the section, used for the passed message.
 
         Returns:
+            None: Delegates to per-rule methods which append to self.current_warnings.
+        """
+        if actual_content.is_empty:
+            return
+        self._check_content_types(actual_content, rules, line_num, section_name)
+        self._check_table_headers(actual_content, rules, line_num, section_name)
+        self._check_bullet_prefixes(actual_content, rules, line_num, section_name)
+
+        if actual_content.exact_list_prefixes is not []:
+            self._check_exact_list_prefix_values(actual_content, section_name)
+
+    def _check_content_types(self,  actual_content, rules: ContentRules, line_num: int, section_name: str) -> None:
+        """found_types must be a superset of expected_types (excluding 'text').
+
+        Args:
+            actual_content: Parsed content info for the section.
+            rules: Expected content rules from the template.
+            line_num: Line number of the section heading.
+            section_name: Display name of the section.
+
+        Returns:
+            None: Warnings are appended to self.current_warnings.
+        """
+        expected_non_text = rules.expected_types - {"text"}
+        if not expected_non_text:
+            self._add_passed(f"Section '{section_name}': no specific content types required.")
+            return
+        missing_types = expected_non_text - actual_content.found_types
+        if missing_types:
+            self._add_warning(
+                line_num,
+                f"Section '{section_name}' is missing expected content types: {sorted(missing_types)}.",
+            )
+        else:
+            self._add_passed(f"Section '{section_name}' has all required content types.")
+
+    def _check_table_headers(self, actual_content, rules: ContentRules, line_num: int, section_name: str) -> None:
+        """Table column headers must match the template exactly.
+
+        Args:
+            actual_content: Parsed content info for the section.
+            rules: Expected content rules from the template.
+            line_num: Line number of the section heading.
+            section_name: Display name of the section.
+
+        Returns:
+            None: Warnings are appended to self.current_warnings.
+        """
+        if not rules.table_headers:
+            return
+        if not actual_content.table_headers:
+            self._add_warning(line_num, f"Section '{section_name}' is missing a required table.")
+        elif actual_content.table_headers != rules.table_headers:
+            self._add_warning(
+                line_num,
+                f"Section '{section_name}' table headers {actual_content.table_headers} "
+                f"do not match expected {rules.table_headers}.",
+            )
+        else:
+            self._add_passed(f"Section '{section_name}' table headers match the template.")
+
+    def _check_bullet_prefixes(self, actual_content, rules: ContentRules, line_num: int, section_name: str) -> None:
+        """Bullet prefixes used in the section must belong to the template's allowed set.
+
+        A prefix present in the document but absent from the template is an error.
+        Missing prefixes are not flagged — having only a subset is fine.
+
+        Args:
+            actual_content: Parsed content info for the section.
+            rules: Expected content rules from the template.
+            line_num: Line number of the section heading.
+            section_name: Display name of the section.
+
+        Returns:
+            None: Warnings are appended to self.current_warnings.
+        """
+        if not rules.bullet_prefixes and not rules.exact_list_prefixes:
+            return
+        before = len(self.current_warnings)
+        missing_bullet = rules.bullet_prefixes - actual_content.bullet_prefixes
+        if missing_bullet:
+            allowed = ", ".join(sorted(rules.bullet_prefixes))
+            self._add_warning(
+                line_num,
+                f"Section '{section_name}' is missing required bullet prefixes. "
+                f"Allowed: {allowed}.",
+            )
+        missing_exact = rules.exact_list_prefixes - actual_content.exact_list_prefixes
+        if missing_exact:
+            allowed = ", ".join(sorted(rules.exact_list_prefixes))
+            self._add_warning(
+                line_num,
+                f"Section '{section_name}' is missing required list item prefixes. "
+                f"Allowed: {allowed}.",
+            )
+        if len(self.current_warnings) == before:
+            self._add_passed(f"Section '{section_name}' has all required bullet prefixes.")
+
+    def _check_exact_list_prefix_values(self, actual_content, section_name: str) -> None:
+        """Each [Label](url): list item must have a link value after the colon.
+
+        Args:
+            actual_content: Parsed content info for the section.
+            section_name: Display name of the section.
+
+        Returns:
             None: Warnings are appended to self.current_warnings.
         """
         before = len(self.current_warnings)
-
-        # Table headers
-        if rules.table_headers:
-            if not actual_content.table_headers:
-                self._add_warning(line_num, "Section is missing a required table.")
-            elif actual_content.table_headers != rules.table_headers:
+        for entry in actual_content.raw_lines:
+            line = entry["content"]
+            line_number = entry["line"]
+            m = LoaderConstants.RE_EXACT_LIST_PREFIX.match(line)
+            if not m:
+                continue
+            remainder = line[m.end():].strip()
+            if not remainder or not LoaderConstants.RE_LINK.search(remainder):
+                label_match = LoaderConstants.RE_LINK.search(m.group(1))
+                label = label_match.group(1) if label_match else m.group(1)
                 self._add_warning(
-                    line_num,
-                    f"Table headers {actual_content.table_headers} "
-                    f"do not match expected {rules.table_headers}.",
+                    line_number,
+                    f"'{label}' in section '{section_name}' has no value assigned.",
                 )
-
-        # Required list prefixes
-        for prefix in rules.bullet_prefixes:
-            if prefix not in actual_content.bullet_prefixes:
-                self._add_warning(
-                    line_num,
-                    f"Required bullet prefix '{prefix}' is missing from section.",
-                )
-        for prefix in rules.exact_list_prefixes:
-            if prefix not in actual_content.exact_list_prefixes:
-                self._add_warning(
-                    line_num,
-                    f"Required list item prefix '{prefix}' is missing from section.",
-                )
-
         if len(self.current_warnings) == before:
-            label = f"'{section_name}'" if section_name else f"at line {line_num}"
-            self._add_passed(f"Section {label} content is valid.")
+            self._add_passed(f"Section '{section_name}' all list items have values.")
 
     def find_markdown_links(self, content: str) -> List[Dict]:
         """Find all markdown links in the content.
@@ -436,31 +565,6 @@ class MarkdownAnalyzer:
         except (OSError, ValueError) as exc:
             logger.warning("Error checking file existence for '%s': %s", file_path, exc)
             return False, ""
-
-    def extract_headings(self, content: str) -> List[Dict]:
-        """Extract all headings from markdown content.
-
-        Args:
-            content: Raw markdown text.
-
-        Returns:
-            List of dicts with keys 'level', 'text', and 'line'.
-        """
-        if not isinstance(content, str):
-            raise InvalidInputError("content", content, "must be a string")
-        if not content.strip():
-            return []
-
-        headings = []
-        for line_num, line in enumerate(content.split("\n"), 1):
-            match = re.match(LoaderConstants.RE_HEADING, line.strip())
-            if match:
-                headings.append({
-                    "level": len(match.group(1)),
-                    "text": match.group(2),
-                    "line": line_num,
-                })
-        return headings
 
     def generate_report(self, analysis: Dict) -> str:
         """Generate a human-readable report of the analysis.
