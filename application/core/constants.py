@@ -327,3 +327,18 @@ class FileMatcherConstants:
     CATALOGUE_PARENT_FOLDER = "catalogue"
     MIN_PATH_PARTS = 2
     PARENT_DIR_INDEX = -2
+
+class FormattingValidatorConstants:
+    BOLD_FORMAT = r'(?<!\\)\*\*'
+    BULLET_POINT = r'^\s*\*\s+'
+    ITALICS_FORMAT = r'(?<!\*)\*(?!\*)'
+    ALT_TEXT = r'!\[\s*\]\('
+    TABLE_SEPARATOR = r'\|(?:\s*:?-+:?\s*\|)+'
+
+    
+
+    
+
+    RE_ITALIC_MARKER = r'(?<!\*)\*(?!\*)'
+    RE_EMPTY_IMAGE_ALT = r'!\[\s*\]\('
+    RE_TABLE_SEPARATOR = r'\|(?:\s*:?-+:?\s*\|)+'

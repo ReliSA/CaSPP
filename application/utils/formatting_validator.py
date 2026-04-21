@@ -1,6 +1,6 @@
 import re
 from typing import List, Dict, Any, Set
-from core.constants import LoaderConstants
+from core.constants import FormattingValidatorConstants
 
 class FormattingValidator:
 
@@ -36,7 +36,7 @@ class FormattingValidator:
             warnings: The list to which any identified warnings are appended.
         """
 
-        bold_count = len(re.findall(r'(?<!\\)\*\*', line_content))
+        bold_count = len(re.findall(FormattingValidatorConstants.BOLD_FORMAT , line_content))
         if bold_count % 2 != 0:
             warnings.append({ "line": line_number, "msg": f"Unclosed bold formatting (odd number of **)."})
 
@@ -51,8 +51,8 @@ class FormattingValidator:
             warnings: The list to which any identified warnings are appended.
         """
 
-        clean_italic_line = re.sub(r'^\s*\*\s+', '', line_content)
-        italic_count = len(re.findall(r'(?<!\*)\*(?!\*)', clean_italic_line))
+        clean_italic_line = re.sub(FormattingValidatorConstants.BULLET_POINT, '', line_content)
+        italic_count = len(re.findall(FormattingValidatorConstants.ITALICS_FORMAT, clean_italic_line))
         if italic_count % 2 != 0:
             warnings.append({ "line": line_number, "msg": "Unclosed italic formatting (odd number of *)." })
 
@@ -66,7 +66,7 @@ class FormattingValidator:
             line_number: The 1-based line number for error reporting.
             warnings: The list to which any identified warnings are appended.
         """
-        if re.search(r'!\[\s*\]\(', line_content):
+        if re.search(FormattingValidatorConstants.ALT_TEXT, line_content):
             warnings.append({ "line": line_number, "msg": "Image is missing alt text (format ![]() is incorrect)."})
 
     @staticmethod
@@ -112,7 +112,7 @@ class FormattingValidator:
         sep_line_number = entry["line"]
         
         # Valid separators | --- | :--- | ---: | :---: |
-        if not re.fullmatch(r'\|(?:\s*:?-+:?\s*\|)+', sep_line):
+        if not re.fullmatch(FormattingValidatorConstants.TABLE_SEPARATOR, sep_line):
             warnings.append({
                 "line": sep_line_number,
                 "msg": "Missing or invalid table separator row (| --- |)."
