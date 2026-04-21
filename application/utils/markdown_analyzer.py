@@ -53,10 +53,11 @@ class MarkdownAnalyzer:
         for heading in doc.headings:
             all_raw_lines.extend(heading.content.raw_lines)
 
-        formatting_warnings = FormattingValidator.run_all_checks(
+        formatting_validator = FormattingValidator(
             full_content=getattr(doc, 'raw_content', ""),
             raw_lines=all_raw_lines
         )
+        formatting_warnings = formatting_validator.run_all_checks()
         self.current_warnings.extend(formatting_warnings)
         
         if not formatting_warnings:
