@@ -1,7 +1,5 @@
 [Home](../README.md) > [Catalogue](../Patterns_catalogue.md) > 2+2 makes four eyes
 
-# 2+2 makes four eyes
-
 ## Also Known As
 
 Grading individuals is teamwork
