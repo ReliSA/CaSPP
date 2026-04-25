@@ -19,8 +19,8 @@ from core.file_manager import FileManager
 from core.editor_manager import EditorManager
 from core.tab_manager import TabManager
 from core.git_manager import GitManager
+from core.error_manager import ErrorManager
 from utils.markdown_auto_stager import MarkdownAutoStager
-
 
 class Application:
     """Main application class that coordinates business logic."""
@@ -62,6 +62,7 @@ class Application:
 
         self.git_manager = GitManager(repo_path=str(Config.get_base_path()))
 
+        self.error_manager = ErrorManager(self.main_window)
         # Set up application logic and signal connections
         self._setup_application()
 
@@ -145,7 +146,7 @@ class Application:
 
         # Load default markdown file
         #self.file_manager.load_markdown_file(Config.get_default_markdown_path())
-    
+
     def _on_editor_text_changed(self) -> None:
         """Wrapper to trigger multiple updates when a tab's text changes.
         

@@ -13,9 +13,10 @@ from utils.markdown_analyzer import MarkdownAnalyzer
 from utils.file_helper import FileHelper
 from core.constants import FileConstants
 from core.tab_manager import TabManager
+from core.error_manager import safe_slot
 from utils.markdown_auto_stager import MarkdownAutoStager
 from utils.file_matcher import FileMatcher
-
+from utils.exceptions import FileNotFoundError
 
 class FileManager:
     """Handles loading and analyzing markdown files and related file events."""
@@ -230,8 +231,10 @@ class FileManager:
         if file_path:
             self.load_markdown_file(file_path)
 
+    @safe_slot
     def handle_link_clicked(self, url: QUrl) -> None:
         """Handle link clicks from the markdown preview."""
+        
         if not self.current_file_path:
             return
 
@@ -246,13 +249,11 @@ class FileManager:
             link_path
         )
 
-        if target_path:
-            self.load_markdown_file(target_path)
-        else:
-            self.main_window.get_markdown_viewer().set_error(
-                f"Could not open link. File not found or invalid: {link_path}"
-            )
+        if not target_path or not self.file_helper.validate_file(target_path):
+            raise FileNotFoundError(link_path)
 
+        self.load_markdown_file(target_path)
+    
     def on_open_explorer_button_pressed(self) -> None:
         """Button listener for opening explorer."""
         self.open_explorer()

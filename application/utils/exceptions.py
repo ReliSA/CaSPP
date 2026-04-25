@@ -16,7 +16,7 @@ class BaseAppException(Exception):
     """
     
     def __init__(self, message: str, error_code: Optional[str] = None, 
-                 user_message: Optional[str] = None) -> None:
+                 user_message: Optional[str] = None, title: str = "Application Error") -> None:
         """
         Initialize base exception.
         
@@ -24,10 +24,12 @@ class BaseAppException(Exception):
             message: Technical error message for developers/logs
             error_code: Optional error code for categorization
             user_message: Optional user-friendly message for UI display
+            title: Optional title for the UI popup dialog
         """
         super().__init__(message)
         self.error_code = error_code
         self.user_message = user_message or message
+        self.title = title
 
 
 # Git-related exceptions
@@ -124,7 +126,8 @@ class FileNotFoundError(FileException):
         super().__init__(
             message=f"File not found: {file_path}",
             error_code="FILE_NOT_FOUND",
-            user_message=f"The file '{file_path}' could not be found."
+            user_message=f"The file '{file_path}' could not be found.",
+            title="File Not Found"
         )
 
 
