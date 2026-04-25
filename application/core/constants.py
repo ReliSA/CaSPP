@@ -96,6 +96,7 @@ class UIConstants:
     FETCH_ACTION_NAME = "Fetch"
     PULL_ACTION_NAME = "Pull"
     PUSH_ACTION_NAME = "Push"
+    EXPORT_STAGED_ACTION_NAME = "Export Staged"
 
     # File menu action shortcuts
     OPEN_FILE_ACTION_SHORTCUT = "Ctrl+O"
@@ -110,6 +111,7 @@ class UIConstants:
     FETCH_ACTION_SHORTCUT = "Ctrl+Shift+F"
     PULL_ACTION_SHORTCUT = "Ctrl+Shift+L"
     PUSH_ACTION_SHORTCUT = "Ctrl+Shift+P"
+    EXPORT_STAGED_ACTION_SHORTCUT = "Ctrl+Shift+E"
 
     # Markdown scene element constants
     EXPLORER_LABEL = "Explorer"
@@ -123,6 +125,7 @@ class UIConstants:
     FETCH_BUTTON_LABEL = "Fetch"
     PULL_BUTTON_LABEL = "Pull"
     PUSH_BUTTON_LABEL = "Push"
+    EXPORT_STAGED_BUTTON_LABEL = "Export Staged"
 
     # Tab constants
     UNTITLED_TAB_NAME = "Untitled"

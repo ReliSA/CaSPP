@@ -46,10 +46,13 @@ class GitScene(QWidget):
         self.btn_push = QPushButton(UIConstants.PUSH_BUTTON_LABEL)
         self.btn_push.setIcon(QIcon(AssetsConstants.PUSH_BUTTON_ICON_PATH))
 
+        self.btn_export_staged = QPushButton(UIConstants.EXPORT_STAGED_BUTTON_LABEL)
+
         self.control_layout.addWidget(self.btn_status)
         self.control_layout.addWidget(self.btn_fetch)
         self.control_layout.addWidget(self.btn_pull)
         self.control_layout.addWidget(self.btn_push)
+        self.control_layout.addWidget(self.btn_export_staged)
 
         # Adding control panel the main layout
         self.layout.addLayout(self.control_layout)
@@ -76,6 +79,7 @@ class GitScene(QWidget):
         self.btn_fetch.setEnabled(enabled)
         self.btn_pull.setEnabled(enabled)
         self.btn_push.setEnabled(enabled)
+        self.btn_export_staged.setEnabled(enabled)
 
     def ask_push_commit_message(self) -> Tuple[str, bool]:
         """Ask user for optional commit message during push."""

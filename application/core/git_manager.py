@@ -6,6 +6,7 @@ from PyQt6.QtCore import QObject, QThread, pyqtSignal
 
 from core.constants import GitConstants
 from utils.git import commit as commit_operation
+from utils.git import export_staged_files_zip as export_staged_files_zip_operation
 from utils.git import fetch as fetch_operation
 from utils.git import get_status_detailed
 from utils.git import pull as pull_operation
@@ -57,6 +58,11 @@ class GitOperationWorker(QThread):
                 self.repo_path,
                 self.kwargs.get("message", GitConstants.DEFAULT_COMMIT_MESSAGE),
                 stage_all=bool(self.kwargs.get("stage_all", False)),
+            )
+        if self.operation == "export_staged":
+            return export_staged_files_zip_operation(
+                self.repo_path,
+                self.kwargs.get("output_zip_path"),
             )
 
         return GitResult(False, f"Unknown operation: {self.operation}")
@@ -121,6 +127,12 @@ class GitManager(QObject):
 
     def commit(self, message: str, stage_all: bool = False) -> bool:
         return self.start_operation("commit", message=message, stage_all=stage_all)
+
+    def export_staged(self, output_zip_path: Optional[str] = None) -> bool:
+        kwargs: Dict[str, Any] = {}
+        if output_zip_path is not None:
+            kwargs["output_zip_path"] = output_zip_path
+        return self.start_operation("export_staged", **kwargs)
 
     def _on_operation_finished(self, operation: str, success: bool, message: str, payload: object) -> None:
         """Fan out completion updates to listeners."""
