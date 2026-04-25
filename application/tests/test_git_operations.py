@@ -211,6 +211,7 @@ def test_pull_blocks_when_behind_with_staged_changes(tmp_path: Path, monkeypatch
 def test_export_staged_files_zip_creates_archive_with_staged_files(tmp_path: Path) -> None:
     _init_repo(tmp_path)
     (tmp_path / "README.md").write_text("zip me\n", encoding="utf-8")
+    (tmp_path / "notes.tmp").write_text("temporary\n", encoding="utf-8")
 
     repo = Repo(tmp_path)
     repo.git.add("README.md")
@@ -220,7 +221,11 @@ def test_export_staged_files_zip_creates_archive_with_staged_files(tmp_path: Pat
     assert result.success is True
     zip_path = Path(result.payload["zip_path"])
     assert zip_path.exists()
+    assert tmp_path not in zip_path.parents
 
     with ZipFile(zip_path, "r") as archive:
         names = archive.namelist()
         assert "README.md" in names
+
+    assert repo.is_dirty(untracked_files=True) is False
+    assert repo.untracked_files == []

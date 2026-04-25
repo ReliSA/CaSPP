@@ -209,6 +209,43 @@ def get_staged_name_status(repo: GitRepo) -> List[Tuple[str, str]]:
     return result
 
 
+def discard_working_tree_changes(repo: GitRepo, preserve_paths: Optional[List[str]] = None) -> Dict[str, Any]:
+    """Discard staged/unstaged tracked changes and remove untracked files."""
+    preserve_paths = preserve_paths or []
+    repo_root = Path(repo.working_dir).resolve()
+
+    try:
+        repo.git.reset("--hard", "HEAD")
+    except Exception as exc:
+        return {
+            "success": False,
+            "message": f"Failed to reset tracked changes: {str(exc)}",
+        }
+
+    clean_args = ["-fd"]
+    for preserve_path in preserve_paths:
+        try:
+            preserve_rel = Path(preserve_path).resolve().relative_to(repo_root)
+            clean_args.extend(["-e", preserve_rel.as_posix()])
+        except ValueError:
+            continue
+        except Exception:
+            continue
+
+    try:
+        repo.git.clean(*clean_args)
+    except Exception as exc:
+        return {
+            "success": False,
+            "message": f"Failed to remove untracked files: {str(exc)}",
+        }
+
+    return {
+        "success": True,
+        "message": "Discarded local tracked and untracked changes.",
+    }
+
+
 def get_status(repo: GitRepo, markdown_only: bool = False) -> Dict[str, List[str]]:
     """Return normalized working tree status."""
     status = {
