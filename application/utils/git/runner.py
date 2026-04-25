@@ -1,7 +1,12 @@
 """Shared helpers for git operations."""
 
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+
+if TYPE_CHECKING:
+    from git import Repo as GitRepo
+else:
+    GitRepo = Any
 
 try:
     import git
@@ -30,7 +35,7 @@ def ensure_git_available() -> None:
         raise GitLibraryNotAvailableError()
 
 
-def load_repo(repo_path: Optional[str] = None) -> "Repo":
+def load_repo(repo_path: Optional[str] = None) -> GitRepo:
     """Load and validate a git repository."""
     ensure_git_available()
 
@@ -73,7 +78,7 @@ def is_markdown_file(file_path: str) -> bool:
     return file_path.lower().endswith(tuple(FileConstants.MARKDOWN_EXTENSIONS))
 
 
-def get_current_branch(repo: "Repo") -> str:
+def get_current_branch(repo: GitRepo) -> str:
     """Return current branch name or detached indicator."""
     try:
         return str(repo.active_branch)
@@ -81,7 +86,7 @@ def get_current_branch(repo: "Repo") -> str:
         return "detached HEAD"
 
 
-def has_changes(repo: "Repo") -> Tuple[bool, bool]:
+def has_changes(repo: GitRepo) -> Tuple[bool, bool]:
     """Return tuple of (has_unstaged_changes, has_staged_changes)."""
     try:
         unstaged = len(repo.index.diff(None)) > 0 or len(repo.untracked_files) > 0
@@ -96,7 +101,115 @@ def has_changes(repo: "Repo") -> Tuple[bool, bool]:
     return unstaged, staged
 
 
-def get_status(repo: "Repo", markdown_only: bool = False) -> Dict[str, List[str]]:
+def get_branch_sync_state(
+    repo: GitRepo,
+    fetch_remote: bool = False,
+    remote_name: str = GitConstants.DEFAULT_REMOTE_NAME,
+) -> Dict[str, Any]:
+    """Return branch sync state against tracking upstream branch."""
+    branch = get_current_branch(repo)
+    if branch == "detached HEAD":
+        return {
+            "ok": False,
+            "reason": "detached_head",
+            "message": "Cannot determine sync status in detached HEAD state.",
+            "branch": branch,
+            "upstream": None,
+            "ahead": 0,
+            "behind": 0,
+            "is_up_to_date": False,
+        }
+
+    try:
+        tracking_branch = repo.active_branch.tracking_branch()
+    except Exception:
+        tracking_branch = None
+
+    if tracking_branch is None:
+        return {
+            "ok": False,
+            "reason": "no_upstream",
+            "message": f"Branch '{branch}' has no upstream tracking branch.",
+            "branch": branch,
+            "upstream": None,
+            "ahead": 0,
+            "behind": 0,
+            "is_up_to_date": False,
+        }
+
+    upstream_name = tracking_branch.name
+
+    if fetch_remote:
+        try:
+            remote_to_fetch = getattr(repo.remotes, tracking_branch.remote_name)
+            remote_to_fetch.fetch()
+        except Exception as exc:
+            return {
+                "ok": False,
+                "reason": "fetch_failed",
+                "message": f"Failed to fetch remote updates: {str(exc)}",
+                "branch": branch,
+                "upstream": upstream_name,
+                "ahead": 0,
+                "behind": 0,
+                "is_up_to_date": False,
+            }
+
+    try:
+        behind_str, ahead_str = repo.git.rev_list("--left-right", "--count", f"{upstream_name}...HEAD").split()
+        behind = int(behind_str)
+        ahead = int(ahead_str)
+    except Exception as exc:
+        return {
+            "ok": False,
+            "reason": "sync_check_failed",
+            "message": f"Failed to compute branch sync status: {str(exc)}",
+            "branch": branch,
+            "upstream": upstream_name,
+            "ahead": 0,
+            "behind": 0,
+            "is_up_to_date": False,
+        }
+
+    return {
+        "ok": True,
+        "reason": "ok",
+        "message": "Sync status collected",
+        "branch": branch,
+        "upstream": upstream_name,
+        "ahead": ahead,
+        "behind": behind,
+        "is_up_to_date": behind == 0,
+    }
+
+
+def get_staged_name_status(repo: GitRepo) -> List[Tuple[str, str]]:
+    """Return staged files as (status, path) tuples."""
+    try:
+        output = repo.git.diff("--cached", "--name-status")
+    except Exception:
+        return []
+
+    result: List[Tuple[str, str]] = []
+    for line in output.splitlines():
+        parts = line.split("\t")
+        if len(parts) < 2:
+            continue
+
+        status_code = parts[0].strip()
+        status = status_code[0] if status_code else ""
+
+        if status == "R" and len(parts) >= 3:
+            result.append((status, parts[2].strip()))
+            continue
+
+        path = parts[1].strip()
+        result.append((status, path))
+
+    return result
+
+
+def get_status(repo: GitRepo, markdown_only: bool = False) -> Dict[str, List[str]]:
     """Return normalized working tree status."""
     status = {
         "modified": [],
@@ -142,7 +255,7 @@ def get_status(repo: "Repo", markdown_only: bool = False) -> Dict[str, List[str]
     return status
 
 
-def normalize_repo_path(repo: "Repo", file_path: str) -> str:
+def normalize_repo_path(repo: GitRepo, file_path: str) -> str:
     """Convert path to repository-relative path."""
     repo_root = Path(repo.working_dir)
     path_obj = Path(file_path)
