@@ -28,6 +28,9 @@ class TabWidget(QWidget):
         self.preview = QTextBrowser()
         self.preview.setVisible(False)
 
+        self.preview.setOpenExternalLinks(False)
+        self.preview.setOpenLinks(False)
+
         self.horiz_splitter.addWidget(self.editor)
         self.horiz_splitter.addWidget(self.preview)
 

@@ -327,3 +327,8 @@ class FileMatcherConstants:
     CATALOGUE_PARENT_FOLDER = "catalogue"
     MIN_PATH_PARTS = 2
     PARENT_DIR_INDEX = -2
+
+class ErrorConstants:
+    """Constants for Errors"""
+    DEFAULT_ERROR_TITLE = "Application Error"
+    DEFAULT_ERROR_MESSAGE = "An unexpected error occurred. Please check the logs."
