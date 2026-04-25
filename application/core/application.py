@@ -128,10 +128,12 @@ class Application:
         git_viewer.btn_fetch.clicked.connect(self.git_manager.fetch)
         git_viewer.btn_pull.clicked.connect(self.git_manager.pull)
         git_viewer.btn_push.clicked.connect(self._push_with_custom_message)
+        git_viewer.btn_export_staged.clicked.connect(self.git_manager.export_staged)
         toolbar.action_status.triggered.connect(self.git_manager.status)
         toolbar.action_fetch.triggered.connect(self.git_manager.fetch)
         toolbar.action_pull.triggered.connect(self.git_manager.pull)
         toolbar.action_push.triggered.connect(self._push_with_custom_message)
+        toolbar.action_export_staged.triggered.connect(self.git_manager.export_staged)
 
         self.git_manager.operation_started.connect(self._on_git_operation_started)
         self.git_manager.operation_output.connect(self._on_git_operation_output)
