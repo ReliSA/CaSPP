@@ -367,3 +367,18 @@ class SyntaxHighlighterConstants:
     REGEX_TASK_LIST = r"^\s*[-*+]\s+\[[ xX]\]"
     REGEX_HTML_TAG = r"<[^>]+>"
     REGEX_TABLE_PIPE = r"\|"
+
+class EditorConstants:
+    """Constants for editor UI styling (line numbers, gutter)."""
+
+    # Font
+    FONT_FAMILY = "Consolas"
+    FONT_SIZE = 11
+
+    # Colors
+    GUTTER_BACKGROUND = "#272822"
+    LINE_NUMBER_COLOR = "#75715E"
+    
+    # Active Line Highlighting
+    ACTIVE_LINE_NUMBER_COLOR = "#F8F8F2"
+    ACTIVE_GUTTER_BACK_COLOR = "#3E3D32"

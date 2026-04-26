@@ -3,6 +3,8 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
 from ui.components.markdown_highlighter import MarkdownHighlighter
+from ui.components.markdown_editor_widget import MarkdownEditorWidget
+from core.constants import EditorConstants
 
 class TabWidget(QWidget):
     """A single tab holding its own editor, preview, and analyzer list."""
@@ -25,11 +27,8 @@ class TabWidget(QWidget):
         self.horiz_splitter = QSplitter(Qt.Orientation.Horizontal)
         
         # Setup editor
-        self.editor = QPlainTextEdit()
-
-        editor_font = QFont("Consolas", 11)
-        self.editor.setFont(editor_font)
-
+        self.editor = MarkdownEditorWidget()
+        
         # Attach the highlighter to the editor
         self.highlighter = MarkdownHighlighter(self.editor.document())
         
