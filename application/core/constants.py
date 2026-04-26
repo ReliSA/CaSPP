@@ -335,3 +335,35 @@ class ErrorConstants:
     """Constants for Errors"""
     DEFAULT_ERROR_TITLE = "Application Error"
     DEFAULT_ERROR_MESSAGE = "An unexpected error occurred. Please check the logs."
+
+class SyntaxHighlighterConstants:
+    """Constants for syntax highlighting."""
+
+    # Colors
+    HEADINGS_COLOR = "#FD971F"
+    HTML_TAG_COLOR = "#F92672"
+    CODE_BLOCK_COLOR = "#E6DB74"
+    LINK_COLOR = "#AE81FF"
+    LIST_COLOR = "#66D9EF"
+    TASK_LIST_COLOR = "#A6E22E"
+    BLOCKQUOTE_COLOR = "#75715E"
+    HR_COLOR = "#75715E"
+    STRIKETHROUGH_COLOR = "#75715E"
+    TABLE_PIPE_COLOR = "#75715E"
+    
+    # Regular Expressions
+    REGEX_HEADING = r"^#{1,6}\s+.*"
+    REGEX_BOLD_AST = r"\*\*[^\*]+\*\*"
+    REGEX_BOLD_UND = r"__[^_]+__"
+    REGEX_ITALIC_AST = r"(?<!\*)\*[^\*]+\*(?!\*)"
+    REGEX_ITALIC_UND = r"(?<!_)_[^_]+_(?!_)"
+    REGEX_CODE = r"`[^`]+`"
+    REGEX_LINK = r"!?\[[^\]]*\]\([^\)]+\)"
+    REGEX_LIST_UNORDERED = r"^\s*[-*+]\s+"
+    REGEX_LIST_ORDERED = r"^\s*\d+\.\s+"
+    REGEX_BLOCKQUOTE = r"^\s*>.*"
+    REGEX_HR = r"^\s*(?:[-*_]\s*){3,}$"
+    REGEX_STRIKETHROUGH = r"~~[^~]+~~"
+    REGEX_TASK_LIST = r"^\s*[-*+]\s+\[[ xX]\]"
+    REGEX_HTML_TAG = r"<[^>]+>"
+    REGEX_TABLE_PIPE = r"\|"
