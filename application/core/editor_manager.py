@@ -4,7 +4,7 @@ from pymdownx import tilde, caret, mark, tasklist, emoji, superfences, highlight
 from pymdownx.emoji import twemoji, to_alt
 
 from core.tab_manager import TabManager
-from core.constants import MarkdownPreviewConstants
+from core.constants import MarkdownPreviewConstants, EditorConstants
 
 class EditorManager:
     """Handles actions done in the markdown editor."""
@@ -80,8 +80,16 @@ class EditorManager:
         styled_html = f"""
         <style>
            {MarkdownPreviewConstants.DEFAULT_CSS}
+           body, p, li, table, th, td {{
+               font-size: {EditorConstants.FONT_SIZE}pt !important;
+           }}
         </style>
         {html_content}
         """
+
+        scroll_bar = tab.preview.verticalScrollBar()
+        current_scroll_position = scroll_bar.value()
         
         tab.preview.setHtml(styled_html)
+
+        scroll_bar.setValue(current_scroll_position)
