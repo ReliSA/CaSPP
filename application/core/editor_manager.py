@@ -1,6 +1,6 @@
 from PyQt6.QtCore import Qt
 import markdown
-from pymdownx import tilde, caret, mark, tasklist, emoji, superfences, highlight
+from pymdownx import tilde, caret, mark, tasklist, emoji, superfences, highlight, saneheaders
 from pymdownx.emoji import twemoji, to_alt
 
 from core.tab_manager import TabManager
