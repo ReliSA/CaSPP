@@ -350,6 +350,11 @@ class SyntaxHighlighterConstants:
     HR_COLOR = "#75715E"
     STRIKETHROUGH_COLOR = "#75715E"
     TABLE_PIPE_COLOR = "#75715E"
+    FOOTNOTE_COLOR = "#AE81FF"
+    EMOJI_COLOR = "#E6DB74"
+    HIGHLIGHT_BG_COLOR = "#E6DB74"
+    HIGHLIGHT_FG_COLOR = "#272822"
+    SUB_SUPER_COLOR = "#66D9EF"
     
     # Regular Expressions
     REGEX_HEADING = r"^#{1,6}\s+.*"
@@ -358,7 +363,7 @@ class SyntaxHighlighterConstants:
     REGEX_ITALIC_AST = r"(?<!\*)\*[^\*]+\*(?!\*)"
     REGEX_ITALIC_UND = r"(?<!_)_[^_]+_(?!_)"
     REGEX_CODE = r"`[^`]+`"
-    REGEX_LINK = r"!?\[[^\]]*\]\([^\)]+\)"
+    REGEX_LINK = r"!?\[(?:[^\[\]]|\[[^\]]*\])*\]\([^\)]+\)"
     REGEX_LIST_UNORDERED = r"^\s*[-*+]\s+"
     REGEX_LIST_ORDERED = r"^\s*\d+\.\s+"
     REGEX_BLOCKQUOTE = r"^\s*>.*"
@@ -367,6 +372,11 @@ class SyntaxHighlighterConstants:
     REGEX_TASK_LIST = r"^\s*[-*+]\s+\[[ xX]\]"
     REGEX_HTML_TAG = r"<[^>]+>"
     REGEX_TABLE_PIPE = r"\|"
+    REGEX_FOOTNOTE = r"\[\^[^\]]+\]:?"
+    REGEX_EMOJI = r":[a-zA-Z0-9_\+\-]+:"
+    REGEX_HIGHLIGHT = r"==[^=]+=="
+    REGEX_SUBSCRIPT = r"(?<!~)~[^~]+~(?!~)"
+    REGEX_SUPERSCRIPT = r"\^[^\^]+\^"
 
 class EditorConstants:
     """Constants for editor UI styling (line numbers, gutter)."""

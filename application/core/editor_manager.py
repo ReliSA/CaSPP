@@ -67,7 +67,7 @@ class EditorManager:
             extensions=[
                 'extra', 'sane_lists', 'pymdownx.tilde', 'pymdownx.caret',
                 'pymdownx.mark', 'pymdownx.tasklist', 'pymdownx.emoji',
-                'pymdownx.superfences',
+                'pymdownx.superfences', 'pymdownx.saneheaders',
                 'pymdownx.highlight'
             ],
             extension_configs={
