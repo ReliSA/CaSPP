@@ -186,6 +186,12 @@ class AssetsConstants:
 
     _RUNTIME_ROOT = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[2]))
 
+    # Absolute path with forward slashes for QSS
+    ICONS_DIR_QSS = str(_RUNTIME_ROOT.joinpath("application", "ui", "assets", "icons")).replace("\\", "/")
+
+    # App theme qss path
+    APP_THEME_QSS_PATH = str(_RUNTIME_ROOT.joinpath("application", "ui", "assets", "qss", "theme.qss"))
+
     # Sidebar icon paths
     SIDEBAR_MARKDOWN_SCENE_ICON_PATH = str(_RUNTIME_ROOT.joinpath("application", "ui", "assets", "icons", "LucideFolderOpen.svg"))
     SIDEBAR_GIT_SCENE_ICON_PATH = str(_RUNTIME_ROOT.joinpath("application", "ui", "assets", "icons", "LucideGithub.svg"))
@@ -202,6 +208,9 @@ class AssetsConstants:
     # File tree icon paths
     FOLDER_ICON_PATH = str(_RUNTIME_ROOT.joinpath("application", "ui", "assets", "icons", "LucideFolder.svg"))
     MARKDOWN_FILE_ICON_PATH = str(_RUNTIME_ROOT.joinpath("application", "ui", "assets", "icons", "StreamlineMarkdownDocumentProgrammingRemix.svg"))
+
+    # App theme path
+    APP_THEME_QSS_PATH = str(_RUNTIME_ROOT.joinpath("application", "ui", "assets", "qss", "theme.qss"))
 
 
 class ReportConstants:
@@ -386,9 +395,9 @@ class EditorConstants:
     FONT_SIZE = 11
 
     # Colors
-    GUTTER_BACKGROUND = "#272822"
-    LINE_NUMBER_COLOR = "#75715E"
+    GUTTER_BACKGROUND = "#1E1E1E"
+    LINE_NUMBER_COLOR = "#858585"
     
     # Active Line Highlighting
-    ACTIVE_LINE_NUMBER_COLOR = "#F8F8F2"
-    ACTIVE_GUTTER_BACK_COLOR = "#3E3D32"
+    ACTIVE_LINE_NUMBER_COLOR = "#C6C6C6"
+    ACTIVE_GUTTER_BACK_COLOR = "#282828"

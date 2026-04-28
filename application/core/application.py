@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import QApplication
 
 # local imports
 from ui.main_window import MainWindow
-from core.constants import FileConstants
+from core.constants import FileConstants, AssetsConstants
 from utils.markdown_parser import MarkdownParser
 from utils.markdown_analyzer import MarkdownAnalyzer
 from utils.template_parser import TemplateParser
@@ -28,6 +28,16 @@ class Application:
     def __init__(self) -> None:
         # Initialize the application
         self.app = QApplication(sys.argv if 'sys' in globals() else [])
+
+        # Initialize app theme
+        self.app.setStyle("Fusion") 
+        try:
+            with open(AssetsConstants.APP_THEME_QSS_PATH, "r", encoding="utf-8") as f:
+                qss_content = f.read()
+                qss_content = qss_content.replace("{{ICONS_DIR}}", AssetsConstants.ICONS_DIR_QSS)
+                self.app.setStyleSheet(qss_content)
+        except Exception as e:
+            print(f"Warning: Could not load stylesheet from {AssetsConstants.APP_THEME_QSS_PATH}: {e}")
 
         # Initialize main window
         self.main_window = MainWindow()

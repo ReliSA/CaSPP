@@ -1,0 +1,212 @@
+/* --- Global Base (Neutral Dark Grey) --- */
+QWidget {
+    background-color: #1E1E1E;
+    color: #CCCCCC; 
+    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-size: 10pt;
+}
+
+/* --- Dialogs and Popups --- */
+QDialog, QMessageBox, QInputDialog {
+    background-color: #1E1E1E;
+    border: 1px solid #3C3C3C;
+}
+
+/* --- Editor and Preview Areas --- */
+QPlainTextEdit, QTextBrowser {
+    background-color: #1E1E1E; 
+    border: none;
+    selection-background-color: #4D4D4D; /* Grey text selection */
+}
+
+/* --- File Explorer (Tree & List) --- */
+QTreeWidget, QListWidget {
+    background-color: #252526; /* Slightly lighter for the sidebar */
+    border: none;
+    outline: none; 
+}
+QTreeWidget::item, QListWidget::item {
+    padding: 4px;
+    border-radius: 3px;
+}
+QTreeWidget::item:hover, QListWidget::item:hover {
+    background-color: #2A2D2E;
+    color: #FFFFFF;
+}
+QTreeWidget::item:selected, QListWidget::item:selected {
+    background-color: #37373D;
+    color: #FFFFFF;
+}
+
+/* --- Minimal Tabs --- */
+QTabWidget::pane {
+    border: none;
+    background-color: #1E1E1E;
+}
+QTabBar::tab {
+    background-color: #2D2D2D; 
+    color: #969696;
+    border: none;
+    border-right: 1px solid #1E1E1E; 
+    padding: 8px 16px; /* Clean, normal padding */
+    min-width: 120px;
+}
+QTabBar::tab:selected {
+    background-color: #1E1E1E; 
+    color: #FFFFFF;
+    border-top: 2px solid #8A8A8A; /* Neutral grey active indicator */
+}
+QTabBar::tab:hover:!selected {
+    background-color: #333333;
+    color: #E0E0E0;
+}
+QTabBar::close-button {
+    image: url("{{ICONS_DIR}}/LucideX.svg");
+    background: transparent;
+    
+    /* Removed all width, height, and subcontrol hacks. Just a simple margin. */
+    margin-right: 6px; 
+}
+
+QTabBar::close-button:hover {
+    background-color: #3C3C3C;
+    border-radius: 4px;
+}
+/* --- Thin, Minimal Scrollbars --- */
+QScrollBar:vertical {
+    background: transparent;
+    width: 10px; 
+    margin: 0px;
+}
+QScrollBar::handle:vertical {
+    background: rgba(136, 136, 136, 0.4); /* Neutral grey handle */
+    min-height: 30px;
+    border-radius: 5px; 
+    margin: 2px;
+}
+QScrollBar::handle:vertical:hover, QScrollBar::handle:vertical:pressed {
+    background: rgba(136, 136, 136, 0.8); 
+}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical,
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+    background: none;
+    border: none;
+    height: 0px; 
+}
+
+/* Horizontal Scrollbar */
+QScrollBar:horizontal {
+    background: transparent;
+    height: 10px;
+    margin: 0px;
+}
+QScrollBar::handle:horizontal {
+    background: rgba(136, 136, 136, 0.4);
+    min-width: 30px;
+    border-radius: 5px;
+    margin: 2px;
+}
+QScrollBar::handle:horizontal:hover, QScrollBar::handle:horizontal:pressed {
+    background: rgba(136, 136, 136, 0.8);
+}
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal,
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
+    background: none;
+    border: none;
+    width: 0px;
+}
+
+/* --- Splitters (Draggable dividers) --- */
+QSplitter::handle {
+    background-color: #333333; 
+}
+QSplitter::handle:horizontal {
+    width: 1px;
+}
+QSplitter::handle:vertical {
+    height: 1px;
+}
+
+/* --- Buttons --- */
+QPushButton {
+    background-color: #333333;
+    border: 1px solid #3C3C3C; /* Border is now visible */
+    border-radius: 4px;
+    padding: 6px 12px;
+    color: #CCCCCC;
+}
+QPushButton:hover {
+    background-color: #3E3E42;
+    border-color: #8A8A8A; /* Highlights border on hover */
+    color: #FFFFFF;
+}
+QPushButton:pressed {
+    background-color: #2D2D2D;
+}
+QPushButton:disabled {
+    color: #5C5C5C;
+    border-color: #2D2D2D;
+}
+
+/* Emphasize action buttons (like Save) */
+QPushButton#save_changes_button {
+    background-color: #4D4D4D;
+    color: white;
+}
+QPushButton#save_changes_button:hover {
+    background-color: #5A5A5A;
+}
+
+/* --- Checkboxes (Brighter visibility) --- */
+QCheckBox {
+    spacing: 8px;
+}
+QCheckBox::indicator {
+    width: 16px;
+    height: 16px;
+    border: 1px solid #8A8A8A; 
+    border-radius: 3px;
+    background-color: #2D2D2D;
+}
+QCheckBox::indicator:hover {
+    border-color: #FFFFFF;
+}
+QCheckBox::indicator:checked {
+    background-color: #5E81AC; 
+    border-color: #5E81AC;
+    /* Encoded crisp white checkmark */
+    image: url("{{ICONS_DIR}}/LucideCheck.svg");
+}
+
+/* --- Top Menu --- */
+QMenuBar {
+    background-color: #333333; 
+    border-bottom: none;
+}
+QMenuBar::item {
+    padding: 6px 12px;
+    background: transparent;
+}
+QMenuBar::item:selected {
+    background-color: #4D4D4D;
+}
+QMenu {
+    background-color: #252526;
+    border: 1px solid #3C3C3C;
+}
+QMenu::item {
+    padding: 6px 30px 6px 20px;
+}
+QMenu::item:selected {
+    background-color: #4D4D4D;
+    color: white;
+}
+
+/* --- Git Scene Terminal --- */
+#git_console {
+    background-color: #0A0A0A; /* Deep black terminal look */
+    color: #D4D4D4;
+    font-family: "Consolas", monospace;
+    border-top: 1px solid #3C3C3C;
+    padding: 8px;
+}

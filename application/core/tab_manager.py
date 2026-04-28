@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import Optional, Dict
 from PyQt6.QtCore import QUrl
+from PyQt6.QtWidgets import QListWidgetItem
+from PyQt6.QtGui import QColor
 
 from ui.components.tab_widget import TabWidget
 from ui.components.md_scene import MarkdownScene
@@ -251,9 +253,24 @@ class TabManager:
             None.
         """
         tab = self.get_current_tab()
-        if tab:
-            tab.analyzer_list.clear()
-            tab.analyzer_list.addItems(report.splitlines() if report else ["No analysis output."])
+        if not tab:
+            return
+            
+        tab.analyzer_list.clear()
+        if not report:
+            tab.analyzer_list.addItem("No analysis output.")
+            return
+            
+        for line in report.splitlines():
+            item = QListWidgetItem(line)
+            if "⚠️" in line or "(line" in line:
+                item.setForeground(QColor("#D7BA7D"))
+            elif "✅" in line:
+                item.setForeground(QColor("#6A9955"))
+            else:
+                item.setForeground(QColor("#CCCCCC"))
+                
+            tab.analyzer_list.addItem(item)
 
     def set_error(self, message: str) -> None:
         """Displays an error message in the active tab's analyzer panel.

@@ -59,6 +59,7 @@ class GitScene(QWidget):
 
         # Changed file list setup
         self.list_git_files = QListWidget()
+        self.list_git_files.setObjectName("git_console")
 
         # Adding chnaged file list to the main layout
         self.layout.addWidget(self.list_git_files)
