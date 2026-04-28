@@ -17,7 +17,6 @@ from utils.md_parser import (
     split_h1,
 )
 from core.constants import LoaderConstants
-from utils.file_helper import FileHelper
 
 logger = logging.getLogger(__name__)
 
@@ -197,59 +196,39 @@ def _detect_and_collapse_alphabet_groups(headings: List[HeadingRules]) -> List[H
 
 
 class TemplateParser:
-    """Parse every .md template file in a directory into TemplateRules.
+    """Parse Markdown template files into TemplateRules.
 
-    All regex and classification logic lives in LoaderConstant; this class
-    only handles file I/O and maps parsed primitives onto template-specific
-    data classes.
+    All file I/O is the caller's responsibility — this class only maps
+    already-read content onto template-specific data classes, mirroring
+    the interface of MarkdownParser.
     """
 
-    def __init__(self, templates_dir: str, file_helper: FileHelper) -> None:
-        """Create a new loader bound to *templates_dir*.
-
-        Args:
-            templates_dir (str): Directory containing Markdown template files.
-            file_helper (FileHelper): FileHelper instance used for reading files
-                                      and discovering templates in the directory.
-        """
-        self.templates_dir = templates_dir
-        self._file_helper = file_helper
+    def __init__(self) -> None:
         self.templates: Dict[str, TemplateRules] = {}
-        self._loaded: bool = False
 
-    def parse(self, force: bool = False) -> None:
-        """Load (or reload) all templates from *templates_dir*.
+    def parse_content(self, filepath: str, content: str) -> TemplateRules:
+        """Parse a single template from in-memory content.
+
+        The result is stored in ``self.templates`` keyed by the filename stem
+        so it can be retrieved later via :meth:`get_template`.
 
         Args:
-            force (bool, optional): Re-parse even if templates were already loaded.
-                Defaults to False.
+            filepath (str): Source path — used only to derive the template name.
+            content (str):  Full markdown text of the template.
+
+        Returns:
+            TemplateRules: Parsed rules extracted from the content.
         """
-        if self._loaded and not force:
-            return
-
-        self.templates = {}
-
-        filepaths = sorted(self._file_helper.find_markdown_files(self.templates_dir, recursive=False))
-        if not filepaths:
-            logger.warning("No templates found in: %s", self.templates_dir)
-            return
-
-        for filepath in filepaths:
-            name = os.path.splitext(os.path.basename(filepath))[0]
-            try:
-                self.templates[name] = self._parse_template(filepath)
-                logger.debug("Loaded template: %s", name)
-            except Exception as exc:  # noqa: BLE001
-                logger.error("Failed to load template %s: %s", name, exc)
-
-        self._loaded = True
-        self.dump_json("output/templates_debug")
-        logger.info("Loaded %d template(s) from %s", len(self.templates), self.templates_dir)
+        if not isinstance(content, str):
+            raise TypeError("content must be a string")
+        name = os.path.splitext(os.path.basename(filepath))[0]
+        rules = self._parse(filepath, content)
+        self.templates[name] = rules
+        logger.debug("Loaded template: %s", name)
+        return rules
 
     def get_template(self, name: str) -> TemplateRules:
         """Return rules for a single named template.
-
-        If templates were not loaded yet, they are loaded lazily.
 
         Args:
             name (str): Template name (filename without the .md extension).
@@ -258,31 +237,23 @@ class TemplateParser:
             TemplateRules: Parsed rules of the template. Returns an empty
             TemplateRules instance if *name* is unknown.
         """
-        if not self._loaded:
-            self.parse()
         return self.templates.get(name, TemplateRules())
 
     def get_all_templates(self) -> Dict[str, TemplateRules]:
-        """Return mapping of all loaded templates.
-
-        If templates were not loaded yet, they are loaded lazily.
+        """Return the mapping of all loaded templates.
 
         Returns:
             Dict[str, TemplateRules]: Mapping of template name → parsed rules.
         """
-        if not self._loaded:
-            self.parse()
         return self.templates
 
     def dump_json(self, output_dir: str, indent: int = 2) -> None:
-        """Write one <name>.json per template into *output_dir*.
+        """Write one <name>.json per template into *output_dir*. Just for debugging purposes.
 
         Args:
             output_dir: Target folder (created if absent).
             indent:     JSON indentation spaces.
         """
-        if not self._loaded:
-            self.parse()
         os.makedirs(output_dir, exist_ok=True)
         for name, rules in self.templates.items():
             dest = os.path.join(output_dir, f"{name}.json")
@@ -306,23 +277,19 @@ class TemplateParser:
             json.dump(rules.to_dict(), fh, indent=indent, ensure_ascii=False)
         logger.debug("Debug JSON written: %s", dest)
 
-    def _parse_template(self, filepath: str) -> TemplateRules:
-        """Parse a single template Markdown file.
+    def _parse(self, filepath: str, content: str) -> TemplateRules:
+        """Internal parser — maps content lines onto TemplateRules.
 
         Args:
-            filepath (str): Absolute path to a .md template file.
+            filepath (str): Source path (used for diagnostics only).
+            content (str):  Full markdown text.
 
         Returns:
-            TemplateRules: Parsed template rules extracted from the file.
+            TemplateRules: Parsed template rules.
         """
         document_rules = DocumentRules()
         raw_headings: List[HeadingRules] = []
         current: Optional[HeadingRules] = None
-
-        content = self._file_helper.read_file(filepath)
-        if content is None:
-            logger.error("Failed to read template: %s", filepath)
-            return TemplateRules()
 
         for raw_line in content.splitlines():
             line = raw_line.strip()

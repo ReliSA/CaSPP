@@ -1,6 +1,7 @@
 """
 File-related operations extracted from Application.
 """
+import logging
 from typing import Optional
 
 # local imports
@@ -17,6 +18,9 @@ from core.error_manager import safe_slot
 from utils.markdown_auto_stager import MarkdownAutoStager
 from utils.file_matcher import FileMatcher
 from utils.exceptions import FileNotFoundError
+
+logger = logging.getLogger(__name__)
+
 
 class FileManager:
     """Handles loading and analyzing markdown files and related file events."""
@@ -54,6 +58,42 @@ class FileManager:
         self.template_loader = template_loader
         self.document_loader = document_loader
         self.file_matcher = FileMatcher(self.template_loader) if self.template_loader else None
+
+    def load_templates(self, templates_dir: str) -> None:
+        """Discover, read, and parse every template in *templates_dir*.
+
+        File I/O is handled here so that TemplateParser stays free of
+        file-system concerns.  Each file's content is passed directly to
+        ``template_loader.parse_content``.
+
+        Args:
+            templates_dir: Directory that contains the ``.md`` template files.
+        """
+        if not self.template_loader:
+            return
+
+        filepaths = sorted(
+            self.file_helper.find_markdown_files(templates_dir, recursive=False)
+        )
+        if not filepaths:
+            logger.warning("No templates found in: %s", templates_dir)
+            return
+
+        for filepath in filepaths:
+            content = self.file_helper.read_file(filepath)
+            if content is None:
+                logger.error("Failed to read template: %s", filepath)
+                continue
+            try:
+                self.template_loader.parse_content(filepath, content)
+            except Exception as exc:
+                logger.error("Failed to parse template %s: %s", filepath, exc)
+
+        logger.info(
+            "Loaded %d template(s) from %s",
+            len(self.template_loader.templates),
+            templates_dir,
+        )
 
     def load_markdown_file(self, file_path: str) -> None:
         """Load a markdown file into the tab manager and analyze it.

@@ -11,7 +11,6 @@ from utils.md_parser import (
     split_h1,
 )
 from core.constants import LoaderConstants
-from utils.file_helper import FileHelper
 
 logger = logging.getLogger(__name__)
 
@@ -256,29 +255,8 @@ class MarkdownParser:
                      discovering .md files in directories.
     """
 
-    def __init__(self, files_dir: str, file_helper: FileHelper) -> None:
-        self._file_helper = file_helper
-        self.files_dir = files_dir
-
-    def parse_file(self, filepath: str) -> ParsedDocument:
-        """Parse a single Markdown file.
-
-        Args:
-            filepath (str): Path to the .md file.
-
-        Returns:
-            ParsedDocument: Parsed representation of the file.
-
-        Raises:
-            FileNotFoundError: If filepath does not exist.
-        """
-        filepath = os.path.abspath(filepath)
-        content = self._file_helper.read_file(filepath)
-        if content is None:
-            raise FileNotFoundError(f"Document not found: {filepath}")
-        doc = self.parse_content(filepath, content)
-        logger.debug("Loaded document: %s  (%d heading(s))", filepath, len(doc.headings))
-        return doc
+    def __init__(self) -> None:
+        pass
 
     def parse_content(self, filepath: str, content: str) -> ParsedDocument:
         """Parse a single Markdown document from in-memory content.
@@ -296,36 +274,9 @@ class MarkdownParser:
         normalized_path = os.path.abspath(filepath)
         return self._parse(normalized_path, content)
 
-    def parse_dir(self) -> Dict[str, ParsedDocument]:
-        """Parse every .md file in directory recursively.
-
-        Args:
-            directory (str): Filesystem directory to scan for .md files.
-
-        Returns:
-            Dict[str, ParsedDocument]: Mapping of stem (relative path without
-            .md) → ParsedDocument.
-        """
-        results: Dict[str, ParsedDocument] = {}
-        filepaths = sorted(self._file_helper.find_markdown_files(self.files_dir))
-        if not filepaths:
-            logger.warning("No markdown files found in: %s", self.files_dir)
-            return results
-
-        for filepath in filepaths:
-            rel_path = os.path.relpath(filepath, self.files_dir)
-            stem = os.path.splitext(rel_path)[0].replace(os.sep, '/')
-            try:
-                results[stem] = self.parse_file(filepath)
-                self.dump_json(results[stem], "output/debug_docs")
-            except Exception as exc:
-                logger.error("Failed to load %s: %s", filepath, exc)
-
-        logger.info("Loaded %d document(s) from %s", len(results), self.files_dir)
-        return results
 
     def dump_json(self, doc: ParsedDocument, output_dir: str, indent: int = 2) -> None:
-        """Write a JSON representation of doc to output_dir for debugging.
+        """Write a JSON representation of doc to output_dir. Just for debugging purposes.
 
         Args:
             doc (ParsedDocument): Parsed document to write.
