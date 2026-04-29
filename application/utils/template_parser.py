@@ -144,24 +144,11 @@ class TemplateRules:
 def _detect_and_collapse_alphabet_groups(headings: List[HeadingRules]) -> List[HeadingRules]:
     """Detect and collapse A–Z / 0-9 heading runs into a single grouped rule.
 
-    Many templates contain an alphabet index where sibling headings are single
-    letters (or '0-9') and repeat for a long sequence. To simplify downstream
-    validation, this function replaces qualifying runs with a single synthetic
-    heading rule:
-
-    * text is set to "[A-Z]"
-    * is_group is set to True
-    * group_members contains the original run members
-
-    Content rules for the whole group are taken from the first member.
-
     Args:
-        headings (List[HeadingRules]): Heading rules extracted from the template
-            in the original order.
+        headings: The headings value.
 
     Returns:
-        List[HeadingRules]: New list of heading rules where qualifying alphabet
-        runs are replaced by a single grouped heading.
+        List[HeadingRules]: New list of heading rules where qualifying alphabet runs are replaced by a single grouped heading.
     """
     result: List[HeadingRules] = []
     i = 0
@@ -204,17 +191,16 @@ class TemplateParser:
     """
 
     def __init__(self) -> None:
+        """Initialize the object with required collaborators.
+        """
         self.templates: Dict[str, TemplateRules] = {}
 
     def parse_content(self, filepath: str, content: str) -> TemplateRules:
         """Parse a single template from in-memory content.
 
-        The result is stored in ``self.templates`` keyed by the filename stem
-        so it can be retrieved later via :meth:`get_template`.
-
         Args:
-            filepath (str): Source path — used only to derive the template name.
-            content (str):  Full markdown text of the template.
+            filepath: The filepath value.
+            content: The markdown or template content to process.
 
         Returns:
             TemplateRules: Parsed rules extracted from the content.
@@ -231,11 +217,10 @@ class TemplateParser:
         """Return rules for a single named template.
 
         Args:
-            name (str): Template name (filename without the .md extension).
+            name: The name value.
 
         Returns:
-            TemplateRules: Parsed rules of the template. Returns an empty
-            TemplateRules instance if *name* is unknown.
+            TemplateRules: Parsed rules of the template. Returns an empty TemplateRules instance if *name* is unknown.
         """
         return self.templates.get(name, TemplateRules())
 
@@ -252,7 +237,7 @@ class TemplateParser:
 
         Args:
             output_dir: Target folder (created if absent).
-            indent:     JSON indentation spaces.
+            indent: JSON indentation spaces.
         """
         os.makedirs(output_dir, exist_ok=True)
         for name, rules in self.templates.items():
@@ -266,9 +251,9 @@ class TemplateParser:
         """Write a JSON file for a single template into *output_dir*.
 
         Args:
-            name:       Template name (filename without .md).
+            name: Template name (filename without .md).
             output_dir: Target folder.
-            indent:     JSON indentation spaces.
+            indent: JSON indentation spaces.
         """
         rules = self.get_template(name)
         os.makedirs(output_dir, exist_ok=True)
@@ -281,8 +266,8 @@ class TemplateParser:
         """Internal parser — maps content lines onto TemplateRules.
 
         Args:
-            filepath (str): Source path (used for diagnostics only).
-            content (str):  Full markdown text.
+            filepath: The filepath value.
+            content: The markdown or template content to process.
 
         Returns:
             TemplateRules: Parsed template rules.

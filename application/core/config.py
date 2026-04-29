@@ -28,7 +28,11 @@ class Config:
     
     @classmethod
     def get_base_path(cls) -> Path:
-        """Find the Git repository root dynamically."""
+        """Find the Git repository root dynamically.
+
+        Returns:
+            The resolved path.
+        """
         path = Path.cwd()
 
         for parent in [path] + list(path.parents):
@@ -39,5 +43,9 @@ class Config:
 
     @classmethod
     def get_default_markdown_path(cls) -> str:
-        """Get the default markdown file path."""
+        """Get the default markdown file path.
+
+        Returns:
+            The string result.
+        """
         return str(cls.get_base_path() / cls.DEFAULT_MARKDOWN_FILE)

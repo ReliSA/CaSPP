@@ -10,11 +10,10 @@ class TopMenuBar(QMenuBar):
     """Handles top menu bar actions."""
 
     def __init__(self, parent: QWidget =None) -> None:
-        """
-        Initializes top menu bar.
-        
+        """Initializes top menu bar.
+
         Args:
-            parent: Parent element
+            parent: Parent element.
         """
         super().__init__(parent)
 

@@ -36,12 +36,11 @@ class MarkdownAutoStager(QObject):
     
     def __init__(self, repo_path: Optional[str] = None, 
                  auto_stage_delay: int = 1000) -> None:
-        """
-        Initialize the auto-stager.
-        
+        """Initialize the auto-stager.
+
         Args:
             repo_path: Path to git repository. If None, will search for repo.
-            auto_stage_delay: Delay in milliseconds before staging files (default: 1000ms)
+            auto_stage_delay: Delay in milliseconds before staging files (default: 1000ms).
         """
         super().__init__()
         self.repo_path = repo_path
@@ -63,7 +62,11 @@ class MarkdownAutoStager(QObject):
         self._on_stage_failure: Optional[Callable[[str, str], None]] = None
     
     def _check_git_availability(self) -> bool:
-        """Check if git repository is available."""
+        """Check if git repository is available.
+
+        Returns:
+            The boolean result.
+        """
         try:
             return is_repo_available(self.repo_path)
         except Exception:
@@ -71,32 +74,41 @@ class MarkdownAutoStager(QObject):
             return False
 
     def _is_markdown_file(self, file_path: str) -> bool:
-        """Return True if path points to supported markdown extension."""
+        """Return True if path points to supported markdown extension.
+
+        Args:
+            file_path: The file path to process.
+
+        Returns:
+            The boolean result.
+        """
         return file_path.lower().endswith(tuple(FileConstants.MARKDOWN_EXTENSIONS))
     
     def is_available(self) -> bool:
-        """Check if auto-staging is available."""
+        """Check if auto-staging is available.
+
+        Returns:
+            The boolean result.
+        """
         return self._git_available
     
     def set_callbacks(self, 
                      on_success: Optional[Callable[[str, str], None]] = None,
                      on_failure: Optional[Callable[[str, str], None]] = None) -> None:
-        """
-        Set callback functions for staging events.
-        
+        """Set callback functions for staging events.
+
         Args:
-            on_success: Called when staging succeeds (file_path, message)
-            on_failure: Called when staging fails (file_path, error)
+            on_success: Called when staging succeeds (file_path, message).
+            on_failure: Called when staging fails (file_path, error).
         """
         self._on_stage_success = on_success
         self._on_stage_failure = on_failure
     
     def stage_file_immediately(self, file_path: str) -> None:
-        """
-        Stage a markdown file immediately using synchronous approach.
-        
+        """Stage a markdown file immediately using synchronous approach.
+
         Args:
-            file_path: Path to the markdown file to stage
+            file_path: Path to the markdown file to stage.
         """
         if not self._git_available:
             logger.debug(f"Git not available, skipping staging of {file_path}")
@@ -114,11 +126,10 @@ class MarkdownAutoStager(QObject):
             self._on_stage_complete(file_path, False, str(e))
     
     def stage_file_delayed(self, file_path: str) -> None:
-        """
-        Stage a markdown file with configurable delay.
-        
+        """Stage a markdown file with configurable delay.
+
         Args:
-            file_path: Path to the markdown file to stage
+            file_path: Path to the markdown file to stage.
         """
         if not self._git_available:
             logger.debug(f"Git not available, skipping staging of {file_path}")
@@ -134,7 +145,8 @@ class MarkdownAutoStager(QObject):
         logger.debug(f"Added {file_path} to pending staging queue")
     
     def _process_pending_files(self) -> None:
-        """Process all files in the pending queue synchronously."""
+        """Process all files in the pending queue synchronously.
+        """
         if not self._pending_files:
             return
         
@@ -160,7 +172,13 @@ class MarkdownAutoStager(QObject):
                 self.staging_failed.emit(file_path, str(e))
     
     def _on_stage_complete(self, file_path: str, success: bool, message: str) -> None:
-        """Handle completion of file staging."""
+        """Handle completion of file staging.
+
+        Args:
+            file_path: The file path to process.
+            success: Whether the operation completed successfully.
+            message: The message to display or use for the operation.
+        """
         if success:
             logger.info(f"Successfully staged: {file_path}")
             self.file_staged.emit(file_path, message)
@@ -173,28 +191,33 @@ class MarkdownAutoStager(QObject):
                 self._on_stage_failure(file_path, message)
     
     def flush_pending(self) -> None:
-        """Immediately process any pending files."""
+        """Immediately process any pending files.
+        """
         if self._staging_timer.isActive():
             self._staging_timer.stop()
             self._process_pending_files()
     
     def clear_pending(self) -> None:
-        """Clear all pending files without staging them."""
+        """Clear all pending files without staging them.
+        """
         self._pending_files.clear()
         if self._staging_timer.isActive():
             self._staging_timer.stop()
         logger.debug("Cleared all pending files")
     
     def get_pending_count(self) -> int:
-        """Get the number of files pending staging."""
+        """Get the number of files pending staging.
+
+        Returns:
+            The integer result.
+        """
         return len(self._pending_files)
     
     def enable_auto_staging(self, enabled: bool = True) -> None:
-        """
-        Enable or disable auto-staging functionality.
-        
+        """Enable or disable auto-staging functionality.
+
         Args:
-            enabled: Whether to enable auto-staging
+            enabled: Whether to enable auto-staging.
         """
         if not enabled:
             self.clear_pending()
@@ -203,6 +226,7 @@ class MarkdownAutoStager(QObject):
         logger.info(f"Auto-staging {'enabled' if self._git_available else 'disabled'}")
     
     def cleanup(self) -> None:
-        """Clean up the auto-stager."""
+        """Clean up the auto-stager.
+        """
         self.clear_pending()
         logger.debug("Auto-stager cleaned up")

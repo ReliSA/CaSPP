@@ -7,7 +7,16 @@ from . import runner
 
 
 def push(repo_path: str, remote_name: str = GitConstants.DEFAULT_REMOTE_NAME, branch: str = None) -> GitResult:
-    """Push local branch to remote."""
+    """Push local branch to remote.
+
+    Args:
+        repo_path: The git repository path.
+        remote_name: The remote name value.
+        branch: The target git branch.
+
+    Returns:
+        The git operation result.
+    """
     try:
         repo = runner.load_repo(repo_path)
         remote_names = [remote.name for remote in repo.remotes]
@@ -36,7 +45,17 @@ def push_markdown_changes(
     remote_name: str = None,
     branch: str = None,
 ) -> GitResult:
-    """Stage markdown files, commit them, then push."""
+    """Stage markdown files, commit them, then push.
+
+    Args:
+        repo_path: The git repository path.
+        commit_message: The commit message value.
+        remote_name: The remote name value.
+        branch: The target git branch.
+
+    Returns:
+        The git operation result.
+    """
     try:
         repo = runner.load_repo(repo_path)
         message = (commit_message or GitConstants.DEFAULT_COMMIT_MESSAGE).strip() or GitConstants.DEFAULT_COMMIT_MESSAGE

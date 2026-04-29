@@ -18,8 +18,7 @@ class MarkdownAnalyzer:
         """Initialise the analyzer.
 
         Args:
-            base_path: Root path of the project. Defaults to the repository root
-                       inferred from the location of this file.
+            base_path: Root path of the project. Defaults to the repository root inferred from the location of this file.
         """
         if base_path is None:
             app_dir = Path(__file__).parent.parent
@@ -104,9 +103,6 @@ class MarkdownAnalyzer:
 
         Args:
             h1_headings: All HeadingInfo objects whose level equals 1.
-
-        Returns:
-            None: Warnings are appended to self.current_warnings.
         """
         count = len(h1_headings)
         if count == 0:
@@ -123,14 +119,8 @@ class MarkdownAnalyzer:
     def _check_h1_filename(self, meta: DocumentMeta) -> None:
         """H1 value must match the filename stem (case-insensitive).
 
-        When the H1 has a prefix (e.g. "Category: Agile"), only the value part
-        ("Agile") is compared to the stem. For plain titles the full text is used.
-
         Args:
             meta: Metadata extracted from the parsed document.
-
-        Returns:
-            None: Warnings are appended to self.current_warnings.
         """
         if meta.h1_value is None or not meta.filepath:
             return
@@ -149,9 +139,6 @@ class MarkdownAnalyzer:
         Args:
             meta: Metadata extracted from the parsed document.
             doc_rules: Document-level rules from the matched template.
-
-        Returns:
-            None: Warnings are appended to self.current_warnings.
         """
         expected = doc_rules.h1_prefix
         actual = meta.h1_prefix
@@ -175,9 +162,6 @@ class MarkdownAnalyzer:
         Args:
             doc_map: Mapping of heading text to HeadingInfo for the document.
             template_headings: Non-H1 heading rules from the template.
-
-        Returns:
-            None: Warnings are appended to self.current_warnings.
         """
         before = len(self.current_warnings)
         for t_heading in template_headings:
@@ -193,19 +177,9 @@ class MarkdownAnalyzer:
     ) -> None:
         """Sections must appear in the same relative order as in the template.
 
-        Only headings that are present in both the document and the template are
-        considered. The check verifies that their template-index sequence is
-        monotonically non-decreasing.
-
-        Note: Optional section names are validated implicitly because sections
-        are matched by exact text.
-
         Args:
             doc_headings: All headings extracted from the document, in document order.
             template_headings: Non-H1 heading rules from the template, in template order.
-
-        Returns:
-            None: Warnings are appended to self.current_warnings.
         """
         template_index = {h.text: i for i, h in enumerate(template_headings)}
         matched = [h for h in doc_headings if h.text in template_index]
@@ -232,9 +206,6 @@ class MarkdownAnalyzer:
         Args:
             doc_headings: All headings extracted from the document.
             template: Full template rules including all heading definitions.
-
-        Returns:
-            None: Warnings are appended to self.current_warnings.
         """
         known_texts = {h.text for h in template.headings}
         template_h1 = next((h for h in template.headings if h.level == 1), None)
@@ -262,9 +233,6 @@ class MarkdownAnalyzer:
         Args:
             doc_map: Mapping of heading text to HeadingInfo for the document.
             template_headings: Non-H1 heading rules from the template.
-
-        Returns:
-            None: Warnings are appended to self.current_warnings.
         """
         before = len(self.current_warnings)
         for t_heading in template_headings:
@@ -281,17 +249,9 @@ class MarkdownAnalyzer:
     def _validate_breadcrumbs(self, doc_meta: DocumentMeta, doc_rules: DocumentRules) -> None:
         """Validate the breadcrumb navigation line.
 
-        Breadcrumbs must be present, have the same number of parts as the
-        template (separated by '>'), and each fixed part must textually match
-        the template. Parts wrapped in '*...*' are treated as wildcards and
-        must only be non-empty.
-
         Args:
             doc_meta: Metadata extracted from the parsed document.
             doc_rules: Document-level rules from the matched template.
-
-        Returns:
-            None: Warnings are appended to self.current_warnings.
         """
         if not doc_meta.breadcrumbs:
             self._add_warning(1, "Document is missing breadcrumbs.")
@@ -330,9 +290,6 @@ class MarkdownAnalyzer:
 
         Args:
             doc_meta: Metadata extracted from the parsed document.
-
-        Returns:
-            None: Warnings are appended to self.current_warnings.
         """
         if not doc_meta.breadcrumbs or not doc_meta.filepath:
             return
@@ -356,9 +313,6 @@ class MarkdownAnalyzer:
         Args:
             doc_map: Mapping of heading text to HeadingInfo for the document.
             template_headings: Non-H1 heading rules from the template.
-
-        Returns:
-            None: Warnings are appended to self.current_warnings.
         """
         before = len(self.current_warnings)
         for t_heading in template_headings:
@@ -380,9 +334,6 @@ class MarkdownAnalyzer:
             rules: Expected content rules extracted from the matching template heading.
             line_num: Line number of the section heading, used for error reporting.
             section_name: Display name of the section, used for the passed message.
-
-        Returns:
-            None: Delegates to per-rule methods which append to self.current_warnings.
         """
         if actual_content.is_empty:
             return
@@ -401,9 +352,6 @@ class MarkdownAnalyzer:
             rules: Expected content rules from the template.
             line_num: Line number of the section heading.
             section_name: Display name of the section.
-
-        Returns:
-            None: Warnings are appended to self.current_warnings.
         """
         expected_non_text = rules.expected_types - {"text"}
         if not expected_non_text:
@@ -426,9 +374,6 @@ class MarkdownAnalyzer:
             rules: Expected content rules from the template.
             line_num: Line number of the section heading.
             section_name: Display name of the section.
-
-        Returns:
-            None: Warnings are appended to self.current_warnings.
         """
         if not rules.table_headers:
             return
@@ -446,17 +391,11 @@ class MarkdownAnalyzer:
     def _check_bullet_prefixes(self, actual_content, rules: ContentRules, line_num: int, section_name: str) -> None:
         """Bullet prefixes used in the section must belong to the template's allowed set.
 
-        A prefix present in the document but absent from the template is an error.
-        Missing prefixes are not flagged — having only a subset is fine.
-
         Args:
             actual_content: Parsed content info for the section.
             rules: Expected content rules from the template.
             line_num: Line number of the section heading.
             section_name: Display name of the section.
-
-        Returns:
-            None: Warnings are appended to self.current_warnings.
         """
         if not rules.bullet_prefixes and not rules.exact_list_prefixes:
             return
@@ -486,9 +425,6 @@ class MarkdownAnalyzer:
         Args:
             actual_content: Parsed content info for the section.
             section_name: Display name of the section.
-
-        Returns:
-            None: Warnings are appended to self.current_warnings.
         """
         before = len(self.current_warnings)
         for entry in actual_content.raw_lines:
@@ -611,9 +547,6 @@ class MarkdownAnalyzer:
         Args:
             line: The 1-based line number where the warning occurred.
             msg: A description of the warning.
-
-        Returns:
-            None: Warnings are appended to self.current_warnings.
         """
         self.current_warnings.append({"line": line, "msg": msg})
 
@@ -622,8 +555,5 @@ class MarkdownAnalyzer:
 
         Args:
             msg: A description of what passed.
-
-        Returns:
-            None: Messages are appended to self.current_passed.
         """
         self.current_passed.append(msg)

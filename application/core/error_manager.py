@@ -21,9 +21,6 @@ class ErrorManager:
 
         Args:
             main_window: The main window of the application used as the parent for error popups.
-
-        Returns:
-            None.
         """
         ErrorManager._instance = self
         self.main_window = main_window
@@ -35,9 +32,6 @@ class ErrorManager:
 
         Args:
             error: The exception instance caught by the safe_slot decorator.
-
-        Returns:
-            None.
         """
         if cls._instance:
             cls._instance.show_error_popup(error)
@@ -46,9 +40,6 @@ class ErrorManager:
 
     def _setup_exception_handling(self) -> None:
         """Tell Python to send ALL unhandled errors to our custom UI handler.
-
-        Returns:
-            None.
         """
         sys.excepthook = self.handle_global_exception
 
@@ -59,9 +50,6 @@ class ErrorManager:
             exc_type: The class of the exception.
             exc_value: The exception instance itself.
             exc_traceback: The traceback object containing the call stack.
-
-        Returns:
-            None.
         """
 
         # Ignore KeyboardInterrupt
@@ -77,11 +65,7 @@ class ErrorManager:
         """Displays a error popup based on custom exceptions.
 
         Args:
-            title: The title text for the message box.
             error: The exception object containing the error details.
-
-        Returns:
-            None. Shows a critical QMessageBox.
         """
         title = ErrorConstants.DEFAULT_ERROR_TITLE
         user_message = ErrorConstants.DEFAULT_ERROR_MESSAGE
@@ -105,6 +89,15 @@ def safe_slot(func):
     """
     @wraps(func)
     def wrapper(*args, **kwargs):
+        """Run the wrapped function and route exceptions to the error manager.
+
+        Args:
+            *args: The args value.
+            **kwargs: The kwargs value.
+
+        Returns:
+            The return value.
+        """
         try:
             return func(*args, **kwargs)
         except Exception as e:
