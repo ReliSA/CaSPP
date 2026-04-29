@@ -13,7 +13,7 @@ class EditorManager:
         """Initialize EditorManager with required collaborators.
 
         Args:
-            markdown_scene: Markdown scene containing ui components for markdown file editation.
+            tab_manager: The tab manager used by this component.
         """
         self.tab_manager = tab_manager
 
@@ -22,9 +22,6 @@ class EditorManager:
 
         Args:
             state: New state of the checkbox.
-
-        Returns:
-            None.
         """
         is_visible = (state == Qt.CheckState.Checked.value)
         for tab in self.tab_manager.tab_states.keys():
@@ -36,24 +33,22 @@ class EditorManager:
         """Update visibility of the analyzer list.
 
         Args:
-            state:  New state of the checkbox.
-
-        Returns:
-            None.
+            state: New state of the checkbox.
         """
         is_visible = (state == Qt.CheckState.Checked.value)
         for tab in self.tab_manager.tab_states.keys():
             tab.analyzer_list.setVisible(is_visible)
 
     def update_live_preview(self) -> None:
-        """Converts the current editor's markdown to HTML (used when typing)."""
+        """Converts the current editor's markdown to HTML (used when typing).
+        """
         self._update_tab_preview(self.tab_manager.get_current_tab())
 
     def _update_tab_preview(self, tab) -> None:
         """Converts the editor's markdown to HTML and updates the live preview panel.
-        
-        Returns:
-            None.
+
+        Args:
+            tab: The tab widget to update.
         """
         tab = self.tab_manager.get_current_tab()
 

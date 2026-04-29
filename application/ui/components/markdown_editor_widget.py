@@ -15,9 +15,6 @@ class MarkdownEditorWidget(QPlainTextEdit):
 
         Args:
             parent: Parent widget. Defaults to None.
-
-        Returns:
-            None.
         """
         super().__init__(parent)
         
@@ -39,14 +36,8 @@ class MarkdownEditorWidget(QPlainTextEdit):
     def line_number_area_paint_event(self, event: QPaintEvent) -> None:
         """Handles paint events for the line number gutter.
 
-        This method draws the gutter background, the line numbers, and the 
-        highlighted background for the currently active line.
-
         Args:
             event: The QPaintEvent triggered by the UI update.
-
-        Returns:
-            None.
         """
         painter = QPainter(self.line_number_area)
         painter.fillRect(event.rect(), QColor(EditorConstants.GUTTER_BACKGROUND))
@@ -83,9 +74,6 @@ class MarkdownEditorWidget(QPlainTextEdit):
     def _line_number_area_width(self) -> int:
         """Calculates the required width for the line number gutter.
 
-        The width scales dynamically based on how many digits are needed 
-        for the total line count (e.g., 1-9 vs 10-99).
-
         Returns:
             int: The calculated width in pixels.
         """
@@ -99,14 +87,8 @@ class MarkdownEditorWidget(QPlainTextEdit):
     def resizeEvent(self, event: QResizeEvent) -> None:
         """Handles resize events for the text editor.
 
-        Ensures the gutter widget is properly resized and positioned 
-        on the left side whenever the editor dimensions change.
-
         Args:
             event: The QResizeEvent.
-
-        Returns:
-            None.
         """
         super().resizeEvent(event)
         cr = self.contentsRect()
@@ -115,10 +97,8 @@ class MarkdownEditorWidget(QPlainTextEdit):
     def _update_line_number_area_width(self, _) -> None:
         """Updates the viewport margins when the block count changes.
 
-        This pushes the text to the right so it doesn't overlap with the gutter.
-
-        Returns:
-            None.
+        Args:
+            _: The   value.
         """
         self.setViewportMargins(self._line_number_area_width(), 0, 0, 0)
 
@@ -127,10 +107,7 @@ class MarkdownEditorWidget(QPlainTextEdit):
 
         Args:
             rect: The updated visible rectangle.
-            dy: The vertical scroll delta.
-
-        Returns:
-            None.
+            deltaY: The deltaY value.
         """
         if deltaY:
             self.line_number_area.scroll(0, deltaY)
@@ -141,11 +118,6 @@ class MarkdownEditorWidget(QPlainTextEdit):
 
     def _update_current_line(self) -> None:
         """Forces the gutter to repaint when the cursor moves.
-
-        This ensures the active line highlighting updates properly.
-
-        Returns:
-            None.
         """
         self.line_number_area.update()
 
@@ -158,9 +130,6 @@ class LineNumberArea(QWidget):
 
         Args:
             editor: The parent MarkdownEditorWidget instance.
-
-        Returns:
-            None.
         """
         super().__init__(editor)
         self.editor = editor
@@ -179,8 +148,5 @@ class LineNumberArea(QWidget):
 
         Args:
             event: The QPaintEvent triggering the redraw.
-
-        Returns:
-            None.
         """
         self.editor.line_number_area_paint_event(event)

@@ -10,8 +10,7 @@ class MainWindow(QMainWindow):
     """Handles main window layout setup."""
 
     def __init__(self) -> None:
-        """
-        Initializes main window.
+        """Initializes main window.
         """
         super().__init__()
 
@@ -47,17 +46,25 @@ class MainWindow(QMainWindow):
         self.sidebar.btn_git.clicked.connect(lambda: self.stacked_scenes.setCurrentIndex(1))
 
     def get_toolbar(self) -> TopMenuBar:
-        """
-        Returns top menu.
+        """Returns top menu.
+
+        Returns:
+            The TopMenuBar result.
         """
         return self.top_menu
 
     def get_markdown_viewer(self) -> MarkdownScene:
-        """
-        Returns markdown scene.
+        """Returns markdown scene.
+
+        Returns:
+            The MarkdownScene result.
         """
         return self.md_scene
 
     def get_git_viewer(self) -> GitScene:
-        """Returns git scene."""
+        """Returns git scene.
+
+        Returns:
+            The GitScene result.
+        """
         return self.git_scene

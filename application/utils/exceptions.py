@@ -17,14 +17,13 @@ class BaseAppException(Exception):
     
     def __init__(self, message: str, error_code: Optional[str] = None, 
                  user_message: Optional[str] = None, title: str = "Application Error") -> None:
-        """
-        Initialize base exception.
-        
+        """Initialize base exception.
+
         Args:
-            message: Technical error message for developers/logs
-            error_code: Optional error code for categorization
-            user_message: Optional user-friendly message for UI display
-            title: Optional title for the UI popup dialog
+            message: Technical error message for developers/logs.
+            error_code: Optional error code for categorization.
+            user_message: Optional user-friendly message for UI display.
+            title: Optional title for the UI popup dialog.
         """
         super().__init__(message)
         self.error_code = error_code
@@ -42,6 +41,11 @@ class GitRepositoryNotFoundError(GitException):
     """Raised when no git repository is found."""
 
     def __init__(self, path: Optional[str] = None) -> None:
+        """Initialize the object with required collaborators.
+
+        Args:
+            path: The path to process.
+        """
         message = f"No git repository found at: {path}" if path else "No git repository found"
         super().__init__(
             message=message,
@@ -54,6 +58,8 @@ class GitLibraryNotAvailableError(GitException):
     """Raised when GitPython library is not available."""
 
     def __init__(self) -> None:
+        """Initialize the object with required collaborators.
+        """
         super().__init__(
             message="GitPython library not available",
             error_code="GIT_LIB_UNAVAILABLE",
@@ -65,6 +71,12 @@ class GitOperationError(GitException):
     """Raised when a git operation fails."""
 
     def __init__(self, operation: str, cause: Optional[Exception] = None) -> None:
+        """Initialize the object with required collaborators.
+
+        Args:
+            operation: The git operation name.
+            cause: The cause value.
+        """
         message = f"Git {operation} operation failed"
         if cause:
             message += f": {str(cause)}"
@@ -80,6 +92,13 @@ class GitRemoteError(GitException):
     """Raised when remote operations fail."""
 
     def __init__(self, remote_name: str, operation: str, cause: Optional[Exception] = None) -> None:
+        """Initialize the object with required collaborators.
+
+        Args:
+            remote_name: The remote name value.
+            operation: The git operation name.
+            cause: The cause value.
+        """
         message = f"Remote '{remote_name}' {operation} failed"
         if cause:
             message += f": {str(cause)}"
@@ -95,6 +114,12 @@ class GitBranchError(GitException):
     """Raised when branch operations fail."""
 
     def __init__(self, branch_name: str, operation: str) -> None:
+        """Initialize the object with required collaborators.
+
+        Args:
+            branch_name: The branch name value.
+            operation: The git operation name.
+        """
         super().__init__(
             message=f"Branch '{branch_name}' {operation} failed",
             error_code="GIT_BRANCH_ERROR",
@@ -106,6 +131,11 @@ class GitDirtyWorkingTreeError(GitException):
     """Raised when working tree has uncommitted changes."""
 
     def __init__(self, operation: str) -> None:
+        """Initialize the object with required collaborators.
+
+        Args:
+            operation: The git operation name.
+        """
         super().__init__(
             message=f"Cannot {operation}: working tree has uncommitted changes",
             error_code="GIT_DIRTY_TREE",
@@ -123,6 +153,11 @@ class FileNotFoundError(FileException):
     """Raised when a file is not found."""
 
     def __init__(self, file_path: str) -> None:
+        """Initialize the object with required collaborators.
+
+        Args:
+            file_path: The file path to process.
+        """
         super().__init__(
             message=f"File not found: {file_path}",
             error_code="FILE_NOT_FOUND",
@@ -135,6 +170,13 @@ class FileAccessError(FileException):
     """Raised when file access is denied or fails."""
 
     def __init__(self, file_path: str, operation: str, cause: Optional[Exception] = None) -> None:
+        """Initialize the object with required collaborators.
+
+        Args:
+            file_path: The file path to process.
+            operation: The git operation name.
+            cause: The cause value.
+        """
         message = f"Failed to {operation} file: {file_path}"
         if cause:
             message += f" ({str(cause)})"
@@ -150,6 +192,12 @@ class InvalidFileFormatError(FileException):
     """Raised when file format is invalid."""
 
     def __init__(self, file_path: str, expected_format: str) -> None:
+        """Initialize the object with required collaborators.
+
+        Args:
+            file_path: The file path to process.
+            expected_format: The expected format value.
+        """
         super().__init__(
             message=f"Invalid file format for {file_path}. Expected: {expected_format}",
             error_code="INVALID_FILE_FORMAT",
@@ -161,6 +209,12 @@ class FileReadError(FileException):
     """Raised when reading a file fails."""
 
     def __init__(self, file_path: str, cause: str) -> None:
+        """Initialize the object with required collaborators.
+
+        Args:
+            file_path: The file path to process.
+            cause: The cause value.
+        """
         super().__init__(
             message=f"Failed to read file: {file_path} - {cause}",
             error_code="FILE_READ_ERROR",
@@ -172,6 +226,12 @@ class FileWriteError(FileException):
     """Raised when writing to a file fails."""
 
     def __init__(self, file_path: str, cause: str) -> None:
+        """Initialize the object with required collaborators.
+
+        Args:
+            file_path: The file path to process.
+            cause: The cause value.
+        """
         super().__init__(
             message=f"Failed to write file: {file_path} - {cause}",
             error_code="FILE_WRITE_ERROR",
@@ -183,6 +243,12 @@ class InvalidFileTypeError(FileException):
     """Raised when file type is not supported."""
 
     def __init__(self, file_path: str, expected_types: list) -> None:
+        """Initialize the object with required collaborators.
+
+        Args:
+            file_path: The file path to process.
+            expected_types: The expected types value.
+        """
         types_str = ", ".join(expected_types)
         super().__init__(
             message=f"Invalid file type for {file_path}. Expected one of: {types_str}",
@@ -195,6 +261,13 @@ class FileSizeError(FileException):
     """Raised when file size exceeds limits."""
 
     def __init__(self, file_path: str, actual_size: int, max_size: int) -> None:
+        """Initialize the object with required collaborators.
+
+        Args:
+            file_path: The file path to process.
+            actual_size: The actual size value.
+            max_size: The max size value.
+        """
         super().__init__(
             message=f"File {file_path} size {actual_size} bytes exceeds maximum {max_size} bytes",
             error_code="FILE_SIZE_ERROR",
@@ -212,6 +285,12 @@ class MarkdownParsingError(AnalysisException):
     """Raised when markdown parsing fails."""
 
     def __init__(self, file_path: str, cause: Optional[Exception] = None) -> None:
+        """Initialize the object with required collaborators.
+
+        Args:
+            file_path: The file path to process.
+            cause: The cause value.
+        """
         message = f"Failed to parse markdown file: {file_path}"
         if cause:
             message += f" ({str(cause)})"
@@ -233,6 +312,12 @@ class InvalidConfigurationError(ConfigurationException):
     """Raised when configuration is invalid."""
 
     def __init__(self, setting: str, value: str) -> None:
+        """Initialize the object with required collaborators.
+
+        Args:
+            setting: The setting value.
+            value: The value value.
+        """
         super().__init__(
             message=f"Invalid configuration for '{setting}': {value}",
             error_code="INVALID_CONFIG",
@@ -250,6 +335,13 @@ class InvalidInputError(ValidationException):
     """Raised when input validation fails."""
 
     def __init__(self, parameter: str, value: str, reason: str) -> None:
+        """Initialize the object with required collaborators.
+
+        Args:
+            parameter: The parameter value.
+            value: The value value.
+            reason: The reason value.
+        """
         super().__init__(
             message=f"Invalid {parameter}: {value} ({reason})",
             error_code="INVALID_INPUT",
@@ -261,6 +353,11 @@ class EmptyInputError(ValidationException):
     """Raised when required input is empty."""
 
     def __init__(self, parameter: str) -> None:
+        """Initialize the object with required collaborators.
+
+        Args:
+            parameter: The parameter value.
+        """
         super().__init__(
             message=f"Required parameter '{parameter}' cannot be empty",
             error_code="EMPTY_INPUT",
@@ -278,6 +375,12 @@ class ThreadOperationError(ThreadException):
     """Raised when thread operations fail."""
 
     def __init__(self, operation: str, cause: Optional[Exception] = None) -> None:
+        """Initialize the object with required collaborators.
+
+        Args:
+            operation: The git operation name.
+            cause: The cause value.
+        """
         message = f"Thread {operation} failed"
         if cause:
             message += f": {str(cause)}"
@@ -299,6 +402,12 @@ class WidgetInitializationError(UIException):
     """Raised when widget initialization fails."""
 
     def __init__(self, widget_name: str, cause: Optional[Exception] = None) -> None:
+        """Initialize the object with required collaborators.
+
+        Args:
+            widget_name: The widget name value.
+            cause: The cause value.
+        """
         message = f"Failed to initialize widget: {widget_name}"
         if cause:
             message += f" ({str(cause)})"

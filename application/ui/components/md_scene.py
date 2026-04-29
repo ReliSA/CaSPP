@@ -14,8 +14,7 @@ class MarkdownScene(QWidget):
     """Handles markdown scene ui actions."""
 
     def __init__(self) -> None:
-        """
-        Initializes markdown scene.
+        """Initializes markdown scene.
         """
         super().__init__()
         
@@ -98,7 +97,15 @@ class MarkdownScene(QWidget):
         self.main_splitter.setSizes([UIConstants.FILE_EXPLORER_INIT_WIDTH, UIConstants.FILE_EXPLORER_INIT_HEIGHT])
 
     def populate_explorer(self, root_directory: str, markdown_file_paths: Iterable[str]) -> int:
-        """Populate explorer tree from markdown file paths provided by FileManager."""
+        """Populate explorer tree from markdown file paths provided by FileManager.
+
+        Args:
+            root_directory: The root directory value.
+            markdown_file_paths: The markdown file paths value.
+
+        Returns:
+            The integer result.
+        """
         root_path = Path(root_directory)
         self.file_tree_widget.clear()
 

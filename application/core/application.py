@@ -26,6 +26,8 @@ class Application:
     """Main application class that coordinates business logic."""
     
     def __init__(self) -> None:
+        """Initialize the object with required collaborators.
+        """
         # Initialize the application
         self.app = QApplication(sys.argv if 'sys' in globals() else [])
 
@@ -66,7 +68,8 @@ class Application:
         self._setup_application()
 
     def _setup_application(self) -> None:
-        """Set up the application."""
+        """Set up the application.
+        """
         # Set up markdown viewer signals for auto-staging
         markdown_viewer = self.main_window.get_markdown_viewer()
         toolbar = self.main_window.get_toolbar()
@@ -150,48 +153,61 @@ class Application:
 
     def _on_editor_text_changed(self) -> None:
         """Wrapper to trigger multiple updates when a tab's text changes.
-        
-        Returns:
-            None.
         """
         self.file_manager.on_editor_text_changed()
         self.editor_manager.update_live_preview()
 
     def _on_tab_switched(self) -> None:
-        """Wrapper to trigger updates when switching between tabs."""
+        """Wrapper to trigger updates when switching between tabs.
+        """
         self.file_manager.on_tab_changed()
         self.editor_manager.update_live_preview()
 
     def run(self) -> int:
-        """
-        Run the application.
-        
+        """Run the application.
+
         Returns:
-            Application exit code
+            Application exit code.
         """
         self.main_window.show()
         return self.app.exec()
 
     def _on_git_operation_started(self, operation: str) -> None:
-        """Update UI when git operation starts."""
+        """Update UI when git operation starts.
+
+        Args:
+            operation: The git operation name.
+        """
         git_viewer = self.main_window.get_git_viewer()
         git_viewer.set_controls_enabled(False)
         git_viewer.set_output(f"Running git {operation}...")
 
     def _on_git_operation_output(self, operation: str, message: str) -> None:
-        """Append manager output to git scene."""
+        """Append manager output to git scene.
+
+        Args:
+            operation: The git operation name.
+            message: The message to display or use for the operation.
+        """
         git_viewer = self.main_window.get_git_viewer()
         git_viewer.append_output(message)
 
     def _on_git_operation_finished(self, operation: str, success: bool, message: str) -> None:
-        """Update git scene after background operation completes."""
+        """Update git scene after background operation completes.
+
+        Args:
+            operation: The git operation name.
+            success: Whether the operation completed successfully.
+            message: The message to display or use for the operation.
+        """
         git_viewer = self.main_window.get_git_viewer()
         status_prefix = "Success" if success else "Failed"
         git_viewer.set_output(f"{status_prefix}: {operation}\n\n{message}")
         git_viewer.set_controls_enabled(True)
 
     def _push_with_custom_message(self) -> None:
-        """Prompt for commit message and run push operation."""
+        """Prompt for commit message and run push operation.
+        """
         git_viewer = self.main_window.get_git_viewer()
         message, accepted = git_viewer.ask_push_commit_message()
         if not accepted:
@@ -201,12 +217,10 @@ class Application:
         self.git_manager.push(message=message)
     
     def get_main_window(self) -> MainWindow:
-        """
-        Get the main window instance.
+        """Get the main window instance.
 
         Returns:
             The MainWindow instance of the application.
-        
         """
         return self.main_window
     

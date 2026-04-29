@@ -18,7 +18,7 @@ class FileMatcher:
         """Initializes FileMatcher with a template loader.
 
         Args:
-            loader (TemplateParser): An instance of TemplateLoader used to fetch template objects.
+            loader: The loader value.
         """
         self.loader = loader
 
@@ -35,7 +35,7 @@ class FileMatcher:
         }
 
     def match(self, file_path):
-        """Finds the corresponding template, based on the filepath
+        """Finds the corresponding template, based on the filepath.
 
         Args:
             file_path: Full or relative file path.

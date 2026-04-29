@@ -6,19 +6,13 @@ class FormattingValidator:
 
     @staticmethod
     def check_encoding_errors(full_content: str) -> List[Dict[str, Any]]:
-        """
-        Checks for the presence of Unicode replacement characters. (Excel table 23)
-
-        This method validates if the document contains the '' character 
-        (\\ufffd), which usually indicates that an encoding error occurred 
-        during file reading. 
+        """Checks for the presence of Unicode replacement characters. (Excel table 23).
 
         Args:
             full_content: The entire raw string content of the markdown file.
 
         Returns:
-            A list of dictionaries, each containing 'line' (int) and 'msg' (str).
-            Returns an empty list if no encoding errors are found.
+            A list of dictionaries, each containing 'line' (int) and 'msg' (str). Returns an empty list if no encoding errors are found.
         """
         warnings = []
         if "\ufffd" in full_content:
@@ -27,8 +21,7 @@ class FormattingValidator:
 
     @staticmethod
     def check_bold(line_content: str, line_number: int, warnings: List[Dict]):
-        """
-        Checks for unclosed bold formatting in a single line. Excel table - 20
+        """Checks for unclosed bold formatting in a single line. Excel table - 20.
 
         Args:
             line_content: The raw text content of the line.
@@ -42,8 +35,7 @@ class FormattingValidator:
 
     @staticmethod
     def check_italics(line_content: str, line_number: int, warnings: List[Dict]):
-        """
-        Checks for unclosed italics formatting in a single line. Excel table - 21
+        """Checks for unclosed italics formatting in a single line. Excel table - 21.
 
         Args:
             line_content: The raw text content of the line.
@@ -58,8 +50,7 @@ class FormattingValidator:
 
     @staticmethod
     def check_image_alt_text(line_content: str, line_number: int, warnings: List[Dict]):
-        """
-        Checks for missing alt text in images - Excel table 22
+        """Checks for missing alt text in images - Excel table 22.
 
         Args:
             line_content: The raw text content of the line.
@@ -71,19 +62,13 @@ class FormattingValidator:
 
     @staticmethod
     def validate_formatting_consistency(raw_lines: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """
-        Runs control of text formatting (Bold, italics and alt text of images) - coresponds to Excel table 20, 21, 22
+        """Runs control of text formatting (Bold, italics and alt text of images) - coresponds to Excel table 20, 21, 22.
 
         Args:
-            raw_lines: A list of dictionaries representing document lines.
-                Each dictionary must contain:
-                - 'content' (str): The raw text of the line.
-                - 'line' (int): The 1-based line number for error reporting.
+            raw_lines: A list of dictionaries representing document lines. Each dictionary must contain: - 'content' (str): The raw text of the line. - 'line' (int): The 1-based line number for error reporting.
 
         Returns:
-            A list of dictionaries, each containing:
-                - 'line' (int): The line number where the issue was found.
-                - 'msg' (str): A descriptive warning message.
+            A list of dictionaries, each containing: - 'line' (int): The line number where the issue was found. - 'msg' (str): A descriptive warning message.
         """
 
         warnings = []
@@ -100,9 +85,8 @@ class FormattingValidator:
     
     @staticmethod
     def check_separator(entry: Dict[str, Any], header_columns: int, warnings: List[Dict]):
-        """
-        Validates the table separator row.
-        
+        """Validates the table separator row.
+
         Args:
             entry: The dictionary for the separator line (contains 'content' and 'line').
             header_columns: Count of pipes in the header row.
@@ -125,8 +109,7 @@ class FormattingValidator:
     
     @staticmethod
     def check_table_row(entry: Dict[str, Any], header_columns: int, warnings: List[Dict]):
-        """
-        Validates a single data row of a Markdown table. (Excel table 24)
+        """Validates a single data row of a Markdown table. (Excel table 24).
 
         Args:
             entry: Dictionary with 'content' and 'line' of the current row.
@@ -150,19 +133,13 @@ class FormattingValidator:
     @staticmethod
     def validate_table_consistency(raw_lines: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
-        """
-        Validates the structural integrity of Markdown tables.
+        """Validates the structural integrity of Markdown tables.
 
         Args:
-            raw_lines: A list of dictionaries representing document lines.
-                Each dictionary must contain:
-                - 'content' (str): The raw text of the line.
-                - 'line' (int): The 1-based line number for error reporting.
+            raw_lines: A list of dictionaries representing document lines. Each dictionary must contain: - 'content' (str): The raw text of the line. - 'line' (int): The 1-based line number for error reporting.
 
         Returns:
-            A list of dictionaries, each containing:
-                - 'line' (int): The line number where the structural issue was found.
-                - 'msg' (str): A descriptive warning message about the error.
+            A list of dictionaries, each containing: - 'line' (int): The line number where the structural issue was found. - 'msg' (str): A descriptive warning message about the error.
         """
         warnings = []
         i = 0
@@ -190,20 +167,14 @@ class FormattingValidator:
     
     @staticmethod
     def run_all_checks(full_content: str, raw_lines: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """
-        Executes all the formatting checks
-        
+        """Executes all the formatting checks.
+
         Args:
-            full_content: The entire raw string content of the markdown file 
-                (used for encoding check).
-            raw_lines: A list of dictionaries representing document lines, where 
-                each dict contains 'content' (str) and 'line' (int).
+            full_content: The entire raw string content of the markdown file (used for encoding check).
+            raw_lines: A list of dictionaries representing document lines, where each dict contains 'content' (str) and 'line' (int).
 
         Returns:
-            A list of dictionaries representing all identified formatting issues, 
-            sorted by line number. Each dictionary contains:
-                - 'line' (int): The line number where the issue was found.
-                - 'msg' (str): A descriptive warning message.
+            A list of dictionaries representing all identified formatting issues, sorted by line number. Each dictionary contains: - 'line' (int): The line number where the issue was found. - 'msg' (str): A descriptive warning message.
         """
         all_warnings = []
         

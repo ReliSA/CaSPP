@@ -8,7 +8,16 @@ from .stage import stage_markdown_files
 
 
 def commit(repo_path: str, message: str, stage_all: bool = False) -> GitResult:
-    """Create commit for staged changes."""
+    """Create commit for staged changes.
+
+    Args:
+        repo_path: The git repository path.
+        message: The message to display or use for the operation.
+        stage_all: Whether to stage all changes before committing.
+
+    Returns:
+        The git operation result.
+    """
     try:
         normalized_message = (message or "").strip()
         if not normalized_message:

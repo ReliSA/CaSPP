@@ -5,7 +5,14 @@ from . import runner
 
 
 def pull(repo_path: str) -> GitResult:
-    """Pull from origin for the current branch."""
+    """Pull from origin for the current branch.
+
+    Args:
+        repo_path: The git repository path.
+
+    Returns:
+        The git operation result.
+    """
     try:
         repo = runner.load_repo(repo_path)
 

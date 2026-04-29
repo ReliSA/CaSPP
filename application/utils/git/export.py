@@ -9,7 +9,15 @@ from . import runner
 
 
 def export_staged_files_zip(repo_path: str, output_zip_path: str = None) -> GitResult:
-    """Export staged files to a zip archive."""
+    """Export staged files to a zip archive.
+
+    Args:
+        repo_path: The git repository path.
+        output_zip_path: Optional destination path for the zip archive.
+
+    Returns:
+        The git operation result.
+    """
     try:
         repo = runner.load_repo(repo_path)
         repo_root = Path(repo.working_dir).resolve()

@@ -13,7 +13,8 @@ from core.application import Application
 
 
 def setup_logging():
-    """Set up application logging."""
+    """Set up application logging.
+    """
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -24,8 +25,12 @@ def setup_logging():
     )
 
 
-def main():
-    """Main entry point for the application."""
+def main() -> int:
+    """Main entry point for the application.
+
+    Returns:
+        The return value.
+    """
     setup_logging()
     logger = logging.getLogger(__name__)
     

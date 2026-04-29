@@ -7,7 +7,15 @@ from . import runner
 
 
 def stage_file(repo_path: str, file_path: str) -> GitResult:
-    """Stage a single file."""
+    """Stage a single file.
+
+    Args:
+        repo_path: The git repository path.
+        file_path: The file path to process.
+
+    Returns:
+        The git operation result.
+    """
     try:
         repo = runner.load_repo(repo_path)
         relative_path = runner.normalize_repo_path(repo, file_path)
@@ -20,7 +28,15 @@ def stage_file(repo_path: str, file_path: str) -> GitResult:
 
 
 def stage_markdown_files(repo_path: str, file_paths: Optional[List[str]] = None) -> GitResult:
-    """Stage markdown files from provided paths or from current status."""
+    """Stage markdown files from provided paths or from current status.
+
+    Args:
+        repo_path: The git repository path.
+        file_paths: The file paths to process.
+
+    Returns:
+        The git operation result.
+    """
     try:
         repo = runner.load_repo(repo_path)
 
@@ -59,7 +75,14 @@ def stage_markdown_files(repo_path: str, file_paths: Optional[List[str]] = None)
 
 
 def unstage_all(repo_path: str) -> GitResult:
-    """Unstage all staged changes."""
+    """Unstage all staged changes.
+
+    Args:
+        repo_path: The git repository path.
+
+    Returns:
+        The git operation result.
+    """
     try:
         repo = runner.load_repo(repo_path)
         repo.git.reset("HEAD")
