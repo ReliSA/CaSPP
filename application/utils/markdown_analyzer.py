@@ -5,6 +5,7 @@ from typing import Dict, List, Tuple
 import logging
 
 from core.constants import FileConstants, LoaderConstants, ReportConstants
+from utils.content_validator import ContentValidator
 from utils.exceptions import FileNotFoundError, InvalidInputError
 from utils.formatting_validator import FormattingValidator
 from utils.markdown_parser import DocumentMeta, HeadingInfo, ParsedDocument
@@ -61,7 +62,17 @@ class MarkdownAnalyzer:
         self.current_warnings.extend(formatting_warnings)
         
         if not formatting_warnings:
-            self._add_passed("Formatting (bold, italics, tables, images) is consistent.")    
+            self._add_passed("Formatting (bold, italics, tables, images) is consistent.")
+
+        # content kontroly(excel 17,18,19)
+
+        content_validator = ContentValidator(
+            raw_lines=all_raw_lines,
+            doc_data=doc,
+            rules=template
+        )
+        content_warnings = content_validator.run_all_checks()
+        self.current_warnings.extend(content_warnings)
         
         # Breadcrumbs
         self._validate_breadcrumbs(doc.meta, template.document_rules)

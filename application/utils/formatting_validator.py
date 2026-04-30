@@ -1,8 +1,21 @@
 import re
 from typing import List, Dict, Any, Set
-from core.constants import FormattingValidatorConstants
+from core.constants import ValidationConstants
 
 class FormattingValidator:
+    """Validator for Markdown formatting and structural integrity.
+
+    This class includes methods to check text formatting (bold, italics), image syntax, encoding errors,
+    and the structural consistency of Markdown tables.
+
+    Attributes:
+        full_content (str): The entire raw string content of the file.
+        raw_lines (List[Dict[str, Any]]): A list of dictionaries, where each dict
+            contains 'content' (str) and 'line' (int) for every line in the file.
+        warnings (List[Dict[str, Any]]): A collection of identified issues found
+            during the validation process.
+    """
+    
     def __init__(self, full_content: str, raw_lines: List[Dict[str, Any]]):
         """
         Tady si objekt při vytvoření uloží vše, co potřebuje.
@@ -37,7 +50,7 @@ class FormattingValidator:
             line_number: The 1-based line number for error reporting.
         """
 
-        bold_count = len(re.findall(FormattingValidatorConstants.BOLD_FORMAT , line_content))
+        bold_count = len(re.findall(ValidationConstants.BOLD_FORMAT , line_content))
         if bold_count % 2 != 0:
             self.warnings.append({ "line": line_number, "msg": f"Unclosed bold formatting (odd number of **)."})
 
@@ -49,8 +62,8 @@ class FormattingValidator:
             line_content: The raw text content of the line.
             line_number: The 1-based line number for error reporting.
         """
-        clean_italic_line = re.sub(FormattingValidatorConstants.BULLET_POINT, '', line_content)
-        italic_count = len(re.findall(FormattingValidatorConstants.ITALICS_FORMAT, clean_italic_line))
+        clean_italic_line = re.sub(ValidationConstants.BULLET_POINT, '', line_content)
+        italic_count = len(re.findall(ValidationConstants.ITALICS_FORMAT, clean_italic_line))
         if italic_count % 2 != 0:
             self.warnings.append({ "line": line_number, "msg": "Unclosed italic formatting (odd number of *)." })
 
@@ -62,7 +75,7 @@ class FormattingValidator:
             line_content: The raw text content of the line.
             line_number: The 1-based line number for error reporting.
         """
-        if re.search(FormattingValidatorConstants.ALT_TEXT, line_content):
+        if re.search(ValidationConstants.ALT_TEXT, line_content):
             self.warnings.append({ "line": line_number, "msg": "Image is missing alt text (format ![]() is incorrect)."})
 
     def validate_formatting_consistency(self) -> None:
@@ -90,7 +103,7 @@ class FormattingValidator:
         sep_line_number = entry["line"]
         
         # Valid separators | --- | :--- | ---: | :---: |
-        if not re.fullmatch(FormattingValidatorConstants.TABLE_SEPARATOR, sep_line):
+        if not re.fullmatch(ValidationConstants.TABLE_SEPARATOR, sep_line):
             self.warnings.append({
                 "line": sep_line_number,
                 "msg": "Missing or invalid table separator row (| --- |)."
