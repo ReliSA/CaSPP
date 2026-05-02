@@ -130,6 +130,14 @@ class UIConstants:
     # Tab constants
     UNTITLED_TAB_NAME = "Untitled"
 
+    # Ui ids
+    GIT_CONSOLE_UI_ID = "git_console"
+    SIDEBAR_UI_ID = "sidebar"
+    SIDEBAR_MD_BTN_ID = "btn_sidebar_md"
+    SIDEBAR_GIT_BTN_ID = "btn_sidebar_git"
+
+
+
 class MarkdownPreviewConstants:
     """Constants for Markdown live preview CSS styling."""
     

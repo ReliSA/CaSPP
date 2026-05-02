@@ -204,9 +204,44 @@ QMenu::item:selected {
 
 /* --- Git Scene Terminal --- */
 #git_console {
-    background-color: #0A0A0A; /* Deep black terminal look */
+    background-color: #0A0A0A;
     color: #D4D4D4;
     font-family: "Consolas", monospace;
     border-top: 1px solid #3C3C3C;
     padding: 8px;
+}
+
+/* --- Sidebar --- */
+#sidebar {
+    background-color: #333333;
+    border-right: 1px solid #1E1E1E;
+    min-width: 50px;
+    max-width: 50px;
+}
+
+#sidebar QPushButton {
+    background-color: transparent;
+    border: none;
+    border-left: 2px solid transparent;
+    border-radius: 0px; 
+    padding: 12px 0px; 
+}
+
+#sidebar QPushButton:hover {
+    background-color: #3C3C3C; 
+}
+
+#sidebar QPushButton:checked {
+    border-left: 2px solid #FFFFFF; 
+}
+
+
+#btn_sidebar_md {
+    qproperty-icon: url("{{ICONS_DIR}}/LucideFolderOpen.svg"); 
+    qproperty-iconSize: 22px 22px; 
+}
+
+#btn_sidebar_git {
+    qproperty-icon: url("{{ICONS_DIR}}/LucideGithub.svg"); 
+    qproperty-iconSize: 22px 22px;
 }
