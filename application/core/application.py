@@ -283,6 +283,11 @@ class Application:
             if os.path.exists(file_path):
                 self.file_manager.load_markdown_file(file_path)
 
+        # Restore current opened tab
+        active_tab_index = settings.value(SettingsConstants.CURRENT_TAB_KEY, -1, type=int)
+        if 0 <= active_tab_index < md_viewer.tabs.count():
+            md_viewer.tabs.setCurrentIndex(active_tab_index)
+
         # Restore Checkboxes
         live_preview = settings.value(SettingsConstants.LIVE_PREVIEW_KEY, False, type=bool)
         md_viewer.live_preview_check_box.setChecked(live_preview)
@@ -323,6 +328,9 @@ class Application:
             if tab_state.file_path:
                 open_files.append(tab_state.file_path)
         settings.setValue(SettingsConstants.OPEN_TABS_KEY, open_files)
+
+        # Save current opened tab
+        settings.setValue(SettingsConstants.CURRENT_TAB_KEY, md_viewer.tabs.currentIndex())
 
         event.accept()
     

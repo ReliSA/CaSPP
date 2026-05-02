@@ -150,6 +150,7 @@ class SettingsConstants:
     ANALYZER_KEY = "analyzer_enabled"
     LAST_DIR_KEY = "last_explorer_dir"
     OPEN_TABS_KEY = "open_tabs"
+    CURRENT_TAB_KEY = "active_tab_index"
 
 class MarkdownPreviewConstants:
     """Constants for Markdown live preview CSS styling."""
