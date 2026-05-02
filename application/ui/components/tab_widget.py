@@ -9,15 +9,11 @@ class TabWidget(QWidget):
     """A single tab holding its own editor, preview, and analyzer list."""
     
     def __init__(self, parent: QWidget = None) -> None:
-        """
-        Initializes top menu bar.
-        
-        Args:
-            parent: Parent element
+        """Initializes top menu bar.
 
-        Returns:
-            None.
-        """    
+        Args:
+            parent: Parent element.
+        """
         super().__init__(parent)
         self.layout = QHBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)

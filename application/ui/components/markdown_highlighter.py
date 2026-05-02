@@ -14,9 +14,6 @@ class MarkdownHighlighter(QSyntaxHighlighter):
 
         Args:
             document: The QTextDocument to apply the highlighting to. Defaults to None.
-
-        Returns:
-            None.
         """
         super().__init__(document)
         self.highlighting_rules = []
@@ -112,15 +109,9 @@ class MarkdownHighlighter(QSyntaxHighlighter):
 
     def highlightBlock(self, text: str) -> None:
         """Applies syntax highlighting to a given block of text.
-        
-        This method is called automatically by PyQt's underlying text engine 
-        whenever the text in the document changes.
 
         Args:
             text: The text block (usually a single line) to be highlighted.
-
-        Returns:
-            None.
         """
         # 1. Apply all single-line regex rules
         for pattern, format in self.highlighting_rules:
