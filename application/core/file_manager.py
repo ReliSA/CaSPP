@@ -2,6 +2,7 @@
 File-related operations extracted from Application.
 """
 import logging
+import os
 from typing import Optional
 
 # local imports
@@ -57,6 +58,7 @@ class FileManager:
         self._is_dirty = False
         self.template_loader = template_loader
         self.document_loader = document_loader
+        self.project_index = {}
         self.file_matcher = FileMatcher(self.template_loader) if self.template_loader else None
 
     def load_templates(self, templates_dir: str) -> None:
@@ -144,7 +146,7 @@ class FileManager:
                 if not template:
                     raise ValueError("Template matching failed for the document.")
 
-                analysis = self.markdown_analyzer.validate_structure(parsed_doc, template)
+                analysis = self.markdown_analyzer.validate_structure(parsed_doc, template, project_index=self.project_index)
 
             report = self.markdown_analyzer.generate_report(analysis)
             self.tab_manager.set_analysis(report)
@@ -241,6 +243,8 @@ class FileManager:
         if not selected_directory:
             return
 
+        self.build_project_index(selected_directory)
+
         markdown_files = self.file_helper.find_markdown_files(
             directory=selected_directory,
             recursive=True,
@@ -324,3 +328,36 @@ class FileManager:
         self.current_file_path = state.file_path
         self.current_file_content = self.tab_manager.get_editor_content() if state.file_path else None
         self._is_dirty = state.is_dirty
+
+    def build_project_index(self, root_dir: str) -> None:
+        """
+        Builds a project-wide index of aliases and links for cross-validation.
+
+        Args:
+            root_dir: The root directory to scan for markdown files.
+        """
+        if not self.document_loader:
+            return
+
+        self.project_index = {}
+        all_files = self.file_helper.find_markdown_files(root_dir, recursive=True)
+        
+        logger.info("Indexing project files for link validation...")
+        for path in all_files:
+            filename = os.path.basename(path)
+            content = self.file_helper.read_file(path)
+            
+            if content:
+                try:
+                    doc = self.document_loader.parse_content(path, content)
+                    metadata = self.document_loader.get_link_metadata(doc)
+                    
+                    self.project_index[filename] = {
+                        "full_path": path,
+                        "aliases": metadata["aliases"],
+                        "related": metadata["related_links"]
+                    }
+                except Exception as e:
+                    logger.error(f"Failed to index {filename}: {e}")
+
+        logger.info(f"Project indexed: {len(self.project_index)} files processed.")

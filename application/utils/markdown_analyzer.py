@@ -1,12 +1,13 @@
 import re
 import os
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Optional,  Tuple
 import logging
 
 from core.constants import FileConstants, LoaderConstants, ReportConstants
 from utils.exceptions import FileNotFoundError, InvalidInputError
 from utils.formatting_validator import FormattingValidator
+from utils.links_validator import LinkValidator
 from utils.markdown_parser import DocumentMeta, HeadingInfo, ParsedDocument
 from utils.template_parser import ContentRules, DocumentRules, HeadingRules, TemplateRules
 
@@ -34,12 +35,13 @@ class MarkdownAnalyzer:
         self.current_warnings: List[Dict] = []
         self.current_passed: List[str] = []
 
-    def validate_structure(self, doc: ParsedDocument, template: TemplateRules) -> Dict:
+    def validate_structure(self, doc: ParsedDocument, template: TemplateRules, project_index: Dict = None) -> Dict:
         """Compare a parsed document against template rules.
 
         Args:
             doc: Parsed representation of the markdown file.
             template: Rules extracted from the matching template.
+            project_index: Global index of all project files and their metadata.
 
         Returns:
             Dict with keys 'file', 'warnings', and 'passed'.
@@ -92,6 +94,16 @@ class MarkdownAnalyzer:
         if not formatting_warnings:
             self._add_passed("Formatting (bold, italics, tables, images) is consistent.")
 
+
+
+        if project_index:
+            link_validator = LinkValidator(doc, project_index)
+            link_warnings = link_validator.run_all_checks()
+        
+            if link_warnings:
+                self.current_warnings.extend(link_warnings)
+            else:
+                self._add_passed("Cross-references and aliases are consistent (Rules 26, 27, 28).")
         return {
             "file": doc.meta.filepath,
             "warnings": self.current_warnings,
