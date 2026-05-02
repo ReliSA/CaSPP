@@ -254,11 +254,11 @@ class Application:
         settings = QSettings(SettingsConstants.ORG_NAME, SettingsConstants.APP_NAME)
         md_viewer = self.main_window.get_markdown_viewer()
 
-        # Restore Window Size and Position
+        # Restore window size and position
         if settings.value(SettingsConstants.GEOMETRY_KEY):
             self.main_window.restoreGeometry(settings.value(SettingsConstants.GEOMETRY_KEY))
 
-        # Restore Active Scene
+        # Restore active scene
         active_scene_index = settings.value(SettingsConstants.ACTIVE_SCENE_KEY, 0, type=int)
         self.main_window.stacked_scenes.setCurrentIndex(active_scene_index)
         if active_scene_index == 0:
@@ -266,7 +266,7 @@ class Application:
         else:
             self.main_window.sidebar.btn_git.setChecked(True)
 
-        # Restore File Explorer
+        # Restore file explorer
         last_explorer_dir = settings.value(SettingsConstants.LAST_DIR_KEY, "", type=str)
         if last_explorer_dir and os.path.isdir(last_explorer_dir):
             markdown_files = self.file_helper.find_markdown_files(
@@ -274,10 +274,15 @@ class Application:
                 recursive=True
             )
             md_viewer.populate_explorer(last_explorer_dir, markdown_files)
-            self.file_manager.open_explorer()
             self.file_manager.current_explorer_dir = last_explorer_dir
 
-        # Restore Open Tabs
+        # Restore opened explorer
+        if settings.value(SettingsConstants.OPEN_EXPLORER_KEY, True, type=bool):
+            self.file_manager.open_explorer()
+        else:
+            self.file_manager.close_explorer()
+
+        # Restore open tabs
         open_files = settings.value(SettingsConstants.OPEN_TABS_KEY, [], type=list)
         for file_path in open_files:
             if os.path.exists(file_path):
@@ -288,7 +293,7 @@ class Application:
         if 0 <= active_tab_index < md_viewer.tabs.count():
             md_viewer.tabs.setCurrentIndex(active_tab_index)
 
-        # Restore Checkboxes
+        # Restore checkboxes
         live_preview = settings.value(SettingsConstants.LIVE_PREVIEW_KEY, False, type=bool)
         md_viewer.live_preview_check_box.setChecked(live_preview)
 
@@ -306,23 +311,27 @@ class Application:
         """
         settings = QSettings(SettingsConstants.ORG_NAME, SettingsConstants.APP_NAME)
 
-        # Save Window Geometry
+        # Save window geometry
         settings.setValue(SettingsConstants.GEOMETRY_KEY, self.main_window.saveGeometry())
 
-        # Save Active Scene 
+        # Save active scene 
         settings.setValue(SettingsConstants.ACTIVE_SCENE_KEY, self.main_window.stacked_scenes.currentIndex())
 
-        # Save Checkboxes
+        # Save checkboxes
         md_viewer = self.main_window.get_markdown_viewer()
         settings.setValue(SettingsConstants.LIVE_PREVIEW_KEY, md_viewer.live_preview_check_box.isChecked())
         settings.setValue(SettingsConstants.ANALYZER_KEY, md_viewer.analyzer_check_box.isChecked())
 
-        # Save Explorer Directory
+        # Save explorer directory
         explorer_dir = self.file_manager.current_explorer_dir
         if explorer_dir:
             settings.setValue(SettingsConstants.LAST_DIR_KEY, explorer_dir)
 
-        # Save Open Tabs
+        # Save explorer opened
+        explorer_open = not md_viewer.file_explorer_widget.isHidden()
+        settings.setValue(SettingsConstants.OPEN_EXPLORER_KEY, explorer_open)
+
+        # Save open tabs
         open_files = []
         for tab_widget, tab_state in self.tab_manager.tab_states.items():
             if tab_state.file_path:
