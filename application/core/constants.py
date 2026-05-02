@@ -264,6 +264,14 @@ class ValidationConstants:
     VALID_URL_SCHEMES = ['http', 'https', 'ftp', 'ftps']
     MAX_URL_LENGTH = 2048
 
+    BOLD_FORMAT = r'(?<!\\)\*\*'
+    BULLET_POINT = r'^\s*\*\s+'
+    ITALICS_FORMAT = r'(?<!\*)\*(?!\*)'
+    ALT_TEXT = r'!\[\s*\]\('
+    TABLE_SEPARATOR = r'\|(?:\s*:?-+:?\s*\|)+'
+    
+    PLACEHOLDER_PATTERN = r'(?i)(?:_|\*){1,3}\s*(?:remove|replace|insert|choose|optional|example)\b.*?(?:_|\*){1,3}'
+
 class LoaderConstants:
     """Constants for template and document loading."""
     # Heading line:  ### Some text
