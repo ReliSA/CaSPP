@@ -3,13 +3,16 @@ Application logic coordinator.
 """
 # standard library imports
 import sys
+import os
 
 # third-party imports
 from PyQt6.QtWidgets import QApplication
+from PyQt6.QtCore import QSettings
+from PyQt6.QtGui import QCloseEvent
 
 # local imports
 from ui.main_window import MainWindow
-from core.constants import FileConstants, AssetsConstants
+from core.constants import FileConstants, AssetsConstants, SettingsConstants
 from utils.markdown_parser import MarkdownParser
 from utils.markdown_analyzer import MarkdownAnalyzer
 from utils.template_parser import TemplateParser
@@ -28,6 +31,10 @@ class Application:
     def __init__(self) -> None:
         """Initialize the object with required collaborators.
         """
+
+        # Booting lock for loading the settings
+        self._is_booting = True
+
         # Initialize the application
         self.app = QApplication(sys.argv if 'sys' in globals() else [])
 
@@ -76,6 +83,12 @@ class Application:
         self.error_manager = ErrorManager(self.main_window)
         # Set up application logic and signal connections
         self._setup_application()
+
+        # Load settings
+        self._load_settings()
+        self.main_window.closeEvent = self._save_settings
+
+        self._is_booting = False
 
     def _setup_application(self) -> None:
         """Set up the application.
@@ -164,12 +177,18 @@ class Application:
     def _on_editor_text_changed(self) -> None:
         """Wrapper to trigger multiple updates when a tab's text changes.
         """
+        if self._is_booting: 
+            return
+
         self.file_manager.on_editor_text_changed()
         self.editor_manager.update_live_preview()
 
     def _on_tab_switched(self) -> None:
         """Wrapper to trigger updates when switching between tabs.
         """
+        if self._is_booting: 
+            return
+        
         self.file_manager.on_tab_changed()
         self.editor_manager.update_live_preview()
 
@@ -225,6 +244,104 @@ class Application:
             return
 
         self.git_manager.push(message=message)
+
+    def _load_settings(self) -> None:
+        """Loads QSettings and restores the previous application state.
+
+        Returns:
+            None.
+        """
+        settings = QSettings(SettingsConstants.ORG_NAME, SettingsConstants.APP_NAME)
+        md_viewer = self.main_window.get_markdown_viewer()
+
+        # Restore window size and position
+        if settings.value(SettingsConstants.GEOMETRY_KEY):
+            self.main_window.restoreGeometry(settings.value(SettingsConstants.GEOMETRY_KEY))
+
+        # Restore active scene
+        active_scene_index = settings.value(SettingsConstants.ACTIVE_SCENE_KEY, 0, type=int)
+        self.main_window.stacked_scenes.setCurrentIndex(active_scene_index)
+        if active_scene_index == 0:
+            self.main_window.sidebar.btn_md.setChecked(True)
+        else:
+            self.main_window.sidebar.btn_git.setChecked(True)
+
+        # Restore file explorer
+        last_explorer_dir = settings.value(SettingsConstants.LAST_DIR_KEY, "", type=str)
+        if last_explorer_dir and os.path.isdir(last_explorer_dir):
+            markdown_files = self.file_helper.find_markdown_files(
+                directory=last_explorer_dir, 
+                recursive=True
+            )
+            md_viewer.populate_explorer(last_explorer_dir, markdown_files)
+            self.file_manager.current_explorer_dir = last_explorer_dir
+
+        # Restore opened explorer
+        if settings.value(SettingsConstants.OPEN_EXPLORER_KEY, True, type=bool):
+            self.file_manager.open_explorer()
+        else:
+            self.file_manager.close_explorer()
+
+        # Restore open tabs
+        open_files = settings.value(SettingsConstants.OPEN_TABS_KEY, [], type=list)
+        for file_path in open_files:
+            if os.path.exists(file_path):
+                self.file_manager.load_markdown_file(file_path)
+
+        # Restore current opened tab
+        active_tab_index = settings.value(SettingsConstants.CURRENT_TAB_KEY, -1, type=int)
+        if 0 <= active_tab_index < md_viewer.tabs.count():
+            md_viewer.tabs.setCurrentIndex(active_tab_index)
+
+        # Restore checkboxes
+        live_preview = settings.value(SettingsConstants.LIVE_PREVIEW_KEY, False, type=bool)
+        md_viewer.live_preview_check_box.setChecked(live_preview)
+
+        analyzer_on = settings.value(SettingsConstants.ANALYZER_KEY, False, type=bool)
+        md_viewer.analyzer_check_box.setChecked(analyzer_on)
+
+    def _save_settings(self, event: QCloseEvent) -> None:
+        """Saves the current application state before shutting down.
+
+        Args:
+            event: The PyQt close event triggered by exiting the application.
+
+        Returns:
+            None.
+        """
+        settings = QSettings(SettingsConstants.ORG_NAME, SettingsConstants.APP_NAME)
+
+        # Save window geometry
+        settings.setValue(SettingsConstants.GEOMETRY_KEY, self.main_window.saveGeometry())
+
+        # Save active scene 
+        settings.setValue(SettingsConstants.ACTIVE_SCENE_KEY, self.main_window.stacked_scenes.currentIndex())
+
+        # Save checkboxes
+        md_viewer = self.main_window.get_markdown_viewer()
+        settings.setValue(SettingsConstants.LIVE_PREVIEW_KEY, md_viewer.live_preview_check_box.isChecked())
+        settings.setValue(SettingsConstants.ANALYZER_KEY, md_viewer.analyzer_check_box.isChecked())
+
+        # Save explorer directory
+        explorer_dir = self.file_manager.current_explorer_dir
+        if explorer_dir:
+            settings.setValue(SettingsConstants.LAST_DIR_KEY, explorer_dir)
+
+        # Save explorer opened
+        explorer_open = not md_viewer.file_explorer_widget.isHidden()
+        settings.setValue(SettingsConstants.OPEN_EXPLORER_KEY, explorer_open)
+
+        # Save open tabs
+        open_files = []
+        for tab_widget, tab_state in self.tab_manager.tab_states.items():
+            if tab_state.file_path:
+                open_files.append(tab_state.file_path)
+        settings.setValue(SettingsConstants.OPEN_TABS_KEY, open_files)
+
+        # Save current opened tab
+        settings.setValue(SettingsConstants.CURRENT_TAB_KEY, md_viewer.tabs.currentIndex())
+
+        event.accept()
     
     def get_main_window(self) -> MainWindow:
         """Get the main window instance.
