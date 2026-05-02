@@ -1,153 +1,96 @@
-# Development Environment Setup and Running the Application
+# Markdown Analyzer — User Manual
 
-This document describes how to prepare the development environment for this project and how to run the application using build scripts.
-
----
-
-## 1. Check Python Version
-
-Before starting, make sure you have **Python 3.10** installed.
-
-```bash
-python3 --version
-```
-
-or
-
-```bash
-python --version
-```
-
-Expected output:
-
-```bash
-Python 3.10.x
-```
+How to use **Markdown Analyzer**: edit Markdown text files (`.md`), preview them, check them against your project’s rules, and sync with Git when your team uses it.
 
 ---
 
-## 2. Clone the Repository
+## Start the app
 
-Clone the repository to your local machine:
-
-```bash
-git clone <HTTPS/SSH/GitHub CLI>
-```
+Run the program **from your project folder** (the folder your team gave you—the one that contains the project and its Git data). If you start it from the wrong place, it may not open. For install and build steps, see [README.md](README.md).
 
 ---
 
-## 3. Set Up Development Environment
+## Main screen
 
-To isolate project dependencies, it is recommended to use a virtual environment.
+**Left sidebar — two modes**
 
-### 3.1 Navigate to Project Root
+- **Markdown** (folder icon): work on documents.
+- **Git** (brand icon): check status and sync with the shared repository.
 
-**Linux / macOS:**
+**Markdown mode**
 
-```bash
-cd /path/to/project
-```
+1. **Open a document** — **File → Open File** (`Ctrl+O` / Mac `⌘+O`), or **File → Open Folder** (`Ctrl+F` / `⌘+F`) to fill the **Explorer** tree with Markdown files, then **double-click** a file.
+2. **Edit** in the large text area. Several files can be open as **tabs**; use **Save Changes** or **File → Save File** (`Ctrl+S` / `⌘+S`) for the active tab.
+3. Turn on **Live Preview** to see formatted output as you type (checkbox or **File → Show Live Preview**, `Ctrl+P` / `⌘+P`).
+4. Turn on **Analyzer** to see whether the document follows the project structure (checkbox or **File → Show Analyzer Output**, `Ctrl+A` / `⌘+A`).
 
-**Windows:**
+Use **Open Explorer** if the file tree is hidden. The **File** and **Git** menus repeat the same actions as the buttons on screen.
 
-```powershell
-cd C:\path\to\project_root
-```
-
----
-
-### 3.2 Create Virtual Environment
-
-```bash
-python3.10 -m venv venv
-```
+**Preview links:** Normal web links open in the browser; links to other Markdown files next to your document open in the app when that file exists.
 
 ---
 
-### 3.3 Activate Virtual Environment
+## Analyzer (structure check)
 
-**Linux / macOS:**
+The Analyzer updates when you **open** or **save** a file. It compares your document to a project template. **Warnings** include a **line number**—go to that line in the editor and fix the issue, then save again to refresh.
 
-```bash
-source venv/bin/activate
-```
-
-**Windows:**
-
-```powershell
-venv\Scripts\activate
-```
+Your file’s **parent folder** must match what the project expects (for example: `categories`, `forms`, `methodologies`, `modes`, `perspectives`, `publications`, `stages`, `patterns`, or files under `catalogue`). If the Analyzer fails or says the template does not match, move the file into the right folder or ask your team.
 
 ---
 
-### 3.4 Verify Activation
+## Git mode
 
-After activation, your terminal should show something like:
+Open the **Git** sidebar. The list below shows messages from each action.
 
-```bash
-(venv) user@machine:~/project$
-```
+| Button | What it does |
+|--------|----------------|
+| **Status** | Shows what changed (Markdown-focused). |
+| **Fetch** | Gets the latest information from the server without changing your files yet. |
+| **Pull** | Brings others’ changes into your copy of the project. |
+| **Push** | Can save your Markdown changes to the shared repo; you may enter an optional **commit message** in the dialog. If Push is blocked, **Pull** first. |
+| **Export Staged** | Puts **staged** files into a ZIP. See the warning below. |
 
-Verify Python version:
+Saving a Markdown file can **auto-stage** it for Git; you may see a note in the list. You still use **Push** when you want to send commits to the server.
 
-```bash
-python --version
-```
-
----
-
-### 3.5 Install Dependencies
-
-Install required packages:
-
-```bash
-pip install -r requirements.txt
-```
-
-If `pip` does not work:
-
-```bash
-python -m pip install -r requirements.txt
-```
+> **WARNING — Export Staged**  
+> After a successful export, the app **cleans your working folder** so a pull can run—including removing **untracked** files. Save your work, know what “staged” means, keep the ZIP somewhere safe, and ask a colleague before using this if you are unsure.
 
 ---
 
-## 4. Run Application Using Build Scripts
+## Keyboard shortcuts
 
-The application can be run on both Windows and Unix-based systems.
+Same actions as the **File** and **Git** menus.
 
----
+**Windows and Linux:** use **Ctrl**.  
+**Mac:** use **⌘ (Command)** instead of **Ctrl**—for example **⌘+O** for Open File and **⌘+Shift+S** for Status. That matches how the shortcuts usually appear in the menu bar on macOS.
 
-### 4.1 Windows
+### File menu
 
-```powershell
-cd C:\path\to\project_root
+| Menu action | Windows / Linux | Mac |
+|-------------|-----------------|-----|
+| Open File | `Ctrl+O` | `⌘+O` |
+| Save File | `Ctrl+S` | `⌘+S` |
+| Open Folder | `Ctrl+F` | `⌘+F` |
+| Open Explorer | `Ctrl+E` | `⌘+E` |
+| Show Live Preview | `Ctrl+P` | `⌘+P` |
+| Show Analyzer Output | `Ctrl+A` | `⌘+A` |
 
-# If script execution is blocked
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+### Git menu
 
-.\build_script.ps1
-.\dist\markdown_analyzer.exe
-```
-
----
-
-### 4.2 Linux / macOS
-
-```bash
-cd /path/to/project_root
-
-# Make script executable if needed
-chmod +x build_script.sh
-
-./build_script.sh
-./dist/markdown_analyzer
-```
+| Menu action | Windows / Linux | Mac |
+|-------------|-----------------|-----|
+| Status | `Ctrl+Shift+S` | `⌘+Shift+S` |
+| Fetch | `Ctrl+Shift+F` | `⌘+Shift+F` |
+| Pull | `Ctrl+Shift+L` | `⌘+Shift+L` |
+| Push | `Ctrl+Shift+P` | `⌘+Shift+P` |
+| Export Staged | `Ctrl+Shift+E` | `⌘+Shift+E` |
 
 ---
 
-## Notes
+## If something goes wrong
 
-* Ensure Python 3.10 is used (not older versions like 3.8).
-* Always activate the virtual environment before installing dependencies or running scripts.
-* On Windows, PowerShell execution policies may block script execution.
+- **App won’t start:** Run it from inside the **project** folder.
+- **Analyzer won’t run:** Put the file under the correct **folder type** (see above).
+- **Push blocked:** **Pull** first; only use **Export Staged** after reading the warning above.
+
+For repeated errors, tell support **what you clicked** and the **exact message** on screen.
