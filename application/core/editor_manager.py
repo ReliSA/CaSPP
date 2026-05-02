@@ -52,9 +52,9 @@ class EditorManager:
         """
         tab = self.tab_manager.get_current_tab()
 
-        if not tab or not tab.preview.isVisible():
+        if not tab or tab.preview.isHidden():
             return
-            
+              
         content = self.tab_manager.get_editor_content()
         
         html_content = markdown.markdown(

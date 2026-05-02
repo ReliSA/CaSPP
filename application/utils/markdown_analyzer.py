@@ -104,20 +104,6 @@ class MarkdownAnalyzer:
             if actual:
                 self._check_section_content(actual.content, t_heading.content_rules, actual.line_number, actual.text)
 
-        # Formatting
-        all_raw_lines = []
-        for heading in doc.headings:
-            all_raw_lines.extend(heading.content.raw_lines)
-
-        formatting_warnings = FormattingValidator.run_all_checks(
-            full_content=getattr(doc, 'raw_content', ""),
-            raw_lines=all_raw_lines
-        )
-        self.current_warnings.extend(formatting_warnings)
-
-        if not formatting_warnings:
-            self._add_passed("Formatting (bold, italics, tables, images) is consistent.")
-
         return {
             "file": doc.meta.filepath,
             "warnings": self.current_warnings,

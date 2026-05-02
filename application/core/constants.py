@@ -136,7 +136,20 @@ class UIConstants:
     SIDEBAR_MD_BTN_ID = "btn_sidebar_md"
     SIDEBAR_GIT_BTN_ID = "btn_sidebar_git"
 
+class SettingsConstants:
+    """Constants for app persistence."""
 
+    # Settings org and app name
+    ORG_NAME = "STEPSENHECPACT"
+    APP_NAME = "MarkdownAnalyzer"
+
+    # Keys for specific settings
+    GEOMETRY_KEY = "geometry"
+    ACTIVE_SCENE_KEY = "active_scene"
+    LIVE_PREVIEW_KEY = "live_preview_enabled"
+    ANALYZER_KEY = "analyzer_enabled"
+    LAST_DIR_KEY = "last_explorer_dir"
+    OPEN_TABS_KEY = "open_tabs"
 
 class MarkdownPreviewConstants:
     """Constants for Markdown live preview CSS styling."""
