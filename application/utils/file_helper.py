@@ -5,10 +5,15 @@ File operations helper module.
 # standard library imports
 import os
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 # third-party imports
 from PyQt6.QtWidgets import QFileDialog, QMessageBox, QWidget
+
+try:
+    from charset_normalizer import from_bytes
+except ImportError:
+    from_bytes = None
 
 # local imports
 from core.constants import FileConstants
@@ -21,25 +26,72 @@ class FileHelper:
     """Helper class for file operations."""
 
     def __init__(self, base_path: Optional[str] = None) -> None:
-        """
-        Initialize file helper.
-        
+        """Initialize file helper.
+
         Args:
-            base_path: Base directory for file operations
+            base_path: Base directory for file operations.
         """
         self.base_path = Path(base_path) if base_path else Path.cwd()
+        self._file_encodings: Dict[str, str] = {}
+
+    def _detect_encoding_from_bytes(self, raw_bytes: bytes) -> str:
+        """Detect text encoding with strict fallbacks.
+
+        Args:
+            raw_bytes: The raw bytes value.
+
+        Returns:
+            The string result.
+        """
+        try:
+            raw_bytes.decode(FileConstants.ENCODING_UTF8)
+            return FileConstants.ENCODING_UTF8
+        except UnicodeDecodeError:
+            pass
+
+        if from_bytes is not None:
+            matches = from_bytes(raw_bytes)
+            best = matches.best()
+            if best and best.encoding:
+                return best.encoding.lower()
+
+        return FileConstants.ENCODING_CP1252
+
+    def _resolve_save_encoding(self, file_path: Optional[str]) -> str:
+        """Resolve output encoding for file writes.
+
+        Args:
+            file_path: The file path to process.
+
+        Returns:
+            The string result.
+        """
+        if not file_path:
+            return FileConstants.ENCODING_UTF8
+
+        resolved_path = str(Path(file_path).resolve())
+        if resolved_path in self._file_encodings:
+            return self._file_encodings[resolved_path]
+
+        path_obj = Path(file_path)
+        if path_obj.exists() and path_obj.is_file():
+            raw_bytes = path_obj.read_bytes()
+            encoding = self._detect_encoding_from_bytes(raw_bytes)
+            self._file_encodings[resolved_path] = encoding
+            return encoding
+
+        return FileConstants.ENCODING_UTF8
     
     def select_markdown_file(self, parent: Optional[QWidget] = None, 
                            title: str = "Select Markdown File") -> Optional[str]:
-        """
-        Open file dialog to select a markdown file.
-        
+        """Open file dialog to select a markdown file.
+
         Args:
-            parent: Parent widget for the dialog
-            title: Dialog title
-        
+            parent: Parent widget for the dialog.
+            title: Dialog title.
+
         Returns:
-            Selected file path or None if cancelled
+            Selected file path or None if cancelled.
         """
         try:
             file_path, _ = QFileDialog.getOpenFileName(
@@ -61,15 +113,14 @@ class FileHelper:
     
     def select_multiple_markdown_files(self, parent: Optional[QWidget] = None,
                                      title: str = "Select Markdown Files") -> List[str]:
-        """
-        Open file dialog to select multiple markdown files.
-        
+        """Open file dialog to select multiple markdown files.
+
         Args:
-            parent: Parent widget for the dialog
-            title: Dialog title
-        
+            parent: Parent widget for the dialog.
+            title: Dialog title.
+
         Returns:
-            List of selected file paths
+            List of selected file paths.
         """
         try:
             file_paths, _ = QFileDialog.getOpenFileNames(
@@ -94,15 +145,14 @@ class FileHelper:
     
     def select_directory(self, parent: Optional[QWidget] = None,
                         title: str = "Select Directory") -> Optional[str]:
-        """
-        Open directory dialog to select a directory.
-        
+        """Open directory dialog to select a directory.
+
         Args:
-            parent: Parent widget for the dialog
-            title: Dialog title
-        
+            parent: Parent widget for the dialog.
+            title: Dialog title.
+
         Returns:
-            Selected directory path or None if cancelled
+            Selected directory path or None if cancelled.
         """
         try:
             dir_path = QFileDialog.getExistingDirectory(
@@ -122,18 +172,13 @@ class FileHelper:
             return None
     
     def _validate_file(self, file_path: str) -> Optional[str]:
-        """
-        Validate that a file exists and is readable.
-        
+        """Validate that a file exists and is readable.
+
         Args:
-            file_path: Path to validate
-        
+            file_path: Path to validate.
+
         Returns:
-            Validated file path or None if invalid
-            
-        Raises:
-            FileNotFoundError: If file doesn't exist
-            FileAccessError: If file is not readable
+            Validated file path or None if invalid.
         """
         try:
             path = Path(file_path)
@@ -159,33 +204,54 @@ class FileHelper:
     def validate_file(self, file_path: str) -> Optional[str]:
         """Public wrapper for validating a file path.
 
-        Returns the resolved path if valid, otherwise None.
+        Args:
+            file_path: The file path to process.
+
+        Returns:
+            The string result.
         """
         return self._validate_file(file_path)
 
     def _show_error(self, parent: Optional[QWidget], title: str, message: str) -> None:
-        """Show error message dialog."""
+        """Show error message dialog.
+
+        Args:
+            parent: The parent widget for dialogs.
+            title: The dialog title.
+            message: The message to display or use for the operation.
+        """
         QMessageBox.critical(parent, title, message)
 
     def _show_warning(self, parent: Optional[QWidget], title: str, message: str) -> None:
-        """Show warning message dialog."""
+        """Show warning message dialog.
+
+        Args:
+            parent: The parent widget for dialogs.
+            title: The dialog title.
+            message: The message to display or use for the operation.
+        """
         QMessageBox.warning(parent, title, message)
 
     def _show_info(self, parent: Optional[QWidget], title: str, message: str) -> None:
-        """Show information message dialog."""
+        """Show information message dialog.
+
+        Args:
+            parent: The parent widget for dialogs.
+            title: The dialog title.
+            message: The message to display or use for the operation.
+        """
         QMessageBox.information(parent, title, message)
     
     def find_markdown_files(self, directory: Optional[str] = None, 
                           recursive: bool = True) -> List[str]:
-        """
-        Find all markdown files in a directory.
-        
+        """Find all markdown files in a directory.
+
         Args:
             directory: Directory to search in. If None, uses base_path.
-            recursive: Whether to search recursively
-        
+            recursive: Whether to search recursively.
+
         Returns:
-            List of markdown file paths
+            List of markdown file paths.
         """
         search_dir = Path(directory) if directory else self.base_path
         
@@ -237,24 +303,20 @@ class FileHelper:
     
     def save_file(self, content: str, file_path: Optional[str] = None, 
                   parent: Optional[QWidget] = None) -> Optional[str]:
-        """
-        Save content to a file.
-        
+        """Save content to a file.
+
         Args:
-            content: Content to save
+            content: Content to save.
             file_path: File path to save to. If None, opens save dialog.
-            parent: Parent widget for dialog
-        
+            parent: Parent widget for dialog.
+
         Returns:
-            Path where file was saved, or None if cancelled/failed
-            
-        Raises:
-            FileWriteError: If writing the file fails
-            FileSizeError: If content is too large
+            Path where file was saved, or None if cancelled/failed.
         """
         try:
             # Validate content size
-            content_size = len(content.encode(FileConstants.ENCODING_UTF8))
+            target_encoding = self._resolve_save_encoding(file_path)
+            content_size = len(content.encode(target_encoding))
             max_size = FileConstants.MAX_FILE_SIZE_MB * 1024 * 1024
             if content_size > max_size:
                 raise FileSizeError("content", content_size, max_size)
@@ -273,9 +335,11 @@ class FileHelper:
             # Ensure the directory exists
             Path(file_path).parent.mkdir(parents=True, exist_ok=True)
             
-            # Write the file
-            with open(file_path, 'w', encoding=FileConstants.ENCODING_UTF8) as f:
+            # Write the file using preserved or detected encoding
+            with open(file_path, 'w', encoding=target_encoding) as f:
                 f.write(content)
+
+            self._file_encodings[str(Path(file_path).resolve())] = target_encoding
             
             return file_path
         
@@ -290,18 +354,13 @@ class FileHelper:
             return None
     
     def read_file(self, file_path: str) -> Optional[str]:
-        """
-        Read content from a file.
-        
+        """Read content from a file.
+
         Args:
-            file_path: Path to file to read
-        
+            file_path: Path to file to read.
+
         Returns:
-            File content or None if failed
-            
-        Raises:
-            FileNotFoundError: If file doesn't exist
-            FileReadError: If reading the file fails
+            File content or None if failed.
         """
         try:
             validated_path = self._validate_file(file_path)
@@ -309,8 +368,10 @@ class FileHelper:
                 # _validate_file already logs the specific error
                 return None
             
-            with open(validated_path, 'r', encoding=FileConstants.ENCODING_CP1252, errors='replace') as f:
-                content = f.read()
+            raw_bytes = Path(validated_path).read_bytes()
+            detected_encoding = self._detect_encoding_from_bytes(raw_bytes)
+            content = raw_bytes.decode(detected_encoding)
+            self._file_encodings[str(Path(validated_path).resolve())] = detected_encoding
                 
             # Check for reasonable file size
             if len(content) > FileConstants.MAX_FILE_SIZE_MB * 1024 * 1024:
@@ -330,14 +391,13 @@ class FileHelper:
             raise FileReadError(file_path, str(e))
     
     def get_file_info(self, file_path: str) -> Optional[dict]:
-        """
-        Get information about a file.
-        
+        """Get information about a file.
+
         Args:
-            file_path: Path to file
-        
+            file_path: Path to file.
+
         Returns:
-            Dictionary with file information or None if file doesn't exist
+            Dictionary with file information or None if file doesn't exist.
         """
         try:
             path = Path(file_path)
@@ -363,13 +423,12 @@ class FileHelper:
             return None
         
     def resolve_relative_markdown_link(self, current_file_path: str, link_path: str) -> Optional[str]:
-        """
-        Resolve a relative link from a markdown file to an absolute path.
-        
+        """Resolve a relative link from a markdown file to an absolute path.
+
         Args:
             current_file_path: The absolute path of the currently open markdown file.
             link_path: The relative path from the link (e.g., "facets/facets.md").
-            
+
         Returns:
             The resolved absolute file path if it exists and is a markdown file, otherwise None.
         """

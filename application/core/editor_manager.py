@@ -1,10 +1,10 @@
 from PyQt6.QtCore import Qt
 import markdown
-from pymdownx import tilde, caret, mark, tasklist, emoji, superfences, highlight
+from pymdownx import tilde, caret, mark, tasklist, emoji, superfences, highlight, saneheaders
 from pymdownx.emoji import twemoji, to_alt
 
 from core.tab_manager import TabManager
-from core.constants import MarkdownPreviewConstants
+from core.constants import MarkdownPreviewConstants, EditorConstants
 
 class EditorManager:
     """Handles actions done in the markdown editor."""
@@ -13,7 +13,7 @@ class EditorManager:
         """Initialize EditorManager with required collaborators.
 
         Args:
-            markdown_scene: Markdown scene containing ui components for markdown file editation.
+            tab_manager: The tab manager used by this component.
         """
         self.tab_manager = tab_manager
 
@@ -22,9 +22,6 @@ class EditorManager:
 
         Args:
             state: New state of the checkbox.
-
-        Returns:
-            None.
         """
         is_visible = (state == Qt.CheckState.Checked.value)
         for tab in self.tab_manager.tab_states.keys():
@@ -36,24 +33,22 @@ class EditorManager:
         """Update visibility of the analyzer list.
 
         Args:
-            state:  New state of the checkbox.
-
-        Returns:
-            None.
+            state: New state of the checkbox.
         """
         is_visible = (state == Qt.CheckState.Checked.value)
         for tab in self.tab_manager.tab_states.keys():
             tab.analyzer_list.setVisible(is_visible)
 
     def update_live_preview(self) -> None:
-        """Converts the current editor's markdown to HTML (used when typing)."""
+        """Converts the current editor's markdown to HTML (used when typing).
+        """
         self._update_tab_preview(self.tab_manager.get_current_tab())
 
     def _update_tab_preview(self, tab) -> None:
         """Converts the editor's markdown to HTML and updates the live preview panel.
-        
-        Returns:
-            None.
+
+        Args:
+            tab: The tab widget to update.
         """
         tab = self.tab_manager.get_current_tab()
 
@@ -67,7 +62,7 @@ class EditorManager:
             extensions=[
                 'extra', 'sane_lists', 'pymdownx.tilde', 'pymdownx.caret',
                 'pymdownx.mark', 'pymdownx.tasklist', 'pymdownx.emoji',
-                'pymdownx.superfences',
+                'pymdownx.superfences', 'pymdownx.saneheaders',
                 'pymdownx.highlight'
             ],
             extension_configs={
@@ -80,8 +75,16 @@ class EditorManager:
         styled_html = f"""
         <style>
            {MarkdownPreviewConstants.DEFAULT_CSS}
+           body, p, li, table, th, td {{
+               font-size: {EditorConstants.FONT_SIZE}pt !important;
+           }}
         </style>
         {html_content}
         """
+
+        scroll_bar = tab.preview.verticalScrollBar()
+        current_scroll_position = scroll_bar.value()
         
         tab.preview.setHtml(styled_html)
+
+        scroll_bar.setValue(current_scroll_position)

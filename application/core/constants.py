@@ -96,6 +96,7 @@ class UIConstants:
     FETCH_ACTION_NAME = "Fetch"
     PULL_ACTION_NAME = "Pull"
     PUSH_ACTION_NAME = "Push"
+    EXPORT_STAGED_ACTION_NAME = "Export Staged"
 
     # File menu action shortcuts
     OPEN_FILE_ACTION_SHORTCUT = "Ctrl+O"
@@ -110,6 +111,7 @@ class UIConstants:
     FETCH_ACTION_SHORTCUT = "Ctrl+Shift+F"
     PULL_ACTION_SHORTCUT = "Ctrl+Shift+L"
     PUSH_ACTION_SHORTCUT = "Ctrl+Shift+P"
+    EXPORT_STAGED_ACTION_SHORTCUT = "Ctrl+Shift+E"
 
     # Markdown scene element constants
     EXPLORER_LABEL = "Explorer"
@@ -123,6 +125,7 @@ class UIConstants:
     FETCH_BUTTON_LABEL = "Fetch"
     PULL_BUTTON_LABEL = "Pull"
     PUSH_BUTTON_LABEL = "Push"
+    EXPORT_STAGED_BUTTON_LABEL = "Export Staged"
 
     # Tab constants
     UNTITLED_TAB_NAME = "Untitled"
@@ -336,5 +339,64 @@ class FileMatcherConstants:
     MIN_PATH_PARTS = 2
     PARENT_DIR_INDEX = -2
 
+class ErrorConstants:
+    """Constants for Errors"""
+    DEFAULT_ERROR_TITLE = "Application Error"
+    DEFAULT_ERROR_MESSAGE = "An unexpected error occurred. Please check the logs."
 
+class SyntaxHighlighterConstants:
+    """Constants for syntax highlighting."""
+
+    # Colors
+    HEADINGS_COLOR = "#FD971F"
+    HTML_TAG_COLOR = "#F92672"
+    CODE_BLOCK_COLOR = "#E6DB74"
+    LINK_COLOR = "#AE81FF"
+    LIST_COLOR = "#66D9EF"
+    TASK_LIST_COLOR = "#A6E22E"
+    BLOCKQUOTE_COLOR = "#75715E"
+    HR_COLOR = "#75715E"
+    STRIKETHROUGH_COLOR = "#75715E"
+    TABLE_PIPE_COLOR = "#75715E"
+    FOOTNOTE_COLOR = "#AE81FF"
+    EMOJI_COLOR = "#E6DB74"
+    HIGHLIGHT_BG_COLOR = "#E6DB74"
+    HIGHLIGHT_FG_COLOR = "#272822"
+    SUB_SUPER_COLOR = "#66D9EF"
     
+    # Regular Expressions
+    REGEX_HEADING = r"^#{1,6}\s+.*"
+    REGEX_BOLD_AST = r"\*\*[^\*]+\*\*"
+    REGEX_BOLD_UND = r"__[^_]+__"
+    REGEX_ITALIC_AST = r"(?<!\*)\*[^\*]+\*(?!\*)"
+    REGEX_ITALIC_UND = r"(?<!_)_[^_]+_(?!_)"
+    REGEX_CODE = r"`[^`]+`"
+    REGEX_LINK = r"!?\[(?:[^\[\]]|\[[^\]]*\])*\]\([^\)]+\)"
+    REGEX_LIST_UNORDERED = r"^\s*[-*+]\s+"
+    REGEX_LIST_ORDERED = r"^\s*\d+\.\s+"
+    REGEX_BLOCKQUOTE = r"^\s*>.*"
+    REGEX_HR = r"^\s*(?:[-*_]\s*){3,}$"
+    REGEX_STRIKETHROUGH = r"~~[^~]+~~"
+    REGEX_TASK_LIST = r"^\s*[-*+]\s+\[[ xX]\]"
+    REGEX_HTML_TAG = r"<[^>]+>"
+    REGEX_TABLE_PIPE = r"\|"
+    REGEX_FOOTNOTE = r"\[\^[^\]]+\]:?"
+    REGEX_EMOJI = r":[a-zA-Z0-9_\+\-]+:"
+    REGEX_HIGHLIGHT = r"==[^=]+=="
+    REGEX_SUBSCRIPT = r"(?<!~)~[^~]+~(?!~)"
+    REGEX_SUPERSCRIPT = r"\^[^\^]+\^"
+
+class EditorConstants:
+    """Constants for editor UI styling (line numbers, gutter)."""
+
+    # Font
+    FONT_FAMILY = "Consolas"
+    FONT_SIZE = 11
+
+    # Colors
+    GUTTER_BACKGROUND = "#272822"
+    LINE_NUMBER_COLOR = "#75715E"
+    
+    # Active Line Highlighting
+    ACTIVE_LINE_NUMBER_COLOR = "#F8F8F2"
+    ACTIVE_GUTTER_BACK_COLOR = "#3E3D32"

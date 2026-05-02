@@ -5,7 +5,14 @@ from . import runner
 
 
 def fetch(repo_path: str) -> GitResult:
-    """Fetch from all configured remotes."""
+    """Fetch from all configured remotes.
+
+    Args:
+        repo_path: The git repository path.
+
+    Returns:
+        The git operation result.
+    """
     try:
         repo = runner.load_repo(repo_path)
         if not repo.remotes:

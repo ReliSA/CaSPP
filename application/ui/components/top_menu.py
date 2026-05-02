@@ -10,11 +10,10 @@ class TopMenuBar(QMenuBar):
     """Handles top menu bar actions."""
 
     def __init__(self, parent: QWidget =None) -> None:
-        """
-        Initializes top menu bar.
-        
+        """Initializes top menu bar.
+
         Args:
-            parent: Parent element
+            parent: Parent element.
         """
         super().__init__(parent)
 
@@ -63,11 +62,15 @@ class TopMenuBar(QMenuBar):
         self.action_push = QAction(UIConstants.PUSH_ACTION_NAME, self)
         self.action_push.setShortcut(UIConstants.PUSH_ACTION_SHORTCUT)
 
+        self.action_export_staged = QAction(UIConstants.EXPORT_STAGED_ACTION_NAME, self)
+        self.action_export_staged.setShortcut(UIConstants.EXPORT_STAGED_ACTION_SHORTCUT)
+
         # Adding Actions to the Git Menu
         self.menu_git.addAction(self.action_status)
         self.menu_git.addAction(self.action_fetch)
         self.menu_git.addAction(self.action_pull)
         self.menu_git.addAction(self.action_push)
+        self.menu_git.addAction(self.action_export_staged)
 
         # Attaching menus to the top bar
         self.addMenu(self.menu_file)

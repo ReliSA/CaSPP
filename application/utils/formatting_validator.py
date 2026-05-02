@@ -167,10 +167,7 @@ class FormattingValidator:
         Executes all the formatting checks
 
         Returns:
-            A list of dictionaries representing all identified formatting issues, 
-            sorted by line number. Each dictionary contains:
-                - 'line' (int): The line number where the issue was found.
-                - 'msg' (str): A descriptive warning message.
+            A list of dictionaries representing all identified formatting issues, sorted by line number. Each dictionary contains: - 'line' (int): The line number where the issue was found. - 'msg' (str): A descriptive warning message.
         """
         self.warnings = []
         

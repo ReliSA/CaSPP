@@ -10,8 +10,7 @@ class SidebarMenu(QWidget):
     """Handles sidebar menu ui actions."""
 
     def __init__(self) -> None:
-        """
-        Initializes sidebar menu.
+        """Initializes sidebar menu.
         """
         super().__init__()
         

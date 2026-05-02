@@ -8,6 +8,7 @@ from .pull import pull
 from .stage import stage_file, stage_markdown_files, unstage_all
 from .commit import commit
 from .push import push, push_markdown_changes
+from .export import export_staged_files_zip
 
 __all__ = [
     "GitResult",
@@ -24,4 +25,5 @@ __all__ = [
     "commit",
     "push",
     "push_markdown_changes",
+    "export_staged_files_zip",
 ]

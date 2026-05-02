@@ -11,14 +11,10 @@ class TabState:
 
     def __init__(self, widget: TabWidget, file_path: Optional[str] = None) -> None:
         """Initializes the tab state with its associated widget and optional file path.
-        
+
         Args:
             widget: The UI component (TabWidget) representing the tab.
-            file_path: Optional path to the markdown file associated with this tab. 
-                Defaults to None for a new 'Untitled' tab.
-
-        Returns:
-            None.
+            file_path: Optional path to the markdown file associated with this tab. Defaults to None for a new 'Untitled' tab.
         """
         self.widget = widget
         self.file_path = file_path
@@ -31,13 +27,9 @@ class TabManager:
 
     def __init__(self, markdown_scene: MarkdownScene) -> None:
         """Initializes the tab manager, links the main UI scene, and creates a default tab.
-        
-        Args:
-            markdown_scene: Markdown scene containing the tab widget layout, file explorer
-                and markdown control panel.
 
-        Returns:
-            None.
+        Args:
+            markdown_scene: Markdown scene containing the tab widget layout, file explorer and markdown control panel.
         """
         self.scene = markdown_scene
         self.tabs_widget = markdown_scene.tabs
@@ -50,9 +42,6 @@ class TabManager:
 
     def _update_tab_closability(self) -> None:
         """Shows or hides the close button to prevent closing the last empty tab.
-        
-        Returns:
-            None.
         """
         if self.tabs_widget.count() > 1:
             self.tabs_widget.setTabsClosable(True)
@@ -67,10 +56,10 @@ class TabManager:
 
     def add_new_tab(self, file_path: Optional[str] = None) -> TabWidget:
         """Creates a new tab, applies current global UI settings, and tracks its state.
-        
+
         Args:
             file_path: Optional path to a file to open in the new tab. Defaults to None.
-            
+
         Returns:
             The newly created TabWidget instance.
         """
@@ -91,12 +80,9 @@ class TabManager:
 
     def close_tab(self, index: int) -> None:
         """Closes the specified tab, cleans up its tracked state, and ensures one tab remains open.
-        
+
         Args:
             index: The integer index of the tab to be closed.
-
-        Returns:
-            None.
         """
         tab = self.tabs_widget.widget(index)
         if tab in self.tab_states:
@@ -110,7 +96,7 @@ class TabManager:
 
     def get_current_tab(self) -> Optional[TabWidget]:
         """Gets the currently active tab widget.
-        
+
         Returns:
             The active TabWidget, or None if no tabs exist.
         """
@@ -118,7 +104,7 @@ class TabManager:
 
     def get_current_state(self) -> Optional[TabState]:
         """Gets the state metadata object for the currently active tab.
-        
+
         Returns:
             The TabState of the active tab, or None if no tabs exist.
         """
@@ -127,13 +113,10 @@ class TabManager:
 
     def load_file_into_tab(self, file_path: str, content: str) -> None:
         """Loads file content by focusing an open tab, reusing an empty tab, or spawning a new one.
-        
+
         Args:
             file_path: The path of the file being loaded.
             content: The text content to populate the editor with.
-
-        Returns:
-            None.
         """
         for tab, state in self.tab_states.items():
             if state.file_path == file_path:
@@ -156,7 +139,7 @@ class TabManager:
 
     def get_editor_content(self) -> str:
         """Gets the raw text content from the currently active editor.
-        
+
         Returns:
             A string containing the current markdown text.
         """
@@ -165,12 +148,9 @@ class TabManager:
 
     def set_active_tab_file(self, file_path: str) -> None:
         """Updates the active tab's state with a new file path and marks it as cleanly saved.
-        
+
         Args:
             file_path: The new file path to associate with the currently active tab.
-
-        Returns:
-            None.
         """
         state = self.get_current_state()
         if state:
@@ -182,12 +162,9 @@ class TabManager:
 
     def set_tab_dirty(self, dirty: bool) -> None:
         """Updates the active tab's dirty state and refreshes its title to reflect unsaved changes.
-        
+
         Args:
             dirty: Boolean indicating whether the tab has unsaved modifications.
-
-        Returns:
-            None.
         """
         state = self.get_current_state()
         if state:
@@ -196,12 +173,9 @@ class TabManager:
 
     def _refresh_tab_title(self, index: int) -> None:
         """Updates the tab's display title, appending an asterisk if there are unsaved changes.
-        
+
         Args:
             index: The integer index of the tab whose title needs to be refreshed.
-
-        Returns:
-            None.
         """
         tab = self.tabs_widget.widget(index)
         state = self.tab_states.get(tab)
@@ -211,30 +185,21 @@ class TabManager:
 
     def _handle_text_changed(self):
         """Routes the internal editor text changed event to the external application callback.
-        
-        Returns:
-            None.
         """
         if self.on_editor_text_changed_callback:
             self.on_editor_text_changed_callback()
 
     def _handle_anchor_clicked(self, url: QUrl) -> None:
         """Routes the preview link clicked event to the external application callback.
-        
+
         Args:
             url: Clicked url in markdown preview.
-        
-        Returns:
-            None.
         """
         if self.on_preview_anchor_clicked_callback:
             self.on_preview_anchor_clicked_callback(url)
 
     def set_loading(self) -> None:
         """Displays a loading indicator in the active tab's analyzer panel.
-        
-        Returns:
-            None.
         """
         tab = self.get_current_tab()
         if tab:
@@ -243,12 +208,9 @@ class TabManager:
 
     def set_analysis(self, report: str) -> None:
         """Displays the formatted analysis report in the active tab's analyzer panel.
-        
+
         Args:
             report: The formatted string containing the analyzer output.
-
-        Returns:
-            None.
         """
         tab = self.get_current_tab()
         if tab:
@@ -257,12 +219,9 @@ class TabManager:
 
     def set_error(self, message: str) -> None:
         """Displays an error message in the active tab's analyzer panel.
-        
+
         Args:
             message: The specific error string to display to the user.
-
-        Returns:
-            None.
         """
         tab = self.get_current_tab()
         if tab:

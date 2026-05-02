@@ -1,8 +1,18 @@
 """
 Git scene.
 """
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QSpacerItem, QSizePolicy, QListWidget
+from PyQt6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QSpacerItem,
+    QSizePolicy,
+    QListWidget,
+    QInputDialog,
+)
 from PyQt6.QtGui import QIcon
+from typing import Tuple
 
 from core.constants import UIConstants, AssetsConstants
 
@@ -10,8 +20,7 @@ class GitScene(QWidget):
     """Handles git scene ui actions."""
 
     def __init__(self) -> None:
-        """
-        Initializes git scene.
+        """Initializes git scene.
         """
         super().__init__()
         
@@ -36,10 +45,13 @@ class GitScene(QWidget):
         self.btn_push = QPushButton(UIConstants.PUSH_BUTTON_LABEL)
         self.btn_push.setIcon(QIcon(AssetsConstants.PUSH_BUTTON_ICON_PATH))
 
+        self.btn_export_staged = QPushButton(UIConstants.EXPORT_STAGED_BUTTON_LABEL)
+
         self.control_layout.addWidget(self.btn_status)
         self.control_layout.addWidget(self.btn_fetch)
         self.control_layout.addWidget(self.btn_pull)
         self.control_layout.addWidget(self.btn_push)
+        self.control_layout.addWidget(self.btn_export_staged)
 
         # Adding control panel the main layout
         self.layout.addLayout(self.control_layout)
@@ -51,18 +63,44 @@ class GitScene(QWidget):
         self.layout.addWidget(self.list_git_files)
 
     def set_output(self, message: str) -> None:
-        """Replace git output list with new message lines."""
+        """Replace git output list with new message lines.
+
+        Args:
+            message: The message to display or use for the operation.
+        """
         self.list_git_files.clear()
         lines = message.splitlines() if message else ["No output."]
         self.list_git_files.addItems(lines)
 
     def append_output(self, message: str) -> None:
-        """Append a single git output line."""
+        """Append a single git output line.
+
+        Args:
+            message: The message to display or use for the operation.
+        """
         self.list_git_files.addItem(message)
 
     def set_controls_enabled(self, enabled: bool) -> None:
-        """Enable or disable git action buttons."""
+        """Enable or disable git action buttons.
+
+        Args:
+            enabled: Whether the option should be enabled.
+        """
         self.btn_status.setEnabled(enabled)
         self.btn_fetch.setEnabled(enabled)
         self.btn_pull.setEnabled(enabled)
         self.btn_push.setEnabled(enabled)
+        self.btn_export_staged.setEnabled(enabled)
+
+    def ask_push_commit_message(self) -> Tuple[str, bool]:
+        """Ask user for optional commit message during push.
+
+        Returns:
+            The boolean result.
+        """
+        message, accepted = QInputDialog.getText(
+            self,
+            "Push markdown changes",
+            "Commit message (optional):",
+        )
+        return message.strip(), accepted

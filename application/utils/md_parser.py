@@ -27,10 +27,9 @@ def parse_heading_line(hashes: str, raw_text: str, is_template: bool = False) ->
     """Parse the text part of a Markdown heading line.
 
     Args:
-        hashes:      The # characters that opened the heading (e.g. '##').
-        raw_text:    Everything after the hashes and the space.
-        is_template: When True, also strip *(optional)* markers and detect
-                     italic variable placeholders (*Name*).
+        hashes: The # characters that opened the heading (e.g. '##').
+        raw_text: Everything after the hashes and the space.
+        is_template: When True, also strip *(optional)* markers and detect italic variable placeholders (*Name*).
 
     Returns:
         A ParsedHeading with all fields populated.
@@ -79,11 +78,6 @@ def parse_heading_line(hashes: str, raw_text: str, is_template: bool = False) ->
 def split_h1(text: str) -> Tuple[Optional[str], str]:
     """Split an H1 text into (prefix, value).
 
-    Examples::
-
-        split_h1("Category: Name")       → ("Category", "Name")
-        split_h1("Tracking progress")    → (None, "Tracking progress")
-
     Args:
         text: Cleaned H1 heading text (no asterisks, no link markup).
 
@@ -117,20 +111,12 @@ def parse_breadcrumbs(line: str) -> Optional[list]:
 def classify_content_line(line: str, is_template: bool = False) -> Tuple[Set[str], Optional[str], Optional[str], Optional[list]]:
     """Classify a single content line and extract relevant details.
 
-    This function encodes every detection rule exactly once.  Both loaders
-    call it and map the results onto their own data structures.
-
     Args:
-        line:        A stripped, non-empty content line.
-        is_template: When True, use the looser HR / footnote patterns that
-                     allow surrounding asterisks (*---*, *[^1]:…*).
+        line: A stripped, non-empty content line.
+        is_template: When True, use the looser HR / footnote patterns that allow surrounding asterisks (*---*, *[^1]:…*).
 
     Returns:
-        A 4-tuple of:
-        - content_types      – set of content-type strings to add
-        - bullet_prefix      – parenthesised prefix string, e.g. '(+)', or None
-        - exact_list_prefix  – link-style prefix string, or None
-        - table_headers      – list of header strings if this is a table header row, else None
+        A 4-tuple of: - content_types      – set of content-type strings to add - bullet_prefix      – parenthesised prefix string, e.g. '(+)', or None - exact_list_prefix  – link-style prefix string, or None - table_headers      – list of header strings if this is a table header row, else None.
     """
     content_types: Set[str] = set()
     bullet_prefix: Optional[str] = None

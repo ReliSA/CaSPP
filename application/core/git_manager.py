@@ -6,6 +6,7 @@ from PyQt6.QtCore import QObject, QThread, pyqtSignal
 
 from core.constants import GitConstants
 from utils.git import commit as commit_operation
+from utils.git import export_staged_files_zip as export_staged_files_zip_operation
 from utils.git import fetch as fetch_operation
 from utils.git import get_status_detailed
 from utils.git import pull as pull_operation
@@ -22,17 +23,30 @@ class GitOperationWorker(QThread):
     finished = pyqtSignal(str, bool, str, object)
 
     def __init__(self, operation: str, repo_path: str, **kwargs: Any) -> None:
+        """Initialize the object with required collaborators.
+
+        Args:
+            operation: The git operation name.
+            repo_path: The git repository path.
+            **kwargs: The kwargs value.
+        """
         super().__init__()
         self.operation = operation
         self.repo_path = repo_path
         self.kwargs = kwargs
 
     def run(self) -> None:
-        """Dispatch the operation and emit a normalized result."""
+        """Dispatch the operation and emit a normalized result.
+        """
         result = self._dispatch()
         self.finished.emit(self.operation, result.success, result.message, result.payload)
 
     def _dispatch(self) -> GitResult:
+        """Dispatch the configured git operation.
+
+        Returns:
+            The git operation result.
+        """
         if self.operation == "status":
             return get_status_detailed(self.repo_path, markdown_only=True)
         if self.operation == "fetch":
@@ -58,6 +72,11 @@ class GitOperationWorker(QThread):
                 self.kwargs.get("message", GitConstants.DEFAULT_COMMIT_MESSAGE),
                 stage_all=bool(self.kwargs.get("stage_all", False)),
             )
+        if self.operation == "export_staged":
+            return export_staged_files_zip_operation(
+                self.repo_path,
+                self.kwargs.get("output_zip_path"),
+            )
 
         return GitResult(False, f"Unknown operation: {self.operation}")
 
@@ -71,16 +90,33 @@ class GitManager(QObject):
     status_updated = pyqtSignal(dict)
 
     def __init__(self, repo_path: str) -> None:
+        """Initialize the object with required collaborators.
+
+        Args:
+            repo_path: The git repository path.
+        """
         super().__init__()
         self.repo_path = repo_path
         self._worker: Optional[GitOperationWorker] = None
 
     def is_busy(self) -> bool:
-        """Return True when an operation is already running."""
+        """Return True when an operation is already running.
+
+        Returns:
+            The boolean result.
+        """
         return self._worker is not None and self._worker.isRunning()
 
     def start_operation(self, operation: str, **kwargs: Any) -> bool:
-        """Start a git operation in background thread."""
+        """Start a git operation in background thread.
+
+        Args:
+            operation: The git operation name.
+            **kwargs: The kwargs value.
+
+        Returns:
+            The boolean result.
+        """
         if self.is_busy():
             self.operation_output.emit(operation, "Another git operation is already running.")
             return False
@@ -92,15 +128,40 @@ class GitManager(QObject):
         return True
 
     def status(self) -> bool:
+        """Start a git status operation.
+
+        Returns:
+            The boolean result.
+        """
         return self.start_operation("status")
 
     def fetch(self) -> bool:
+        """Start a git fetch operation.
+
+        Returns:
+            The boolean result.
+        """
         return self.start_operation("fetch")
 
     def pull(self) -> bool:
+        """Start a git pull operation.
+
+        Returns:
+            The boolean result.
+        """
         return self.start_operation("pull")
 
     def push(self, message: Optional[str] = None, remote: Optional[str] = None, branch: Optional[str] = None) -> bool:
+        """Start a git push operation.
+
+        Args:
+            message: The message to display or use for the operation.
+            remote: The target git remote.
+            branch: The target git branch.
+
+        Returns:
+            The boolean result.
+        """
         kwargs: Dict[str, Any] = {}
         if message is not None:
             kwargs["message"] = message
@@ -111,19 +172,70 @@ class GitManager(QObject):
         return self.start_operation("push", **kwargs)
 
     def stage_file(self, file_path: str) -> bool:
+        """Start staging a single file.
+
+        Args:
+            file_path: The file path to process.
+
+        Returns:
+            The boolean result.
+        """
         return self.start_operation("stage_file", file_path=file_path)
 
     def stage_markdown(self, file_paths: Optional[list] = None) -> bool:
+        """Start staging markdown files.
+
+        Args:
+            file_paths: The file paths to process.
+
+        Returns:
+            The boolean result.
+        """
         return self.start_operation("stage_markdown", file_paths=file_paths)
 
     def unstage_all(self) -> bool:
+        """Start unstaging all files.
+
+        Returns:
+            The boolean result.
+        """
         return self.start_operation("unstage_all")
 
     def commit(self, message: str, stage_all: bool = False) -> bool:
+        """Start a git commit operation.
+
+        Args:
+            message: The message to display or use for the operation.
+            stage_all: Whether to stage all changes before committing.
+
+        Returns:
+            The boolean result.
+        """
         return self.start_operation("commit", message=message, stage_all=stage_all)
 
+    def export_staged(self, output_zip_path: Optional[str] = None) -> bool:
+        """Start exporting staged files.
+
+        Args:
+            output_zip_path: Optional destination path for the zip archive.
+
+        Returns:
+            The boolean result.
+        """
+        kwargs: Dict[str, Any] = {}
+        if output_zip_path is not None:
+            kwargs["output_zip_path"] = output_zip_path
+        return self.start_operation("export_staged", **kwargs)
+
     def _on_operation_finished(self, operation: str, success: bool, message: str, payload: object) -> None:
-        """Fan out completion updates to listeners."""
+        """Fan out completion updates to listeners.
+
+        Args:
+            operation: The git operation name.
+            success: Whether the operation completed successfully.
+            message: The message to display or use for the operation.
+            payload: Additional operation result data.
+        """
         if operation == "status" and success and isinstance(payload, dict):
             status_payload = payload.get("status")
             if isinstance(status_payload, dict):

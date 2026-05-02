@@ -11,7 +11,6 @@ from utils.md_parser import (
     split_h1,
 )
 from core.constants import LoaderConstants
-from utils.file_helper import FileHelper
 
 logger = logging.getLogger(__name__)
 
@@ -62,10 +61,7 @@ class ContentInfo:
         """Return a JSON-serializable representation of the content info.
 
         Returns:
-            Dict[str, Any]: Dictionary with keys 'found_types', 'bullet_prefixes',
-            'exact_list_prefixes', 'table_headers', 'is_empty' and
-            'first_content_line'. Values are basic Python types suitable for
-            JSON encoding.
+            Dict[str, Any]: Dictionary with keys 'found_types', 'bullet_prefixes', 'exact_list_prefixes', 'table_headers', 'is_empty' and 'first_content_line'. Values are basic Python types suitable for JSON encoding.
         """
         return {
             "found_types": sorted(self.found_types),
@@ -108,13 +104,8 @@ class HeadingInfo:
     def to_dict(self) -> Dict[str, Any]:
         """Return a JSON-serializable representation of the heading.
 
-        The returned dictionary always includes level/text/raw_text/line_number,
-        link information and merged content. If the heading represents an
-        alphabet group (is_group=True) the group member lists are also included.
-
         Returns:
-            Dict[str, Any]: Mapping representing this heading suitable for
-            serialization and comparison with template data.
+            Dict[str, Any]: Mapping representing this heading suitable for serialization and comparison with template data.
         """
         dictionary = {
             "level": self.level,
@@ -147,9 +138,7 @@ class ParsedDocument:
         """Return a serializable mapping of the parsed document.
 
         Returns:
-            Dict[str, Any]: Dictionary with 'meta' and 'headings' keys. 'meta'
-            contains filepath, breadcrumbs and H1 info; 'headings' is a list
-            of heading dictionaries as produced by :meth:HeadingInfo.to_dict.
+            Dict[str, Any]: Dictionary with 'meta' and 'headings' keys. 'meta' contains filepath, breadcrumbs and H1 info; 'headings' is a list of heading dictionaries as produced by :meth:HeadingInfo.to_dict.
         """
         return {
             "meta": {
@@ -166,18 +155,11 @@ class ParsedDocument:
 def _collapse_alphabet_groups(headings: List[HeadingInfo]) -> List[HeadingInfo]:
     """Collapse runs of A–Z / 0-9 headings into a single is_group=True entry.
 
-    This is a normalization step that reduces long sequences of headings like
-    A, B, C, ... into one synthetic heading with text='[A-Z]' and
-    is_group=True. The synthetic heading keeps the original members and
-    their line numbers in group_members and group_line_numbers.
-
     Args:
-        headings (List[HeadingInfo]): Headings extracted from a document in
-            the original order.
+        headings: The headings value.
 
     Returns:
-        List[HeadingInfo]: New list of headings where qualifying alphabet runs
-        are replaced by a single grouped heading.
+        List[HeadingInfo]: New list of headings where qualifying alphabet runs are replaced by a single grouped heading.
     """
     result: List[HeadingInfo] = []
     i = 0
@@ -217,14 +199,8 @@ def _collapse_alphabet_groups(headings: List[HeadingInfo]) -> List[HeadingInfo]:
 def _merge_content(infos: List[ContentInfo]) -> ContentInfo:
     """Merge multiple ContentInfo objects into one.
 
-    The merge operation is a union of all detected content kinds:
-
-    * Set-like fields are unioned.
-    * Table headers are taken from the first non-empty table encountered.
-    * first_content_line is taken from the first non-zero value.
-
     Args:
-        infos (List[ContentInfo]): Content info objects to be merged.
+        infos: The infos value.
 
     Returns:
         ContentInfo: A new instance representing the merged content.
@@ -256,36 +232,17 @@ class MarkdownParser:
                      discovering .md files in directories.
     """
 
-    def __init__(self, files_dir: str, file_helper: FileHelper) -> None:
-        self._file_helper = file_helper
-        self.files_dir = files_dir
-
-    def parse_file(self, filepath: str) -> ParsedDocument:
-        """Parse a single Markdown file.
-
-        Args:
-            filepath (str): Path to the .md file.
-
-        Returns:
-            ParsedDocument: Parsed representation of the file.
-
-        Raises:
-            FileNotFoundError: If filepath does not exist.
+    def __init__(self) -> None:
+        """Initialize the object with required collaborators.
         """
-        filepath = os.path.abspath(filepath)
-        content = self._file_helper.read_file(filepath)
-        if content is None:
-            raise FileNotFoundError(f"Document not found: {filepath}")
-        doc = self.parse_content(filepath, content)
-        logger.debug("Loaded document: %s  (%d heading(s))", filepath, len(doc.headings))
-        return doc
+        pass
 
     def parse_content(self, filepath: str, content: str) -> ParsedDocument:
         """Parse a single Markdown document from in-memory content.
 
         Args:
-            filepath (str): Source path used for metadata and diagnostics.
-            content (str): Full markdown text.
+            filepath: The filepath value.
+            content: The markdown or template content to process.
 
         Returns:
             ParsedDocument: Parsed representation of the content.
@@ -296,41 +253,14 @@ class MarkdownParser:
         normalized_path = os.path.abspath(filepath)
         return self._parse(normalized_path, content)
 
-    def parse_dir(self) -> Dict[str, ParsedDocument]:
-        """Parse every .md file in directory recursively.
-
-        Args:
-            directory (str): Filesystem directory to scan for .md files.
-
-        Returns:
-            Dict[str, ParsedDocument]: Mapping of stem (relative path without
-            .md) → ParsedDocument.
-        """
-        results: Dict[str, ParsedDocument] = {}
-        filepaths = sorted(self._file_helper.find_markdown_files(self.files_dir))
-        if not filepaths:
-            logger.warning("No markdown files found in: %s", self.files_dir)
-            return results
-
-        for filepath in filepaths:
-            rel_path = os.path.relpath(filepath, self.files_dir)
-            stem = os.path.splitext(rel_path)[0].replace(os.sep, '/')
-            try:
-                results[stem] = self.parse_file(filepath)
-                self.dump_json(results[stem], "output/debug_docs")
-            except Exception as exc:
-                logger.error("Failed to load %s: %s", filepath, exc)
-
-        logger.info("Loaded %d document(s) from %s", len(results), self.files_dir)
-        return results
 
     def dump_json(self, doc: ParsedDocument, output_dir: str, indent: int = 2) -> None:
-        """Write a JSON representation of doc to output_dir for debugging.
+        """Write a JSON representation of doc to output_dir. Just for debugging purposes.
 
         Args:
-            doc (ParsedDocument): Parsed document to write.
-            output_dir (str): Destination directory where the JSON will be saved.
-            indent (int, optional): Indentation level for JSON. Defaults to 2.
+            doc: The parsed document to process.
+            output_dir: The directory where output files should be written.
+            indent: The indent value.
         """
         os.makedirs(output_dir, exist_ok=True)
         stem = os.path.splitext(os.path.basename(doc.meta.filepath))[0]
@@ -343,8 +273,8 @@ class MarkdownParser:
         """Internal parser that constructs a ParsedDocument from already-read content.
 
         Args:
-            filepath (str): Absolute path to the source file (used for metadata only).
-            content (str): Full text of the Markdown file.
+            filepath: The filepath value.
+            content: The markdown or template content to process.
 
         Returns:
             ParsedDocument: Parsed representation including meta and headings.
