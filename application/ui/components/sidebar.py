@@ -2,9 +2,8 @@
 Sidebar.
 """
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QSpacerItem, QSizePolicy
-from PyQt6.QtGui import QIcon, QPixmap
 
-from core.constants import AssetsConstants
+from core.constants import UIConstants
 
 class SidebarMenu(QWidget):
     """Handles sidebar menu ui actions."""
@@ -15,14 +14,22 @@ class SidebarMenu(QWidget):
         super().__init__()
         
         # Setup app sidebar
+        self.setObjectName(UIConstants.SIDEBAR_UI_ID)
+        
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
 
         self.btn_md = QPushButton()
-        self.btn_md.setIcon(QIcon(QPixmap(AssetsConstants.SIDEBAR_MARKDOWN_SCENE_ICON_PATH)))
+        self.btn_md.setObjectName(UIConstants.SIDEBAR_MD_BTN_ID)
+        self.btn_md.setCheckable(True)
+        self.btn_md.setAutoExclusive(True)
+        self.btn_md.setChecked(True)
         
         self.btn_git = QPushButton()
-        self.btn_git.setIcon(QIcon(QPixmap(AssetsConstants.SIDEBAR_GIT_SCENE_ICON_PATH)))
+        self.btn_git.setObjectName(UIConstants.SIDEBAR_GIT_BTN_ID)
+        self.btn_git.setCheckable(True)
+        self.btn_git.setAutoExclusive(True)
 
         spacer = QSpacerItem(0, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 

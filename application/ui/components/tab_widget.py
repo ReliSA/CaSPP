@@ -4,7 +4,6 @@ from PyQt6.QtGui import QFont
 
 from ui.components.markdown_highlighter import MarkdownHighlighter
 from ui.components.markdown_editor_widget import MarkdownEditorWidget
-from core.constants import EditorConstants
 
 class TabWidget(QWidget):
     """A single tab holding its own editor, preview, and analyzer list."""
