@@ -59,6 +59,7 @@ class FileManager:
         self.template_loader = template_loader
         self.document_loader = document_loader
         self.project_index = {}
+        self.references_content: Optional[str] = None
         self.file_matcher = FileMatcher(self.template_loader) if self.template_loader else None
         self.current_explorer_dir = ""
 
@@ -143,11 +144,13 @@ class FileManager:
             if self.document_loader and self.template_loader:
                 parsed_doc = self.document_loader.parse_content(file_path, content)
 
+                self._update_project_index_entry(file_path, parsed_doc)
+
                 template = self.file_matcher.match(file_path) if self.file_matcher else None
                 if not template:
-                    raise ValueError("Template matching failed for the document.")
+                    raise ValueError("Template matching failed for the document (It's possible that for this document, template just doesn't exist.")
 
-                analysis = self.markdown_analyzer.validate_structure(parsed_doc, template, project_index=self.project_index)
+                analysis = self.markdown_analyzer.validate_structure(parsed_doc, template, project_index=self.project_index, references_content=self.references_content)
 
             report = self.markdown_analyzer.generate_report(analysis)
             self.tab_manager.set_analysis(report)
@@ -156,6 +159,26 @@ class FileManager:
             traceback.print_exc()
             error_msg = f"Error during analysis: {str(e)}"
             self.tab_manager.set_analysis(error_msg)
+
+    def _update_project_index_entry(self, file_path: str, parsed_doc) -> None:
+        """Refresh the project index entry for a single file after it has been edited.
+
+        Args:
+            file_path: Absolute path of the file that changed.
+            parsed_doc: Already-parsed document, so we avoid reading the file again.
+        """
+        if not self.project_index or not self.document_loader:
+            return
+        filename = os.path.basename(file_path)
+        try:
+            metadata = self.document_loader.get_link_metadata(parsed_doc)
+            self.project_index[filename] = {
+                "full_path": file_path,
+                "aliases": metadata["aliases"],
+                "related": metadata["related_links"],
+            }
+        except Exception as e:
+            logger.warning("Failed to update project index for %s: %s", filename, e)
 
     def on_file_saved(self, file_path: str, content: Optional[str] = None) -> None:
         """Handle file saved events and re-run analysis for markdown files.
@@ -342,18 +365,23 @@ class FileManager:
             return
 
         self.project_index = {}
+        self.references_content = None
         all_files = self.file_helper.find_markdown_files(root_dir, recursive=True)
-        
+
         logger.info("Indexing project files for link validation...")
         for path in all_files:
             filename = os.path.basename(path)
             content = self.file_helper.read_file(path)
-            
+
+            if filename.lower() == 'references.md':
+                self.references_content = content
+                continue
+
             if content:
                 try:
                     doc = self.document_loader.parse_content(path, content)
                     metadata = self.document_loader.get_link_metadata(doc)
-                    
+
                     self.project_index[filename] = {
                         "full_path": path,
                         "aliases": metadata["aliases"],

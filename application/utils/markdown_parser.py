@@ -377,6 +377,8 @@ class MarkdownParser:
                     line = line_entry["content"]
                     links = LoaderConstants.RE_MARKDOWN_LINK_URL.findall(line)
                     for url in links:
+                        if os.path.basename(url.split('#')[0]).lower() == 'references.md':
+                            continue
                         filename = os.path.basename(url.split('#')[0])
                         metadata["related_links"].append(filename)
         

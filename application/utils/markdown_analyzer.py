@@ -36,7 +36,7 @@ class MarkdownAnalyzer:
         self.current_warnings: List[Dict] = []
         self.current_passed: List[str] = []
 
-    def validate_structure(self, doc: ParsedDocument, template: TemplateRules, project_index: Dict = None) -> Dict:
+    def validate_structure(self, doc: ParsedDocument, template: TemplateRules, project_index: Dict = None, references_content: str = None) -> Dict:
         """Compare a parsed document against template rules.
 
         Args:
@@ -111,25 +111,14 @@ class MarkdownAnalyzer:
         for heading in doc.headings:
             all_raw_lines.extend(heading.content.raw_lines)
 
-        formatting_warnings = FormattingValidator.run_all_checks(
-            full_content=getattr(doc, 'raw_content', ""),
-            raw_lines=all_raw_lines
-        )
-        self.current_warnings.extend(formatting_warnings)
-
-        if not formatting_warnings:
-            self._add_passed("Formatting (bold, italics, tables, images) is consistent.")
-
-
-
         if project_index:
-            link_validator = LinkValidator(doc, project_index)
+            link_validator = LinkValidator(doc, project_index, references_content=references_content)
             link_warnings = link_validator.run_all_checks()
         
             if link_warnings:
                 self.current_warnings.extend(link_warnings)
             else:
-                self._add_passed("Cross-references and aliases are consistent (Rules 26, 27, 28).")
+                self._add_passed("Cross-references and aliases are consistent.")
         return {
             "file": doc.meta.filepath,
             "warnings": self.current_warnings,
