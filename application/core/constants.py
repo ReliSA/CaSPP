@@ -130,6 +130,29 @@ class UIConstants:
     # Tab constants
     UNTITLED_TAB_NAME = "Untitled"
 
+    # Ui ids
+    GIT_CONSOLE_UI_ID = "git_console"
+    SIDEBAR_UI_ID = "sidebar"
+    SIDEBAR_MD_BTN_ID = "btn_sidebar_md"
+    SIDEBAR_GIT_BTN_ID = "btn_sidebar_git"
+
+class SettingsConstants:
+    """Constants for app persistence."""
+
+    # Settings org and app name
+    ORG_NAME = "STEPSENHECPACT"
+    APP_NAME = "MarkdownAnalyzer"
+
+    # Keys for specific settings
+    GEOMETRY_KEY = "geometry"
+    ACTIVE_SCENE_KEY = "active_scene"
+    LIVE_PREVIEW_KEY = "live_preview_enabled"
+    ANALYZER_KEY = "analyzer_enabled"
+    LAST_DIR_KEY = "last_explorer_dir"
+    OPEN_TABS_KEY = "open_tabs"
+    CURRENT_TAB_KEY = "active_tab_index"
+    OPEN_EXPLORER_KEY = "explorer_is_open"
+
 class MarkdownPreviewConstants:
     """Constants for Markdown live preview CSS styling."""
     
@@ -186,6 +209,12 @@ class AssetsConstants:
 
     _RUNTIME_ROOT = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[2]))
 
+    # Absolute path with forward slashes for QSS
+    ICONS_DIR_QSS = str(_RUNTIME_ROOT.joinpath("application", "ui", "assets", "icons")).replace("\\", "/")
+
+    # App theme qss path
+    APP_THEME_QSS_PATH = str(_RUNTIME_ROOT.joinpath("application", "ui", "assets", "qss", "theme.qss"))
+
     # Sidebar icon paths
     SIDEBAR_MARKDOWN_SCENE_ICON_PATH = str(_RUNTIME_ROOT.joinpath("application", "ui", "assets", "icons", "LucideFolderOpen.svg"))
     SIDEBAR_GIT_SCENE_ICON_PATH = str(_RUNTIME_ROOT.joinpath("application", "ui", "assets", "icons", "LucideGithub.svg"))
@@ -202,6 +231,9 @@ class AssetsConstants:
     # File tree icon paths
     FOLDER_ICON_PATH = str(_RUNTIME_ROOT.joinpath("application", "ui", "assets", "icons", "LucideFolder.svg"))
     MARKDOWN_FILE_ICON_PATH = str(_RUNTIME_ROOT.joinpath("application", "ui", "assets", "icons", "StreamlineMarkdownDocumentProgrammingRemix.svg"))
+
+    # App theme path
+    APP_THEME_QSS_PATH = str(_RUNTIME_ROOT.joinpath("application", "ui", "assets", "qss", "theme.qss"))
 
 
 class ReportConstants:
@@ -263,6 +295,14 @@ class ValidationConstants:
     # URL validation
     VALID_URL_SCHEMES = ['http', 'https', 'ftp', 'ftps']
     MAX_URL_LENGTH = 2048
+
+    BOLD_FORMAT = r'(?<!\\)\*\*'
+    BULLET_POINT = r'^\s*\*\s+'
+    ITALICS_FORMAT = r'(?<!\*)\*(?!\*)'
+    ALT_TEXT = r'!\[\s*\]\('
+    TABLE_SEPARATOR = r'\|(?:\s*:?-+:?\s*\|)+'
+    
+    PLACEHOLDER_PATTERN = r'(?i)(?:_|\*){1,3}\s*(?:remove|replace|insert|choose|optional|example)\b.*?(?:_|\*){1,3}'
 
 class LoaderConstants:
     """Constants for template and document loading."""
@@ -398,9 +438,9 @@ class EditorConstants:
     FONT_SIZE = 11
 
     # Colors
-    GUTTER_BACKGROUND = "#272822"
-    LINE_NUMBER_COLOR = "#75715E"
+    GUTTER_BACKGROUND = "#1E1E1E"
+    LINE_NUMBER_COLOR = "#858585"
     
     # Active Line Highlighting
-    ACTIVE_LINE_NUMBER_COLOR = "#F8F8F2"
-    ACTIVE_GUTTER_BACK_COLOR = "#3E3D32"
+    ACTIVE_LINE_NUMBER_COLOR = "#C6C6C6"
+    ACTIVE_GUTTER_BACK_COLOR = "#282828"

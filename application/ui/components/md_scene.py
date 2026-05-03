@@ -30,12 +30,12 @@ class MarkdownScene(QWidget):
         self.file_explorer_widget = QWidget()
         
         self.file_explorer_layout = QVBoxLayout(self.file_explorer_widget)
-        self.file_explorer_layout.setContentsMargins(1, -1, 1, -1)
-        self.file_explorer_layout.setSpacing(6)
+        self.file_explorer_layout.setContentsMargins(0, 0, 0, 0)
+        self.file_explorer_layout.setSpacing(0)
 
         # File explorer control layout setup 
         self.file_explorer_control_layout = QHBoxLayout()
-        self.file_explorer_control_layout.setContentsMargins(0, -1, 0, -1)
+        self.file_explorer_control_layout.setContentsMargins(10, 5, 5, 5)
         
         self.explorer_label = QLabel(UIConstants.EXPLORER_LABEL)
         spacer_exp = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)

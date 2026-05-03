@@ -60,6 +60,7 @@ class FileManager:
         self.document_loader = document_loader
         self.project_index = {}
         self.file_matcher = FileMatcher(self.template_loader) if self.template_loader else None
+        self.current_explorer_dir = ""
 
     def load_templates(self, templates_dir: str) -> None:
         """Discover, read, and parse every template in *templates_dir*.
@@ -244,6 +245,7 @@ class FileManager:
             return
 
         self.build_project_index(selected_directory)
+        self.current_explorer_dir = selected_directory
 
         markdown_files = self.file_helper.find_markdown_files(
             directory=selected_directory,
