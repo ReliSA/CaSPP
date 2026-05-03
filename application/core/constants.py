@@ -365,6 +365,18 @@ class LoaderConstants:
     # Minimum number of breadcrumb items to trigger breadcrumb analysis — avoids false positives from short lists of links
     BREADCRUMBS_MIN_LENGTH = 2
 
+    # Regex to capture text after a bullet point (* or -)
+    RE_BULLET_CONTENT = re.compile(r'[*-]\s*(.*)')
+
+    # Regex to capture the URL part of a Markdown link [label](url)
+    RE_MARKDOWN_LINK_URL = re.compile(r'\[.*?\]\((.*?)\)')
+
+    # Regex for [label](url)
+    RE_MARKDOWN_LINK = re.compile(r'\[(?P<label>.*?)\]\((?P<url>.*?)\)')
+
+    # Matches any markdown link [label](url), including those with empty components, for integrity validation.
+    RE_LINK_INTEGRITY = re.compile(r'\[(.*?)\]\((.*?)\)')
+
 class FileMatcherConstants:
     """Constants for FileMatcher"""
     CATALOGUE_PARENT_FOLDER = "catalogue"

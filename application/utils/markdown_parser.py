@@ -336,3 +336,48 @@ class MarkdownParser:
         headings = _collapse_alphabet_groups(raw_headings)
 
         return ParsedDocument(meta=meta, headings=headings)
+
+    def get_link_metadata(self, doc: ParsedDocument) -> Dict[str, Any]:
+        """
+        This method scans the headings and content of a parsed markdown file to 
+        identify aliases (from the 'Also Known As' section) and outbound links 
+        (from the 'Related Patterns' section).
+
+        Args:
+            doc (ParsedDocument): The parsed representation of the markdown file.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing two keys:
+                - 'aliases': A list of strings representing alternative names 
+                  for the pattern.
+                - 'related_links': A list of filenames (e.g., 'Observer.md') 
+                  referenced in the 'Related Patterns' section.
+        """
+        import re
+        metadata = {
+            "aliases": [],
+            "related_links": []
+        }
+        
+        for heading in doc.headings:
+            # Aliases in "Also Known As"
+            if heading.text.lower() == "also known as":
+                for line_entry in heading.content.raw_lines:
+                    line = line_entry["content"].strip()
+                    if not line:
+                        continue
+                    
+                    clean_line = re.sub(r'^[-*+]\s+', '', line)
+                    parts = [p.strip() for p in clean_line.split(',') if p.strip()]
+                    metadata["aliases"].extend(parts)
+
+            # Links in "Related Patterns"
+            elif heading.text.lower() == "related patterns":
+                for line_entry in heading.content.raw_lines:
+                    line = line_entry["content"]
+                    links = LoaderConstants.RE_MARKDOWN_LINK_URL.findall(line)
+                    for url in links:
+                        filename = os.path.basename(url.split('#')[0])
+                        metadata["related_links"].append(filename)
+        
+        return metadata
