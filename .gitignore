@@ -10,3 +10,4 @@ app.log
 *dist
 */main.spec
 *output
+.coverage

@@ -30,6 +30,17 @@ class GitConstants:
     LOG_MESSAGE_TRUNCATE = 50
     COMMIT_HASH_DISPLAY_LENGTH = 8
 
+    # Git operation constants
+    GIT_OPERATION_STATUS = "status"
+    GIT_OPERATION_FETCH = "fetch"
+    GIT_OPERATION_PULL = "pull"
+    GIT_OPERATION_PUSH = "push"
+    GIT_OPERATION_EXPORT_STAGED = "export_staged"
+    GIT_OPERATION_STAGE_FILE = "stage_file"
+    GIT_OPERATION_STAGE_MARKDOWN = "stage_markdown"
+    GIT_OPERATION_UNSTAGE_ALL = "unstage_all"
+    GIT_OPERATION_COMMIT = "commit"
+
 
 # File-related constants
 class FileConstants:
@@ -242,6 +253,10 @@ class ReportConstants:
     ICON_OK = "✅"
     ICON_WARNING = "⚠️"
 
+    COLOR_WARNING = "#D7BA7D"
+    COLOR_OK = "#6A9955"
+    COLOR_DEFAULT = "#CCCCCC"
+
 
 # Application constants
 class AppConstants:
@@ -265,6 +280,7 @@ class LogConstants:
     """Constants for logging configuration."""
     
     DEFAULT_LOG_LEVEL = "INFO"
+    LOG_LEVEL_ERROR = "ERROR"
     MAX_LOG_FILE_SIZE_MB = 10
     LOG_BACKUP_COUNT = 3
     
@@ -301,6 +317,8 @@ class ValidationConstants:
     ITALICS_FORMAT = r'(?<!\*)\*(?!\*)'
     ALT_TEXT = r'!\[\s*\]\('
     TABLE_SEPARATOR = r'\|(?:\s*:?-+:?\s*\|)+'
+
+    UNICODE_REPLACEMENT_CHARACTER = "\ufffd"
     
     PLACEHOLDER_PATTERN = r'(?i)(?:_|\*){1,3}\s*(?:remove|replace|insert|choose|optional|example)\b.*?(?:_|\*){1,3}'
 

@@ -1,7 +1,7 @@
 import re
-from typing import List, Dict, Any, Set
+from typing import List, Dict, Any
 
-from core.constants import ValidationConstants
+from utils.constants import ValidationConstants
 
 class ContentValidator:
     """Validator for document content against template-specific rules.

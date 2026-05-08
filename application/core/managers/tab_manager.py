@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Optional, Dict
 from PyQt6.QtCore import QUrl
@@ -5,8 +6,11 @@ from PyQt6.QtWidgets import QListWidgetItem
 from PyQt6.QtGui import QColor
 
 from ui.components.tab_widget import TabWidget
-from ui.components.md_scene import MarkdownScene
-from core.constants import UIConstants
+from ui.scenes.md_scene import MarkdownScene
+from utils.constants import UIConstants, ReportConstants
+
+logger = logging.getLogger(__name__)
+
 
 class TabState:
     """Represents the logical state and metadata of a single markdown editor tab."""
@@ -78,6 +82,11 @@ class TabManager:
         index = self.tabs_widget.addTab(tab, state.base_title)
         self.tabs_widget.setCurrentIndex(index)
         self._update_tab_closability()
+        logger.info(
+            "Opened new tab %r (path=%s)",
+            state.base_title,
+            file_path or "new",
+        )
         return tab
 
     def close_tab(self, index: int) -> None:
@@ -88,6 +97,8 @@ class TabManager:
         """
         tab = self.tabs_widget.widget(index)
         if tab in self.tab_states:
+            prev = self.tab_states[tab]
+            logger.info("Closed tab %r", prev.file_path or prev.base_title)
             del self.tab_states[tab]
         self.tabs_widget.removeTab(index)
 
@@ -124,6 +135,7 @@ class TabManager:
             if state.file_path == file_path:
                 self.tabs_widget.setCurrentIndex(self.tabs_widget.indexOf(tab))
                 tab.editor.setPlainText(content)
+                logger.info("Focused existing tab for file: %s", file_path)
                 return
 
         current_tab = self.get_current_tab()
@@ -138,6 +150,7 @@ class TabManager:
         state.file_path = file_path
         tab.editor.setPlainText(content)
         self.set_active_tab_file(file_path)
+        logger.info("Loaded file into tab: %s", file_path)
 
     def get_editor_content(self) -> str:
         """Gets the raw text content from the currently active editor.
@@ -225,12 +238,12 @@ class TabManager:
             
         for line in report.splitlines():
             item = QListWidgetItem(line)
-            if "⚠️" in line or "(line" in line:
-                item.setForeground(QColor("#D7BA7D"))
-            elif "✅" in line:
-                item.setForeground(QColor("#6A9955"))
+            if ReportConstants.ICON_WARNING in line or "(line" in line:
+                item.setForeground(QColor(ReportConstants.COLOR_WARNING))
+            elif ReportConstants.ICON_OK in line:
+                item.setForeground(QColor(ReportConstants.COLOR_OK))
             else:
-                item.setForeground(QColor("#CCCCCC"))
+                item.setForeground(QColor(ReportConstants.COLOR_DEFAULT))
                 
             tab.analyzer_list.addItem(item)
 

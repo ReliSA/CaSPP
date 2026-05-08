@@ -1,9 +1,4 @@
-import sys
-import os
-from typing import Optional
-
-from core.constants import FileMatcherConstants
-from utils.template_parser import TemplateParser
+from utils.constants import FileMatcherConstants
 
 class FileMatcher:
     """

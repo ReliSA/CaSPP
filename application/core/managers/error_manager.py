@@ -1,6 +1,7 @@
 """
 Global error management.
 """
+import logging
 import sys
 import traceback
 from functools import wraps
@@ -9,7 +10,10 @@ from PyQt6.QtWidgets import QMessageBox
 
 from ui.main_window import MainWindow
 from utils.exceptions import BaseAppException 
-from core.constants import ErrorConstants
+from utils.constants import ErrorConstants
+
+logger = logging.getLogger(__name__)
+
 
 class ErrorManager:
     """Handles global application exceptions and displays popups."""
@@ -34,9 +38,22 @@ class ErrorManager:
             error: The exception instance caught by the safe_slot decorator.
         """
         if cls._instance:
+            if isinstance(error, BaseAppException):
+                logger.warning("Handled application error in Qt slot: %s", error)
+            else:
+                tb = getattr(error, "__traceback__", None)
+                logger.error(
+                    "Unhandled exception in Qt slot",
+                    exc_info=(type(error), error, tb) if tb else True,
+                )
             cls._instance.show_error_popup(error)
         else:
-            traceback.print_exc()
+            tb = getattr(error, "__traceback__", None)
+            logger.error(
+                "Slot error (no ErrorManager instance): %s",
+                error,
+                exc_info=(type(error), error, tb) if tb else None,
+            )
 
     def _setup_exception_handling(self) -> None:
         """Tell Python to send ALL unhandled errors to our custom UI handler.
@@ -57,7 +74,10 @@ class ErrorManager:
             sys.__excepthook__(exc_type, exc_value, exc_traceback)
             return
 
-        traceback.print_exception(exc_type, exc_value, exc_traceback)
+        logger.critical(
+            "Unhandled exception",
+            exc_info=(exc_type, exc_value, exc_traceback),
+        )
 
         self.show_error_popup(exc_value)
 

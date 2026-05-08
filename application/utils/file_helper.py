@@ -3,6 +3,7 @@ File operations helper module.
 """
 
 # standard library imports
+import logging
 import os
 from pathlib import Path
 from typing import Optional, List, Dict
@@ -16,11 +17,13 @@ except ImportError:
     from_bytes = None
 
 # local imports
-from core.constants import FileConstants
+from utils.constants import FileConstants
 from utils.exceptions import (
     FileNotFoundError, FileReadError, FileWriteError, 
     InvalidFileTypeError, FileSizeError, FileAccessError
 )
+
+logger = logging.getLogger(__name__)
 
 class FileHelper:
     """Helper class for file operations."""
@@ -102,7 +105,7 @@ class FileHelper:
             )
             
             if file_path:
-                return self._validate_file(file_path)
+                return self.validate_file(file_path)
             
             return None
         
@@ -132,7 +135,7 @@ class FileHelper:
             
             validated_paths = []
             for file_path in file_paths:
-                validated_path = self._validate_file(file_path)
+                validated_path = self.validate_file(file_path)
                 if validated_path:
                     validated_paths.append(validated_path)
             
@@ -171,7 +174,7 @@ class FileHelper:
                            f"Failed to open directory dialog: {str(e)}")
             return None
     
-    def _validate_file(self, file_path: str) -> Optional[str]:
+    def validate_file(self, file_path: str) -> Optional[str]:
         """Validate that a file exists and is readable.
 
         Args:
@@ -196,21 +199,9 @@ class FileHelper:
         
         except (OSError, ValueError) as e:
             # Log the error but return None for validation failure in UI context
-            import logging
             logger = logging.getLogger(__name__)
             logger.warning(f"File validation failed for '{file_path}': {e}")
             return None
-
-    def validate_file(self, file_path: str) -> Optional[str]:
-        """Public wrapper for validating a file path.
-
-        Args:
-            file_path: The file path to process.
-
-        Returns:
-            The string result.
-        """
-        return self._validate_file(file_path)
 
     def _show_error(self, parent: Optional[QWidget], title: str, message: str) -> None:
         """Show error message dialog.
@@ -268,38 +259,8 @@ class FileHelper:
             return [str(file_path) for file_path in sorted(unique_files)]
         
         except (OSError, ValueError) as e:
-            import logging
-            logger = logging.getLogger(__name__)
             logger.warning(f"Error finding markdown files in '{search_dir}': {e}")
             return []
-    
-    # def get_recent_files(self, max_count: int = 10) -> List[str]:
-    #     """
-    #     Get list of recently accessed files.
-    #     This is a placeholder - in a real app, you'd store this in settings.
-        
-    #     Args:
-    #         max_count: Maximum number of recent files to return
-        
-    #     Returns:
-    #         List of recent file paths
-    #     """
-    #     # TODO: Implement actual recent files tracking using QSettings
-    #     # For now, return some common files from the project
-    #     recent_files = []
-        
-    #     # Look for common markdown files
-    #     common_names = FileConstants.COMMON_MARKDOWN_FILES
-        
-    #     for name in common_names:
-    #         file_path = self.base_path / name
-    #         if file_path.exists():
-    #             recent_files.append(str(file_path))
-            
-    #         if len(recent_files) >= max_count:
-    #             break
-        
-    #     return recent_files
     
     def save_file(self, content: str, file_path: Optional[str] = None, 
                   parent: Optional[QWidget] = None) -> Optional[str]:
@@ -344,8 +305,6 @@ class FileHelper:
             return file_path
         
         except (OSError, UnicodeEncodeError) as e:
-            import logging
-            logger = logging.getLogger(__name__)
             logger.error(f"Failed to save file '{file_path}': {e}")
             raise FileWriteError(file_path or "unknown", str(e))
         except RuntimeError as e:
@@ -363,9 +322,9 @@ class FileHelper:
             File content or None if failed.
         """
         try:
-            validated_path = self._validate_file(file_path)
+            validated_path = self.validate_file(file_path)
             if not validated_path:
-                # _validate_file already logs the specific error
+                # validate_file already logs the specific error
                 return None
             
             raw_bytes = Path(validated_path).read_bytes()
@@ -380,13 +339,9 @@ class FileHelper:
             return content
         
         except UnicodeDecodeError as e:
-            import logging
-            logger = logging.getLogger(__name__)
             logger.error(f"Encoding error reading file '{file_path}': {e}")
             raise FileReadError(file_path, "File encoding not supported")
         except OSError as e:
-            import logging
-            logger = logging.getLogger(__name__)
             logger.error(f"Failed to read file '{file_path}': {e}")
             raise FileReadError(file_path, str(e))
     
@@ -417,8 +372,6 @@ class FileHelper:
             }
         
         except (OSError, ValueError) as e:
-            import logging
-            logger = logging.getLogger(__name__)
             logger.warning(f"Failed to get file info for '{file_path}': {e}")
             return None
         
@@ -443,7 +396,5 @@ class FileHelper:
             return None
             
         except (ValueError, OSError) as e:
-            import logging
-            logger = logging.getLogger(__name__)
             logger.warning(f"Failed to resolve path '{link_path}' from '{current_file_path}': {e}")
             return None

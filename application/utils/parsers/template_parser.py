@@ -10,13 +10,13 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set
 
 # local imports
-from utils.md_parser import (
+from utils.parsers.base_parser import (
     classify_content_line,
     parse_breadcrumbs,
     parse_heading_line,
     split_h1,
 )
-from core.constants import LoaderConstants
+from utils.constants import LoaderConstants
 
 logger = logging.getLogger(__name__)
 

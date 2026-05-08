@@ -4,7 +4,7 @@ Top menu.
 from PyQt6.QtWidgets import QMenuBar, QMenu, QWidget
 from PyQt6.QtGui import QAction
 
-from core.constants import UIConstants
+from utils.constants import UIConstants
 
 class TopMenuBar(QMenuBar):
     """Handles top menu bar actions."""

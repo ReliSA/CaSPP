@@ -1,6 +1,5 @@
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QSplitter, QPlainTextEdit, QTextBrowser, QListWidget
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QSplitter, QTextBrowser, QListWidget
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont
 
 from ui.components.markdown_highlighter import MarkdownHighlighter
 from ui.components.markdown_editor_widget import MarkdownEditorWidget

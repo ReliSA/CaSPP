@@ -1,6 +1,7 @@
 """
 Markdown scene.
 """
+import logging
 from pathlib import Path
 from typing import Dict, Iterable
 
@@ -8,7 +9,10 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QPus
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon, QPixmap
 
-from core.constants import UIConstants, AssetsConstants
+from utils.constants import UIConstants, AssetsConstants
+
+logger = logging.getLogger(__name__)
+
 
 class MarkdownScene(QWidget):
     """Handles markdown scene ui actions."""
@@ -140,4 +144,9 @@ class MarkdownScene(QWidget):
             markdown_files_count += 1
 
         self.file_tree_widget.expandAll()
+        logger.info(
+            "UI: explorer tree built — root=%s markdown_files=%d",
+            root_directory,
+            markdown_files_count,
+        )
         return markdown_files_count

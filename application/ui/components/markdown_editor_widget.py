@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import QPlainTextEdit, QWidget
 from PyQt6.QtGui import QPainter, QColor, QFont, QPaintEvent, QResizeEvent
 from PyQt6.QtCore import Qt, QRect, QSize
 
-from core.constants import EditorConstants
+from utils.constants import EditorConstants
 
 class MarkdownEditorWidget(QPlainTextEdit):
     """A UI text editor widget with built-in line numbers and active line highlighting."""

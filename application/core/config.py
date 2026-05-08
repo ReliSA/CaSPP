@@ -2,10 +2,14 @@
 Configuration settings for the application.
 """
 # standard library imports
+import logging
 from pathlib import Path
 
 # local imports
-from .constants import AppConstants, UIConstants
+from utils.constants import AppConstants, UIConstants
+
+logger = logging.getLogger(__name__)
+
 
 class Config:
     """Application configuration."""
@@ -37,8 +41,10 @@ class Config:
 
         for parent in [path] + list(path.parents):
             if (parent / ".git").exists():
+                logger.debug("Resolved repository root: %s", parent)
                 return parent
 
+        logger.error("No .git directory found when walking up from %s", path)
         raise RuntimeError("No Git repository found.")
 
     @classmethod
