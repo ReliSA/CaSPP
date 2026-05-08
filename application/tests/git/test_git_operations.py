@@ -11,8 +11,8 @@ APP_DIR = Path(__file__).resolve().parents[1]
 if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 
-from core.git_manager import GitManager, GitOperationWorker
-from core.constants import GitConstants
+from core.managers.git_manager import GitManager, GitOperationWorker
+from utils.constants import GitConstants
 from utils.git.commit import commit
 from utils.git.stage import stage_markdown_files
 from utils.git.status import get_status_detailed
@@ -85,7 +85,7 @@ def test_git_manager_rejects_when_busy() -> None:
             return True
 
     manager._worker = _BusyWorker()
-    started = manager.start_operation("status")
+    started = manager.start_operation(GitConstants.GIT_OPERATION_STATUS)
 
     assert started is False
 

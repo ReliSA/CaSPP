@@ -2,6 +2,7 @@
 Application logic coordinator.
 """
 # standard library imports
+import logging
 import sys
 import os
 
@@ -12,18 +13,21 @@ from PyQt6.QtGui import QCloseEvent
 
 # local imports
 from ui.main_window import MainWindow
-from core.constants import FileConstants, AssetsConstants, SettingsConstants
-from utils.markdown_parser import MarkdownParser
-from utils.markdown_analyzer import MarkdownAnalyzer
-from utils.template_parser import TemplateParser
+from utils.constants import FileConstants, AssetsConstants, SettingsConstants
+from utils.parsers.markdown_parser import MarkdownParser
+from core.analyzer.markdown_analyzer import MarkdownAnalyzer
+from utils.parsers.template_parser import TemplateParser
 from core.config import Config
 from utils.file_helper import FileHelper
-from core.file_manager import FileManager
-from core.editor_manager import EditorManager
-from core.tab_manager import TabManager
-from core.git_manager import GitManager
-from core.error_manager import ErrorManager
-from utils.markdown_auto_stager import MarkdownAutoStager
+from core.managers.file_manager import FileManager
+from core.managers.editor_manager import EditorManager
+from core.managers.tab_manager import TabManager
+from core.managers.git_manager import GitManager
+from core.managers.error_manager import ErrorManager
+from utils.git.markdown_auto_stager import MarkdownAutoStager
+
+logger = logging.getLogger(__name__)
+
 
 class Application:
     """Main application class that coordinates business logic."""
@@ -46,7 +50,11 @@ class Application:
                 qss_content = qss_content.replace("{{ICONS_DIR}}", AssetsConstants.ICONS_DIR_QSS)
                 self.app.setStyleSheet(qss_content)
         except Exception as e:
-            print(f"Warning: Could not load stylesheet from {AssetsConstants.APP_THEME_QSS_PATH}: {e}")
+            logger.warning(
+                "Could not load stylesheet from %s: %s",
+                AssetsConstants.APP_THEME_QSS_PATH,
+                e,
+            )
 
         # Initialize main window
         self.main_window = MainWindow()
@@ -59,8 +67,8 @@ class Application:
 
         # Initialize file helper and file manager
         self.file_helper = FileHelper(str(Config.get_base_path()))
-        self.template_loader = TemplateParser()
-        self.document_loader = MarkdownParser()
+        self.template_parser = TemplateParser()
+        self.document_parser = MarkdownParser()
         self.auto_stager = MarkdownAutoStager(str(Config.get_base_path()))
         self.file_manager = FileManager(
             self.main_window,
@@ -68,10 +76,12 @@ class Application:
             self.markdown_analyzer,
             self.file_helper,
             self.auto_stager,
-            self.template_loader,
-            self.document_loader
+            self.template_parser,
+            self.document_parser
         )
-        self.file_manager.load_templates(str(Config.get_base_path() / FileConstants.TEMPLATES_PATH))
+        templates_path = Config.get_base_path() / FileConstants.TEMPLATES_PATH
+        self.file_manager.load_templates(str(templates_path))
+        logger.info("Application core initialized (repo: %s)", Config.get_base_path())
 
         # Initialize editor manager
         self.editor_manager = EditorManager(
@@ -165,11 +175,7 @@ class Application:
         self.git_manager.operation_finished.connect(self._on_git_operation_finished)
 
         self.auto_stager.file_staged.connect(self.file_manager.on_file_staged)
-        self.auto_stager.staging_failed.connect(
-            lambda file_path, error: self.main_window.get_git_viewer().append_output(
-                f"Auto-stage failed for {file_path}: {error}"
-            )
-        )
+        self.auto_stager.staging_failed.connect(self._on_auto_stager_failed)
 
         # Load default markdown file
         #self.file_manager.load_markdown_file(Config.get_default_markdown_path())
@@ -188,9 +194,20 @@ class Application:
         """
         if self._is_booting: 
             return
-        
+
+        state = self.tab_manager.get_current_state()
+        label = state.file_path or "Untitled"
+        logger.debug("Active tab changed to: %s", label)
+
         self.file_manager.on_tab_changed()
         self.editor_manager.update_live_preview()
+
+    def _on_auto_stager_failed(self, file_path: str, error: str) -> None:
+        """Log auto-stage failures and mirror a short message to the git console."""
+        logger.warning("Auto-stage failed for %s: %s", file_path, error)
+        self.main_window.get_git_viewer().append_output(
+            f"Auto-stage failed for {file_path}: {error}"
+        )
 
     def run(self) -> int:
         """Run the application.
@@ -220,6 +237,7 @@ class Application:
         """
         git_viewer = self.main_window.get_git_viewer()
         git_viewer.append_output(message)
+        logger.debug("Git %s output chunk: %s", operation, message[:500] if message else "")
 
     def _on_git_operation_finished(self, operation: str, success: bool, message: str) -> None:
         """Update git scene after background operation completes.
@@ -240,9 +258,11 @@ class Application:
         git_viewer = self.main_window.get_git_viewer()
         message, accepted = git_viewer.ask_push_commit_message()
         if not accepted:
+            logger.info("Push cancelled by user")
             git_viewer.append_output("Push cancelled.")
             return
 
+        logger.info("User initiated push with custom commit message")
         self.git_manager.push(message=message)
 
     def _load_settings(self) -> None:
@@ -300,6 +320,18 @@ class Application:
         analyzer_on = settings.value(SettingsConstants.ANALYZER_KEY, False, type=bool)
         md_viewer.analyzer_check_box.setChecked(analyzer_on)
 
+        restored_tabs = len(
+            [p for p in open_files if os.path.exists(p)]
+        )
+        logger.info(
+            "Settings restored: scene=%s, explorer_dir=%s, open_tabs=%d, live_preview=%s, analyzer=%s",
+            "markdown" if active_scene_index == 0 else "git",
+            last_explorer_dir or "(none)",
+            restored_tabs,
+            live_preview,
+            analyzer_on,
+        )
+
     def _save_settings(self, event: QCloseEvent) -> None:
         """Saves the current application state before shutting down.
 
@@ -340,6 +372,13 @@ class Application:
 
         # Save current opened tab
         settings.setValue(SettingsConstants.CURRENT_TAB_KEY, md_viewer.tabs.currentIndex())
+
+        logger.info(
+            "Saving session: scene=%s, open_tab_paths=%d, explorer_open=%s",
+            "markdown" if self.main_window.stacked_scenes.currentIndex() == 0 else "git",
+            len(open_files),
+            explorer_open,
+        )
 
         event.accept()
     

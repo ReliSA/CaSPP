@@ -8,15 +8,14 @@ from typing import Optional
 # local imports
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QDesktopServices
-import traceback
 
 from ui.main_window import MainWindow
-from utils.markdown_analyzer import MarkdownAnalyzer
+from core.analyzer.markdown_analyzer import MarkdownAnalyzer
 from utils.file_helper import FileHelper
-from core.constants import FileConstants
-from core.tab_manager import TabManager
-from core.error_manager import safe_slot
-from utils.markdown_auto_stager import MarkdownAutoStager
+from utils.constants import FileConstants
+from core.managers.tab_manager import TabManager
+from core.managers.error_manager import safe_slot
+from utils.git.markdown_auto_stager import MarkdownAutoStager
 from utils.file_matcher import FileMatcher
 from utils.exceptions import FileNotFoundError
 
@@ -104,6 +103,7 @@ class FileManager:
         # Validate the file first using the FileHelper
         validated = self.file_helper.validate_file(file_path)
         if not validated:
+            logger.warning("Load rejected (invalid or missing file): %s", file_path)
             self.tab_manager.set_error(
                 "Cannot analyze - file not found or inaccessible."
             )
@@ -111,8 +111,10 @@ class FileManager:
 
         self._is_loading_file = True
         try:
+            logger.info("Loading markdown file: %s", validated)
             content = self.file_helper.read_file(validated)
             if content is None:
+                logger.error("Read failed for: %s", validated)
                 self.tab_manager.set_error("Cannot analyze - failed to read file content.")
                 return
 
@@ -125,6 +127,7 @@ class FileManager:
             self.tab_manager.set_tab_dirty(False)
             self._analyze_current_file(validated, content)
         except Exception:
+            logger.exception("Failed to load markdown file in viewer")
             self.tab_manager.set_error("Cannot analyze - failed to load file in viewer.")
         finally:
             self._is_loading_file = False
@@ -156,7 +159,7 @@ class FileManager:
             self.tab_manager.set_analysis(report)
 
         except Exception as e:
-            traceback.print_exc()
+            logger.exception("Analysis failed for %s", file_path)
             error_msg = f"Error during analysis: {str(e)}"
             self.tab_manager.set_analysis(error_msg)
 
@@ -211,6 +214,7 @@ class FileManager:
         self.main_window.get_git_viewer().append_output(
             f"Auto-staged: {file_path} ({message})"
         )
+        logger.info("Auto-staged %s (%s)", file_path, message)
 
     def save_current_markdown_file(self) -> None:
         """Save current editor content and run post-save hooks.
@@ -224,6 +228,7 @@ class FileManager:
         )
 
         if saved_file:
+            logger.info("Saved markdown file: %s", saved_file)
             self.current_file_path = saved_file
             self.current_file_content = content
             self._is_dirty = False
@@ -254,8 +259,10 @@ class FileManager:
             )
 
             if not selected_file:
+                logger.info("UI: open file dialog cancelled")
                 return
 
+            logger.info("UI: open file — %s", selected_file)
             self.load_markdown_file(selected_file)
             return
 
@@ -265,8 +272,10 @@ class FileManager:
         )
 
         if not selected_directory:
+            logger.info("UI: open folder dialog cancelled")
             return
 
+        logger.info("UI: opened project folder — %s", selected_directory)
         self.build_project_index(selected_directory)
         self.current_explorer_dir = selected_directory
 
@@ -289,6 +298,7 @@ class FileManager:
         """
         file_path = item.data(0, Qt.ItemDataRole.UserRole)
         if file_path:
+            logger.info("UI: explorer opened file — %s", file_path)
             self.load_markdown_file(file_path)
 
     @safe_slot
@@ -303,10 +313,12 @@ class FileManager:
             return
 
         if url.scheme() in ('http', 'https'):
+            logger.info("UI: preview opened external URL — %s", url.toString())
             QDesktopServices.openUrl(url)
             return
         
         link_path = url.toString()
+        logger.info("UI: preview link follow — %s (from %s)", link_path, self.current_file_path)
 
         target_path = self.file_helper.resolve_relative_markdown_link(
             self.current_file_path, 
@@ -331,6 +343,7 @@ class FileManager:
     def open_explorer(self) -> None:
         """Sets visibility of ui elements for open file explorer.
         """
+        logger.info("UI: file explorer panel shown")
         markdown_scene = self.main_window.get_markdown_viewer()
         markdown_scene.close_explorer_button.setVisible(True)
         markdown_scene.open_explorer_button.setVisible(False)
@@ -339,6 +352,7 @@ class FileManager:
     def close_explorer(self) -> None:
         """Sets visibility of ui elements for closed file explorer.
         """
+        logger.info("UI: file explorer panel hidden")
         markdown_scene = self.main_window.get_markdown_viewer()
         markdown_scene.close_explorer_button.setVisible(False)
         markdown_scene.open_explorer_button.setVisible(True)

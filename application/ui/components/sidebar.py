@@ -3,7 +3,7 @@ Sidebar.
 """
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QSpacerItem, QSizePolicy
 
-from core.constants import UIConstants
+from utils.constants import UIConstants
 
 class SidebarMenu(QWidget):
     """Handles sidebar menu ui actions."""

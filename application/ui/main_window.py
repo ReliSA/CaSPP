@@ -1,10 +1,15 @@
 from PyQt6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QStackedWidget
 
+import logging
+
 from ui.components.top_menu import TopMenuBar
 from ui.components.sidebar import SidebarMenu
-from ui.components.md_scene import MarkdownScene
-from ui.components.git_scene import GitScene
-from core.constants import UIConstants
+from ui.scenes.md_scene import MarkdownScene
+from ui.scenes.git_scene import GitScene
+from utils.constants import UIConstants
+
+logger = logging.getLogger(__name__)
+
 
 class MainWindow(QMainWindow):
     """Handles main window layout setup."""
@@ -42,8 +47,18 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.stacked_scenes)
 
         # Sidebar scene switch setup
-        self.sidebar.btn_md.clicked.connect(lambda: self.stacked_scenes.setCurrentIndex(0))
-        self.sidebar.btn_git.clicked.connect(lambda: self.stacked_scenes.setCurrentIndex(1))
+        self.sidebar.btn_md.clicked.connect(self.show_markdown_scene)
+        self.sidebar.btn_git.clicked.connect(self.show_git_scene)
+
+    def show_markdown_scene(self) -> None:
+        """Switch stacked widget to the markdown editor scene and log."""
+        self.stacked_scenes.setCurrentIndex(0)
+        logger.info("UI: sidebar — Markdown scene")
+
+    def show_git_scene(self) -> None:
+        """Switch stacked widget to the git console scene and log."""
+        self.stacked_scenes.setCurrentIndex(1)
+        logger.info("UI: sidebar — Git scene")
 
     def get_toolbar(self) -> TopMenuBar:
         """Returns top menu.

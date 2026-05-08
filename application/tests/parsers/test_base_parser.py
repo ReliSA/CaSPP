@@ -3,14 +3,18 @@
 import sys
 from pathlib import Path
 
-import pytest
 
 APP_DIR = Path(__file__).resolve().parents[1]
 if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 
-from core.constants import LoaderConstants
-from utils.md_parser import classify_content_line, parse_breadcrumbs, parse_heading_line, split_h1
+from utils.constants import LoaderConstants
+from utils.parsers.base_parser import (
+    classify_content_line,
+    parse_breadcrumbs,
+    parse_heading_line,
+    split_h1,
+)
 
 
 class TestParseHeadingLine:

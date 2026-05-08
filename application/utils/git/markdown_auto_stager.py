@@ -13,7 +13,7 @@ from PyQt6.QtCore import QTimer, QObject, pyqtSignal
 # local imports
 from utils.git.runner import is_repo_available
 from utils.git.stage import stage_file, stage_markdown_files
-from core.constants import FileConstants
+from utils.constants import FileConstants
 
 logger = logging.getLogger(__name__)
 

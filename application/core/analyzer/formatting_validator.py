@@ -1,6 +1,6 @@
 import re
-from typing import List, Dict, Any, Set
-from core.constants import ValidationConstants
+from typing import List, Dict, Any
+from utils.constants import ValidationConstants
 
 class FormattingValidator:
     """Validator for Markdown formatting and structural integrity.
@@ -23,7 +23,7 @@ class FormattingValidator:
         """
         self.full_content = full_content
         self.raw_lines = raw_lines
-        self.warnings = []  # Tady si budeme sbírat chyby
+        self.warnings = []
 
 
     def check_encoding_errors(self) -> None:
@@ -38,7 +38,7 @@ class FormattingValidator:
 
         Returns: None
         """
-        if "\ufffd" in self.full_content:
+        if ValidationConstants.UNICODE_REPLACEMENT_CHARACTER in self.full_content:
             self.warnings.append({"line": 1, "msg": "File contains encoding errors (replacement characters found)."})
 
     def check_bold(self, line_content: str, line_number: int):

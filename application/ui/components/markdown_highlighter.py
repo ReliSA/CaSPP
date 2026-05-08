@@ -4,7 +4,7 @@ Markdown syntax highlighter for QPlainTextEdit.
 from PyQt6.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor, QFont
 from PyQt6.QtCore import QRegularExpression
 
-from core.constants import SyntaxHighlighterConstants, EditorConstants
+from utils.constants import SyntaxHighlighterConstants, EditorConstants
 
 class MarkdownHighlighter(QSyntaxHighlighter):
     """Applies markdown syntax highlighting to a QTextDocument."""

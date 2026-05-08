@@ -1,7 +1,6 @@
 """Unit tests for utils.markdown_analyzer — MarkdownAnalyzer class."""
 
 import sys
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -10,12 +9,12 @@ APP_DIR = Path(__file__).resolve().parents[1]
 if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 
-from core.constants import ReportConstants
+from utils.constants import ReportConstants
 from utils.exceptions import FileNotFoundError as AppFileNotFoundError
 from utils.exceptions import InvalidInputError
-from utils.markdown_analyzer import MarkdownAnalyzer
-from utils.markdown_parser import ContentInfo, DocumentMeta, HeadingInfo, MarkdownParser, ParsedDocument
-from utils.template_parser import ContentRules, DocumentRules, HeadingRules, TemplateParser, TemplateRules
+from core.analyzer.markdown_analyzer import MarkdownAnalyzer
+from utils.parsers.markdown_parser import ContentInfo, DocumentMeta, HeadingInfo, MarkdownParser, ParsedDocument
+from utils.parsers.template_parser import DocumentRules, HeadingRules, TemplateParser, TemplateRules
 
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
 SAMPLE_MD = (FIXTURES_DIR / "sample_pattern.md").read_text(encoding="utf-8")

@@ -1,6 +1,6 @@
 """Git push operations."""
 
-from core.constants import GitConstants
+from utils.constants import GitConstants
 
 from .types import GitResult
 from . import runner

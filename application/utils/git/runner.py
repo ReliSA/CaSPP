@@ -1,5 +1,6 @@
 """Shared helpers for git operations."""
 
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
@@ -20,8 +21,10 @@ except ImportError:
     GitCommandError = Exception
     GIT_AVAILABLE = False
 
-from core.constants import GitConstants, FileConstants
+from utils.constants import GitConstants, FileConstants
 from utils.exceptions import GitLibraryNotAvailableError, GitRepositoryNotFoundError
+
+logger = logging.getLogger(__name__)
 
 
 def is_git_available() -> bool:
@@ -55,11 +58,13 @@ def load_repo(repo_path: Optional[str] = None) -> GitRepo:
         if repo_path:
             path = Path(repo_path)
             if not path.exists():
+                logger.warning("Git repo path does not exist: %s", repo_path)
                 raise GitRepositoryNotFoundError(repo_path)
             return Repo(path)
 
         return Repo(Path.cwd(), search_parent_directories=True)
     except InvalidGitRepositoryError as exc:
+        logger.warning("Not a valid git repository (path=%s)", repo_path)
         raise GitRepositoryNotFoundError(repo_path) from exc
 
 

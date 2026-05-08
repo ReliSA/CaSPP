@@ -1,16 +1,16 @@
 import re
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional,  Tuple
+from typing import Dict, List, Tuple
 import logging
 
-from core.constants import FileConstants, LoaderConstants, ReportConstants
-from utils.content_validator import ContentValidator
+from utils.constants import FileConstants, LoaderConstants, ReportConstants
+from core.analyzer.content_validator import ContentValidator
 from utils.exceptions import FileNotFoundError, InvalidInputError
-from utils.formatting_validator import FormattingValidator
-from utils.links_validator import LinkValidator
-from utils.markdown_parser import DocumentMeta, HeadingInfo, ParsedDocument
-from utils.template_parser import ContentRules, DocumentRules, HeadingRules, TemplateRules
+from core.analyzer.formatting_validator import FormattingValidator
+from core.analyzer.links_validator import LinkValidator
+from utils.parsers.markdown_parser import DocumentMeta, HeadingInfo, ParsedDocument
+from utils.parsers.template_parser import ContentRules, DocumentRules, HeadingRules, TemplateRules
 
 logger = logging.getLogger(__name__)
 
@@ -368,7 +368,7 @@ class MarkdownAnalyzer:
         self._check_table_headers(actual_content, rules, line_num, section_name)
         self._check_bullet_prefixes(actual_content, rules, line_num, section_name)
 
-        if actual_content.exact_list_prefixes is not []:
+        if actual_content.exact_list_prefixes:
             self._check_exact_list_prefix_values(actual_content, section_name)
 
     def _check_content_types(self,  actual_content, rules: ContentRules, line_num: int, section_name: str) -> None:

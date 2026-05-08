@@ -6,7 +6,7 @@ every regex and classification rule lives in exactly one place.
 from dataclasses import dataclass
 from typing import Optional, Set, Tuple
 
-from core.constants import LoaderConstants
+from utils.constants import LoaderConstants
 
 
 @dataclass

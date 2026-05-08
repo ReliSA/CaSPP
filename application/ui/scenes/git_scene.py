@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QIcon
 from typing import Tuple
 
-from core.constants import UIConstants, AssetsConstants
+from utils.constants import UIConstants, AssetsConstants
 
 class GitScene(QWidget):
     """Handles git scene ui actions."""

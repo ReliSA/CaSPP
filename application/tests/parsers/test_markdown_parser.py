@@ -3,7 +3,6 @@
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -11,8 +10,8 @@ APP_DIR = Path(__file__).resolve().parents[1]
 if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 
-from core.constants import LoaderConstants
-from utils.markdown_parser import MarkdownParser, ParsedDocument
+from utils.constants import LoaderConstants
+from utils.parsers.markdown_parser import MarkdownParser, ParsedDocument
 
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
 

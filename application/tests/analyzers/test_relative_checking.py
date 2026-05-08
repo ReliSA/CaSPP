@@ -9,7 +9,7 @@ from pathlib import Path
 app_dir = Path(__file__).parent
 sys.path.insert(0, str(app_dir))
 
-from utils.markdown_analyzer import MarkdownAnalyzer
+from core.analyzer.markdown_analyzer import MarkdownAnalyzer
 
 def test_relative_path_checking():
     """Test the relative path checking functionality."""

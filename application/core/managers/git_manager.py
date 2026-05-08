@@ -1,10 +1,11 @@
 """Git manager orchestrating threaded git operations for UI."""
 
+import logging
 from typing import Any, Dict, Optional
 
 from PyQt6.QtCore import QObject, QThread, pyqtSignal
 
-from core.constants import GitConstants
+from utils.constants import GitConstants
 from utils.git import commit as commit_operation
 from utils.git import export_staged_files_zip as export_staged_files_zip_operation
 from utils.git import fetch as fetch_operation
@@ -15,6 +16,8 @@ from utils.git import stage_file as stage_file_operation
 from utils.git import stage_markdown_files as stage_markdown_files_operation
 from utils.git import unstage_all as unstage_all_operation
 from utils.git.types import GitResult
+
+logger = logging.getLogger(__name__)
 
 
 class GitOperationWorker(QThread):
@@ -47,32 +50,32 @@ class GitOperationWorker(QThread):
         Returns:
             The git operation result.
         """
-        if self.operation == "status":
+        if self.operation == GitConstants.GIT_OPERATION_STATUS:
             return get_status_detailed(self.repo_path, markdown_only=True)
-        if self.operation == "fetch":
+        if self.operation == GitConstants.GIT_OPERATION_FETCH:
             return fetch_operation(self.repo_path)
-        if self.operation == "pull":
+        if self.operation == GitConstants.GIT_OPERATION_PULL:
             return pull_operation(self.repo_path)
-        if self.operation == "push":
+        if self.operation == GitConstants.GIT_OPERATION_PUSH:
             return push_markdown_changes(
                 self.repo_path,
                 commit_message=self.kwargs.get("message", GitConstants.DEFAULT_COMMIT_MESSAGE),
                 remote_name=self.kwargs.get("remote"),
                 branch=self.kwargs.get("branch"),
             )
-        if self.operation == "stage_file":
+        if self.operation == GitConstants.GIT_OPERATION_STAGE_FILE:
             return stage_file_operation(self.repo_path, self.kwargs.get("file_path", ""))
-        if self.operation == "stage_markdown":
+        if self.operation == GitConstants.GIT_OPERATION_STAGE_MARKDOWN:
             return stage_markdown_files_operation(self.repo_path, self.kwargs.get("file_paths"))
-        if self.operation == "unstage_all":
+        if self.operation == GitConstants.GIT_OPERATION_UNSTAGE_ALL:
             return unstage_all_operation(self.repo_path)
-        if self.operation == "commit":
+        if self.operation == GitConstants.GIT_OPERATION_COMMIT:
             return commit_operation(
                 self.repo_path,
                 self.kwargs.get("message", GitConstants.DEFAULT_COMMIT_MESSAGE),
                 stage_all=bool(self.kwargs.get("stage_all", False)),
             )
-        if self.operation == "export_staged":
+        if self.operation == GitConstants.GIT_OPERATION_EXPORT_STAGED:
             return export_staged_files_zip_operation(
                 self.repo_path,
                 self.kwargs.get("output_zip_path"),
@@ -118,9 +121,15 @@ class GitManager(QObject):
             The boolean result.
         """
         if self.is_busy():
+            logger.warning(
+                "Git operation %r skipped: another operation is already running (repo=%s)",
+                operation,
+                self.repo_path,
+            )
             self.operation_output.emit(operation, "Another git operation is already running.")
             return False
 
+        logger.info("Starting git operation %r (repo=%s)", operation, self.repo_path)
         self._worker = GitOperationWorker(operation=operation, repo_path=self.repo_path, **kwargs)
         self._worker.finished.connect(self._on_operation_finished)
         self.operation_started.emit(operation)
@@ -133,7 +142,7 @@ class GitManager(QObject):
         Returns:
             The boolean result.
         """
-        return self.start_operation("status")
+        return self.start_operation(GitConstants.GIT_OPERATION_STATUS)
 
     def fetch(self) -> bool:
         """Start a git fetch operation.
@@ -141,7 +150,7 @@ class GitManager(QObject):
         Returns:
             The boolean result.
         """
-        return self.start_operation("fetch")
+        return self.start_operation(GitConstants.GIT_OPERATION_FETCH)
 
     def pull(self) -> bool:
         """Start a git pull operation.
@@ -149,7 +158,7 @@ class GitManager(QObject):
         Returns:
             The boolean result.
         """
-        return self.start_operation("pull")
+        return self.start_operation(GitConstants.GIT_OPERATION_PULL)
 
     def push(self, message: Optional[str] = None, remote: Optional[str] = None, branch: Optional[str] = None) -> bool:
         """Start a git push operation.
@@ -169,7 +178,7 @@ class GitManager(QObject):
             kwargs["remote"] = remote
         if branch is not None:
             kwargs["branch"] = branch
-        return self.start_operation("push", **kwargs)
+        return self.start_operation(GitConstants.GIT_OPERATION_PUSH, **kwargs)
 
     def stage_file(self, file_path: str) -> bool:
         """Start staging a single file.
@@ -180,7 +189,10 @@ class GitManager(QObject):
         Returns:
             The boolean result.
         """
-        return self.start_operation("stage_file", file_path=file_path)
+        return self.start_operation(
+            GitConstants.GIT_OPERATION_STAGE_FILE,
+            file_path=file_path,
+        )
 
     def stage_markdown(self, file_paths: Optional[list] = None) -> bool:
         """Start staging markdown files.
@@ -191,7 +203,10 @@ class GitManager(QObject):
         Returns:
             The boolean result.
         """
-        return self.start_operation("stage_markdown", file_paths=file_paths)
+        return self.start_operation(
+            GitConstants.GIT_OPERATION_STAGE_MARKDOWN,
+            file_paths=file_paths,
+        )
 
     def unstage_all(self) -> bool:
         """Start unstaging all files.
@@ -199,7 +214,7 @@ class GitManager(QObject):
         Returns:
             The boolean result.
         """
-        return self.start_operation("unstage_all")
+        return self.start_operation(GitConstants.GIT_OPERATION_UNSTAGE_ALL)
 
     def commit(self, message: str, stage_all: bool = False) -> bool:
         """Start a git commit operation.
@@ -211,7 +226,11 @@ class GitManager(QObject):
         Returns:
             The boolean result.
         """
-        return self.start_operation("commit", message=message, stage_all=stage_all)
+        return self.start_operation(
+            GitConstants.GIT_OPERATION_COMMIT,
+            message=message,
+            stage_all=stage_all,
+        )
 
     def export_staged(self, output_zip_path: Optional[str] = None) -> bool:
         """Start exporting staged files.
@@ -225,7 +244,10 @@ class GitManager(QObject):
         kwargs: Dict[str, Any] = {}
         if output_zip_path is not None:
             kwargs["output_zip_path"] = output_zip_path
-        return self.start_operation("export_staged", **kwargs)
+        return self.start_operation(
+            GitConstants.GIT_OPERATION_EXPORT_STAGED,
+            **kwargs,
+        )
 
     def _on_operation_finished(self, operation: str, success: bool, message: str, payload: object) -> None:
         """Fan out completion updates to listeners.
@@ -236,10 +258,19 @@ class GitManager(QObject):
             message: The message to display or use for the operation.
             payload: Additional operation result data.
         """
-        if operation == "status" and success and isinstance(payload, dict):
+        if operation == GitConstants.GIT_OPERATION_STATUS and success and isinstance(payload, dict):
             status_payload = payload.get("status")
             if isinstance(status_payload, dict):
                 self.status_updated.emit(status_payload)
+
+        if success:
+            logger.info("Git operation %r completed successfully", operation)
+        else:
+            logger.error(
+                "Git operation %r failed: %s",
+                operation,
+                (message or "")[:2000],
+            )
 
         self.operation_output.emit(operation, message)
         self.operation_finished.emit(operation, success, message)

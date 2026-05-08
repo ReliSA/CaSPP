@@ -8,7 +8,7 @@ APP_DIR = Path(__file__).resolve().parents[1]
 if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 
-from utils.formatting_validator import FormattingValidator
+from core.analyzer.formatting_validator import FormattingValidator
 
 
 def _entry(content: str, line: int) -> Dict[str, Any]:

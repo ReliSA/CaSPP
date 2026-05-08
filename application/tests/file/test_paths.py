@@ -10,7 +10,7 @@ app_dir = Path(__file__).parent
 sys.path.insert(0, str(app_dir))
 
 from core.config import Config
-from utils.markdown_analyzer import MarkdownAnalyzer
+from core.analyzer.markdown_analyzer import MarkdownAnalyzer
 
 def test_paths():
     """Test the base path configuration."""

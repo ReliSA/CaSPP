@@ -8,8 +8,8 @@ APP_DIR = Path(__file__).resolve().parents[1]
 if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 
-from core.constants import LoaderConstants
-from utils.template_parser import (
+from utils.constants import LoaderConstants
+from utils.parsers.template_parser import (
     ContentRules,
     DocumentRules,
     HeadingRules,
