@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-APP_DIR = Path(__file__).resolve().parents[1]
+APP_DIR = Path(__file__).resolve().parents[2]
 if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 
@@ -16,7 +16,7 @@ from core.analyzer.markdown_analyzer import MarkdownAnalyzer
 from utils.parsers.markdown_parser import ContentInfo, DocumentMeta, HeadingInfo, MarkdownParser, ParsedDocument
 from utils.parsers.template_parser import DocumentRules, HeadingRules, TemplateParser, TemplateRules
 
-FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
+FIXTURES_DIR = Path(__file__).resolve().parents[1] / "fixtures"
 SAMPLE_MD = (FIXTURES_DIR / "sample_pattern.md").read_text(encoding="utf-8")
 TEMPLATE_PATTERN_MD = (FIXTURES_DIR / "template_pattern.md").read_text(encoding="utf-8")
 

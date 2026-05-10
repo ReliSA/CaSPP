@@ -9,7 +9,7 @@ from core.analyzer.content_validator import ContentValidator
 from utils.exceptions import FileNotFoundError, InvalidInputError
 from core.analyzer.formatting_validator import FormattingValidator
 from core.analyzer.links_validator import LinkValidator
-from utils.parsers.markdown_parser import DocumentMeta, HeadingInfo, ParsedDocument
+from utils.parsers.markdown_parser import DocumentMeta, HeadingInfo, ParsedDocument, ContentInfo
 from utils.parsers.template_parser import ContentRules, DocumentRules, HeadingRules, TemplateRules
 
 logger = logging.getLogger(__name__)
@@ -65,8 +65,6 @@ class MarkdownAnalyzer:
         if not formatting_warnings:
             self._add_passed("Formatting (bold, italics, tables, images) is consistent.")
 
-        # content kontroly(excel 17,18,19)
-
         content_validator = ContentValidator(
             raw_lines=all_raw_lines,
             doc_data=doc,
@@ -105,11 +103,6 @@ class MarkdownAnalyzer:
             actual = doc_map.get(t_heading.text)
             if actual:
                 self._check_section_content(actual.content, t_heading.content_rules, actual.line_number, actual.text)
-
-        # Formatting
-        all_raw_lines = []
-        for heading in doc.headings:
-            all_raw_lines.extend(heading.content.raw_lines)
 
         if project_index:
             link_validator = LinkValidator(doc, project_index, references_content=references_content)
@@ -353,7 +346,7 @@ class MarkdownAnalyzer:
         if len(self.current_warnings) == before:
             self._add_passed("All mandatory sections have content.")
 
-    def _check_section_content(self, actual_content, rules: ContentRules, line_num: int, section_name: str = "") -> None:
+    def _check_section_content(self, actual_content: ContentInfo, rules: ContentRules, line_num: int, section_name: str = "") -> None:
         """Validate content within a single section.
 
         Args:
@@ -371,7 +364,7 @@ class MarkdownAnalyzer:
         if actual_content.exact_list_prefixes:
             self._check_exact_list_prefix_values(actual_content, section_name)
 
-    def _check_content_types(self,  actual_content, rules: ContentRules, line_num: int, section_name: str) -> None:
+    def _check_content_types(self, actual_content: ContentInfo, rules: ContentRules, line_num: int, section_name: str) -> None:
         """found_types must be a superset of expected_types (excluding 'text').
 
         Args:
@@ -393,7 +386,7 @@ class MarkdownAnalyzer:
         else:
             self._add_passed(f"Section '{section_name}' has all required content types.")
 
-    def _check_table_headers(self, actual_content, rules: ContentRules, line_num: int, section_name: str) -> None:
+    def _check_table_headers(self, actual_content: ContentInfo, rules: ContentRules, line_num: int, section_name: str) -> None:
         """Table column headers must match the template exactly.
 
         Args:
@@ -415,7 +408,7 @@ class MarkdownAnalyzer:
         else:
             self._add_passed(f"Section '{section_name}' table headers match the template.")
 
-    def _check_bullet_prefixes(self, actual_content, rules: ContentRules, line_num: int, section_name: str) -> None:
+    def _check_bullet_prefixes(self, actual_content: ContentInfo, rules: ContentRules, line_num: int, section_name: str) -> None:
         """Bullet prefixes used in the section must belong to the template's allowed set.
 
         Args:
@@ -446,7 +439,7 @@ class MarkdownAnalyzer:
         if len(self.current_warnings) == before:
             self._add_passed(f"Section '{section_name}' has all required bullet prefixes.")
 
-    def _check_exact_list_prefix_values(self, actual_content, section_name: str) -> None:
+    def _check_exact_list_prefix_values(self, actual_content: ContentInfo, section_name: str) -> None:
         """Each [Label](url): list item must have a link value after the colon.
 
         Args:
