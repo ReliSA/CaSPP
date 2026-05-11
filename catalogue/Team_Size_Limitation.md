@@ -15,7 +15,7 @@ Enough Cooks in the Kitchen
 - [Primary perspective](facets/perspectives/perspectives.md): [Teacher](facets/perspectives/Teacher.md)
 - [Stage](facets/stages/stages.md): [Team and Project Setup](facets/categories/Team_and_Project_Setup.md)
 
-## Synopsis (optional)
+## Synopsis
 
 How to best set up the student team size to maximize product and educational efficiency? Put a reasonable upper limit on team size.
 

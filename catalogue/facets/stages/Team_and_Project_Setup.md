@@ -1,4 +1,4 @@
-[Home](../../../README.md) > [Catalogue](../../../Patterns_catalogue.md) > [Facets](../facets.md) > [Stages](stage.md) > Team and Project Setup
+[Home](../../../README.md) > [Catalogue](../../../Patterns_catalogue.md) > [Facets](../facets.md) > [Stages](stages.md) > Team and Project Setup
 # Stage: Team and Project Setup
 
 Patterns for setting up student teams and their projects at the start of each course execution.

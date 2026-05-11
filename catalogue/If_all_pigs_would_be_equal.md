@@ -52,7 +52,7 @@ This solution consists of guidelines which should be adapted throughout the whol
 |--|--|--|
 |[2+2 makes four eyes](2_2_makes_four_eyes.md)|child|specifies one step of the solution|
  
-## Example(s) / Known Use(s) (optional) 
+## Example(s) / Known Use(s)
 
 ## [Sources](../References.md)
 

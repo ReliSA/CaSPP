@@ -1,5 +1,5 @@
-[Home](../../../README.md) > [Catalogue](../../../Patterns_catalogue.md) > [Facets](../facets.md) > [Solution Forms](forms.md) > Artifact
-# Solution Form: Artifact
+[Home](../../../README.md) > [Catalogue](../../../Patterns_catalogue.md) > [Facets](../facets.md) > [Solution Forms](forms.md) > Role
+# Solution Form: Role
 
 Patterns with solutions in a form of an artifact, i.e., a document, template, concept, created software or other tangable output.
 
@@ -35,7 +35,7 @@ Patterns with solutions in a form of an artifact, i.e., a document, template, co
 
 ## M
 
-## 
+## N
 [Nominate One Communicator](../../Nominate_One_Communicator.md)
 
 ## O

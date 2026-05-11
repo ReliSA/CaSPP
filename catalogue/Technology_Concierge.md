@@ -1,6 +1,6 @@
-[Home](../README.md) > [Catalogue](../Patterns_catalogue.md) > Working Environment Guaranteed
+[Home](../README.md) > [Catalogue](../Patterns_catalogue.md) > Technology Concierge
 
-# Working Environment Guaranteed
+# Technology Concierge
 
 ## [Classification](facets/facets.md)
 

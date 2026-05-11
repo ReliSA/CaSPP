@@ -99,7 +99,7 @@ Occasionally, borrowing power banks is suggested as an alternative or supplement
  - A frequently encountered solution is Nearby power supply via sockets embedded in the table top (Figure 4). A built-in folding or rotating mechanism allows the sockets to be concealed in the table as required.
  - If, for structural reasons, the Nearby power supply is provided via the ceiling of the room, both a flexible solution with lowerable sockets suspended from the ceiling (Figures 1 and 2) and a solution with permanently installed pillars (Figure 5) can be selected.
 
-## Notes (optional) 
+## Notes
 
 ![Integrated Nearby power supply at the "Lernarena" (Photo: Mareike Kehrer and Dennis Dubbert)] (https://github.com/ReliSA/STePSEnHECs-PaCt/blob/main/catalogue/facets/publications/dub24/Nearby_power_supply-1.png "Integrated Nearby power supply at the "Lernarena" (Photo: Mareike Kehrer and Dennis Dubbert)")
 

@@ -11,7 +11,7 @@
 - [Primary perspective](facets/perspectives/perspectives.md): [Teacher](facets/perspectives/Teacher.md)
 - [Stage](facets/stages/stages.md): [Team and Project Setup](facets/categories/Team_and_Project_Setup.md)
 
-## Synopsis (optional)
+## Synopsis
 
 How to assemble teams quickly and minimize the initial social and inter-personal hurdles? Allow teams to self-assemble to create a sense of ownership and freedom of choice.
 

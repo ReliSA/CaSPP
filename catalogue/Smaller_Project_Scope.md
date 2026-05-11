@@ -11,7 +11,7 @@
 - [Primary perspective](facets/perspectives/perspectives.md): [Teacher](facets/perspectives/Teacher.md)
 - [Stage](facets/stages/stages.md): [Team and Project Setup](facets/categories/Team_and_Project_Setup.md)
 
-## Synopsis (optional)
+## Synopsis
 
 How to efficiently teach the practices given the limited capacity of the course? Assign smaller, worthwhile projects accounting for the educational activities within and the team's capacity.
 

@@ -114,7 +114,7 @@ Above all: given the information you have now, assess if you think the assignmen
 
 ## Example(s) / Known Use(s)
 
-## Notes (optional) 
+## Notes
 
 ![Grip on the assignment](https://github.com/ReliSA/STePSEnHECs-PaCt/blob/main/catalogue/facets/publications/jac22/Grip_on_the_assignment.png "Grip on the assignment")
 

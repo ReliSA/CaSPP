@@ -88,7 +88,7 @@ Lastly, broken displays or connections make the workstation unusable for hybrid 
  - A Workstation with (interactive) displays can also be found in other SCALE-UP rooms, for example at Ostfalia University[^1]. Depending on the room design, some of the displays are mounted at the head end of the long desks, while others combine round desks with raised displays mounted on the wall.
  - Lastly, the University of Strathclyde shows how to implement this pattern while still providing a bit more privacy, as they created a Workstation with (interactive) displays out of a Learning alcove (Figure 2).
 
-## Notes (optional) 
+## Notes
 
 ![Noise-protected Learning alcove with display and a Nearby power supply (Photo: Christian Hahn)](https://github.com/ReliSA/STePSEnHECs-PaCt/blob/main/catalogue/facets/publications/dub24/Learning_alcove-2.png "Noise-protected Learning alcove with display and a Nearby power supply (Photo: Christian Hahn)")
 

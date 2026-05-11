@@ -2,7 +2,7 @@
 
 # Challenging personal learning goals
 
-## [Classification](facets/facets.md
+## [Classification](facets/facets.md)
 
 - [Category](facets/categories/categories.md): [Guidance](facets/categories/Guidance.md)
 - [Form](facets/forms/forms.md): [Activity](facets/categories/Activity.md)

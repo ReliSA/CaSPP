@@ -1,4 +1,4 @@
-[Home](../../../README.md) > [Catalogue](../../../Patterns_catalogue.md) > [Facets](../facets.md) > [Stage](stage.md) > Execution
+[Home](../../../README.md) > [Catalogue](../../../Patterns_catalogue.md) > [Facets](../facets.md) > [Stages](stages.md) > Execution
 # Stage: Execution
 
 Patterns applicable during the project's execution.

@@ -1,4 +1,4 @@
-[Home](../../../README.md) > [Catalogue](../../../Patterns_catalogue.md) > [Facets](../facets.md) > [Stage](stage.md) > Initiation
+[Home](../../../README.md) > [Catalogue](../../../Patterns_catalogue.md) > [Facets](../facets.md) > [Stages](stages.md) > Initiation
 # Stage: Initiation
 
 Patterns applicable during the initiation (early phase) of project's execution.
