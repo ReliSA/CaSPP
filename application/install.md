@@ -7,6 +7,7 @@ This document describes how to prepare the development environment for this proj
 ## 1. Check Python Version
 
 Before starting, make sure you have **Python 3.10** installed.
+Official Python installation documentation: https://www.python.org/downloads/
 
 ```bash
 python3 --version
