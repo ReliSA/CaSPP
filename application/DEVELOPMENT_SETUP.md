@@ -38,25 +38,25 @@ Clone the repository to your local machine:
 git clone <HTTPS/SSH/GitHub CLI>
 ```
 
-Then navigate to the project root directory.
+Then navigate to the application directory.
 
 **Linux / macOS:**
 
 ```bash
-cd /path/to/project_root
+cd /path/to/project_root/application
 ```
 
 **Windows:**
 
 ```powershell
-cd C:\path\to\project_root
+cd C:\path\to\project_root\application
 ```
 
 ---
 
 ## 3. Create a Virtual Environment
 
-To isolate project dependencies, create a virtual environment:
+To isolate application dependencies, create a virtual environment:
 
 ```bash
 python3.10 -m venv venv
