@@ -98,8 +98,6 @@ class Application:
         self._load_settings()
         self.main_window.closeEvent = self._save_settings
 
-        self._is_booting = False
-
     def _setup_application(self) -> None:
         """Set up the application.
         """
@@ -312,6 +310,10 @@ class Application:
         active_tab_index = settings.value(SettingsConstants.CURRENT_TAB_KEY, -1, type=int)
         if 0 <= active_tab_index < md_viewer.tabs.count():
             md_viewer.tabs.setCurrentIndex(active_tab_index)
+
+        self._is_booting = False
+
+        self.file_manager.on_tab_changed()
 
         # Restore checkboxes
         live_preview = settings.value(SettingsConstants.LIVE_PREVIEW_KEY, False, type=bool)
