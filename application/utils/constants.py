@@ -365,6 +365,9 @@ class LoaderConstants:
     # Breadcrumb line guard — italic-only lines are template instructions, not breadcrumbs
     RE_ITALIC_ONLY = re.compile(r'^\*[^*].*[^*]\*$|^\*[^*]\*$')
 
+    # Filename normalisation — keep only lowercase alphanumerics and hyphens
+    RE_FILENAME_STRIP = re.compile(r'[^a-z0-9-]')
+
     # Content-type string constants — single source of truth for the vocabulary
     # used in both ContentRules.expected_types and ContentInfo.found_types.
     CT_TEXT = 'text'
@@ -398,6 +401,7 @@ class LoaderConstants:
 class FileMatcherConstants:
     """Constants for FileMatcher"""
     CATALOGUE_PARENT_FOLDER = "catalogue"
+    FACETS_FOLDER = "facets"
     MIN_PATH_PARTS = 2
     PARENT_DIR_INDEX = -2
 
