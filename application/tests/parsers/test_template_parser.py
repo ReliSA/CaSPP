@@ -18,7 +18,7 @@ from utils.parsers.template_parser import (
     _detect_and_collapse_alphabet_groups,
 )
 
-FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
+FIXTURES_DIR = Path(__file__).resolve().parents[1] / "fixtures"
 
 _PATTERN_CONTENT = (FIXTURES_DIR / "template_pattern.md").read_text(encoding="utf-8")
 _CATEGORY_CONTENT = (FIXTURES_DIR / "template_category.md").read_text(encoding="utf-8")

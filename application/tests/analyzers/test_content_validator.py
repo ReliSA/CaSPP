@@ -38,13 +38,15 @@ def _rule_heading(text: str, is_group: bool = False, group_members: List[str] = 
 
 
 def _doc_heading(text: str, line_number: int = 1, group_members: List[str] = None,
-                 has_table: bool = False, raw_lines: List[Dict] = None) -> MagicMock:
+                 has_table: bool = False, raw_lines: List[Dict] = None,
+                 is_empty: bool = False) -> MagicMock:
     h = MagicMock()
     h.text = text
     h.line_number = line_number
     h.group_members = group_members or []
     h.has_table = has_table
     h.content.raw_lines = raw_lines or []
+    h.content.is_empty = is_empty
     return h
 
 
@@ -336,3 +338,43 @@ class TestRunAllChecks:
         )
         result = v.run_all_checks()
         assert len(result) >= 3
+
+
+# ---------------------------------------------------------------------------
+# _check_mandatory_sections_not_empty
+# ---------------------------------------------------------------------------
+
+class TestCheckMandatorySectionsNotEmpty:
+
+    def _cv(self) -> ContentValidator:
+        return ContentValidator(raw_lines=[], doc_data=_doc([]), rules=_rules([]))
+
+    def test_non_empty_mandatory_passes(self):
+        cv = self._cv()
+        doc_map = {"Context": _doc_heading("Context", is_empty=False)}
+        template = [HeadingRules(level=2, text="Context")]
+        cv._check_mandatory_sections_not_empty(doc_map, template)
+        assert cv.warnings == []
+        assert len(cv.passed) == 1
+
+    def test_empty_mandatory_warns(self):
+        cv = self._cv()
+        doc_map = {"Context": _doc_heading("Context", is_empty=True)}
+        template = [HeadingRules(level=2, text="Context")]
+        cv._check_mandatory_sections_not_empty(doc_map, template)
+        assert len(cv.warnings) == 1
+        assert "Context" in cv.warnings[0]["msg"]
+
+    def test_empty_optional_does_not_warn(self):
+        cv = self._cv()
+        doc_map = {"Notes": _doc_heading("Notes", is_empty=True)}
+        template = [HeadingRules(level=2, text="Notes", optional=True)]
+        cv._check_mandatory_sections_not_empty(doc_map, template)
+        assert cv.warnings == []
+
+    def test_missing_section_not_checked(self):
+        cv = self._cv()
+        doc_map = {}
+        template = [HeadingRules(level=2, text="Context")]
+        cv._check_mandatory_sections_not_empty(doc_map, template)
+        assert cv.warnings == []
