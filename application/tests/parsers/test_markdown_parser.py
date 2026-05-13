@@ -13,7 +13,7 @@ if str(APP_DIR) not in sys.path:
 from utils.constants import LoaderConstants
 from utils.parsers.markdown_parser import MarkdownParser, ParsedDocument
 
-FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
+FIXTURES_DIR = Path(__file__).resolve().parents[1] / "fixtures"
 
 SAMPLE_MD = (FIXTURES_DIR / "sample_pattern.md").read_text(encoding="utf-8")
 

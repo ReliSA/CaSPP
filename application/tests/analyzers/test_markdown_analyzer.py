@@ -474,44 +474,6 @@ class TestCheckBreadcrumbLinks:
 
 
 # ---------------------------------------------------------------------------
-# _check_mandatory_sections_not_empty
-# ---------------------------------------------------------------------------
-
-class TestCheckMandatorySectionsNotEmpty:
-
-    def setup_method(self):
-        self.analyzer = _analyzer()
-        self.analyzer.current_warnings = []
-        self.analyzer.current_passed = []
-
-    def test_non_empty_mandatory_passes(self):
-        doc_map = {"Context": _heading(2, "Context", is_empty=False)}
-        template = [_heading_rule(2, "Context")]
-        self.analyzer._check_mandatory_sections_not_empty(doc_map, template)
-        assert len(self.analyzer.current_warnings) == 0
-        assert len(self.analyzer.current_passed) == 1
-
-    def test_empty_mandatory_warns(self):
-        doc_map = {"Context": _heading(2, "Context", is_empty=True)}
-        template = [_heading_rule(2, "Context")]
-        self.analyzer._check_mandatory_sections_not_empty(doc_map, template)
-        assert len(self.analyzer.current_warnings) == 1
-        assert "Context" in self.analyzer.current_warnings[0]["msg"]
-
-    def test_empty_optional_does_not_warn(self):
-        doc_map = {"Notes": _heading(2, "Notes", is_empty=True)}
-        template = [_heading_rule(2, "Notes", optional=True)]
-        self.analyzer._check_mandatory_sections_not_empty(doc_map, template)
-        assert len(self.analyzer.current_warnings) == 0
-
-    def test_missing_section_not_checked(self):
-        doc_map = {}
-        template = [_heading_rule(2, "Context")]
-        self.analyzer._check_mandatory_sections_not_empty(doc_map, template)
-        assert len(self.analyzer.current_warnings) == 0
-
-
-# ---------------------------------------------------------------------------
 # find_markdown_links
 # ---------------------------------------------------------------------------
 

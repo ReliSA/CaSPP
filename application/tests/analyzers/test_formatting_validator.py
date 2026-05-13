@@ -19,6 +19,10 @@ def _lines(*contents: str) -> List[Dict[str, Any]]:
     return [_entry(c, i + 1) for i, c in enumerate(contents)]
 
 
+def _validator(full_content: str = "", lines: List[Dict] = None) -> FormattingValidator:
+    return FormattingValidator(full_content=full_content, raw_lines=lines or [])
+
+
 # ---------------------------------------------------------------------------
 # check_encoding_errors
 # ---------------------------------------------------------------------------
@@ -26,23 +30,30 @@ def _lines(*contents: str) -> List[Dict[str, Any]]:
 class TestCheckEncodingErrors:
 
     def test_clean_content_returns_empty(self):
-        assert FormattingValidator.check_encoding_errors("Normal text.") == []
+        v = _validator("Normal text.")
+        v.check_encoding_errors()
+        assert v.warnings == []
 
     def test_replacement_char_returns_warning(self):
-        result = FormattingValidator.check_encoding_errors("Bad � char")
-        assert len(result) == 1
-        assert result[0]["line"] == 1
+        v = _validator("Bad � char")
+        v.check_encoding_errors()
+        assert len(v.warnings) == 1
+        assert v.warnings[0]["line"] == 1
 
     def test_multiple_replacement_chars_one_warning(self):
-        result = FormattingValidator.check_encoding_errors("� � �")
-        assert len(result) == 1
+        v = _validator("� � �")
+        v.check_encoding_errors()
+        assert len(v.warnings) == 1
 
     def test_empty_string_returns_empty(self):
-        assert FormattingValidator.check_encoding_errors("") == []
+        v = _validator("")
+        v.check_encoding_errors()
+        assert v.warnings == []
 
     def test_warning_message_is_descriptive(self):
-        result = FormattingValidator.check_encoding_errors("bad �")
-        assert "encoding" in result[0]["msg"].lower()
+        v = _validator("bad �")
+        v.check_encoding_errors()
+        assert "encoding" in v.warnings[0]["msg"].lower()
 
 
 # ---------------------------------------------------------------------------
@@ -52,9 +63,9 @@ class TestCheckEncodingErrors:
 class TestCheckBold:
 
     def _run(self, line: str, line_number: int = 1) -> List[Dict]:
-        warnings: List[Dict] = []
-        FormattingValidator.check_bold(line, line_number, warnings)
-        return warnings
+        v = _validator(lines=[_entry(line, line_number)])
+        v.check_bold()
+        return v.warnings
 
     def test_closed_bold_no_warning(self):
         assert self._run("**bold text**") == []
@@ -78,9 +89,10 @@ class TestCheckBold:
         assert result[0]["line"] == 7
 
     def test_warning_appended_to_existing_list(self):
-        warnings = [{"line": 1, "msg": "prior"}]
-        FormattingValidator.check_bold("**bad", 2, warnings)
-        assert len(warnings) == 2
+        v = _validator(lines=[_entry("**bad", 2)])
+        v.warnings = [{"line": 1, "msg": "prior"}]
+        v.check_bold()
+        assert len(v.warnings) == 2
 
     def test_empty_line_no_warning(self):
         assert self._run("") == []
@@ -93,9 +105,9 @@ class TestCheckBold:
 class TestCheckItalics:
 
     def _run(self, line: str, line_number: int = 1) -> List[Dict]:
-        warnings: List[Dict] = []
-        FormattingValidator.check_italics(line, line_number, warnings)
-        return warnings
+        v = _validator(lines=[_entry(line, line_number)])
+        v.check_italics()
+        return v.warnings
 
     def test_closed_italic_no_warning(self):
         assert self._run("*italic text*") == []
@@ -134,9 +146,10 @@ class TestCheckItalics:
         assert len(result) == 1
 
     def test_warning_appended_to_existing_list(self):
-        warnings = [{"line": 1, "msg": "prior"}]
-        FormattingValidator.check_italics("*bad", 2, warnings)
-        assert len(warnings) == 2
+        v = _validator(lines=[_entry("*bad", 2)])
+        v.warnings = [{"line": 1, "msg": "prior"}]
+        v.check_italics()
+        assert len(v.warnings) == 2
 
 
 # ---------------------------------------------------------------------------
@@ -146,9 +159,9 @@ class TestCheckItalics:
 class TestCheckImageAltText:
 
     def _run(self, line: str, line_number: int = 1) -> List[Dict]:
-        warnings: List[Dict] = []
-        FormattingValidator.check_image_alt_text(line, line_number, warnings)
-        return warnings
+        v = _validator(lines=[_entry(line, line_number)])
+        v.check_image_alt_text()
+        return v.warnings
 
     def test_image_with_alt_no_warning(self):
         assert self._run("![Alt text](image.png)") == []
@@ -179,9 +192,10 @@ class TestCheckImageAltText:
         assert self._run("") == []
 
     def test_warning_appended_to_existing_list(self):
-        warnings = [{"line": 1, "msg": "prior"}]
-        FormattingValidator.check_image_alt_text("![](img.png)", 2, warnings)
-        assert len(warnings) == 2
+        v = _validator(lines=[_entry("![](img.png)", 2)])
+        v.warnings = [{"line": 1, "msg": "prior"}]
+        v.check_image_alt_text()
+        assert len(v.warnings) == 2
 
 
 # ---------------------------------------------------------------------------
@@ -191,36 +205,39 @@ class TestCheckImageAltText:
 class TestValidateFormattingConsistency:
 
     def test_clean_lines_return_empty(self):
-        lines = _lines("Normal text.", "**bold** and *italic*.")
-        assert FormattingValidator.validate_formatting_consistency(lines) == []
+        v = _validator(lines=_lines("Normal text.", "**bold** and *italic*."))
+        v.validate_formatting_consistency()
+        assert v.warnings == []
 
     def test_unclosed_bold_detected(self):
-        lines = _lines("**unclosed bold")
-        result = FormattingValidator.validate_formatting_consistency(lines)
-        assert any("bold" in w["msg"].lower() for w in result)
+        v = _validator(lines=_lines("**unclosed bold"))
+        v.validate_formatting_consistency()
+        assert any("bold" in w["msg"].lower() for w in v.warnings)
 
     def test_unclosed_italic_detected(self):
-        lines = _lines("*unclosed italic")
-        result = FormattingValidator.validate_formatting_consistency(lines)
-        assert any("italic" in w["msg"].lower() for w in result)
+        v = _validator(lines=_lines("*unclosed italic"))
+        v.validate_formatting_consistency()
+        assert any("italic" in w["msg"].lower() for w in v.warnings)
 
     def test_missing_alt_text_detected(self):
-        lines = _lines("![](img.png)")
-        result = FormattingValidator.validate_formatting_consistency(lines)
-        assert any("alt" in w["msg"].lower() for w in result)
+        v = _validator(lines=_lines("![](img.png)"))
+        v.validate_formatting_consistency()
+        assert any("alt" in w["msg"].lower() for w in v.warnings)
 
     def test_empty_lines_list_returns_empty(self):
-        assert FormattingValidator.validate_formatting_consistency([]) == []
+        v = _validator(lines=[])
+        v.validate_formatting_consistency()
+        assert v.warnings == []
 
     def test_multiple_issues_across_lines_all_reported(self):
-        lines = _lines("**unclosed", "*unclosed", "![](img.png)")
-        result = FormattingValidator.validate_formatting_consistency(lines)
-        assert len(result) == 3
+        v = _validator(lines=_lines("**unclosed", "*unclosed", "![](img.png)"))
+        v.validate_formatting_consistency()
+        assert len(v.warnings) == 3
 
     def test_line_numbers_preserved_correctly(self):
-        lines = [_entry("normal", 10), _entry("**bad", 20)]
-        result = FormattingValidator.validate_formatting_consistency(lines)
-        assert result[0]["line"] == 20
+        v = _validator(lines=[_entry("normal", 10), _entry("**bad", 20)])
+        v.validate_formatting_consistency()
+        assert v.warnings[0]["line"] == 20
 
 
 # ---------------------------------------------------------------------------
@@ -230,9 +247,9 @@ class TestValidateFormattingConsistency:
 class TestCheckSeparator:
 
     def _run(self, content: str, header_columns: int, line: int = 2) -> List[Dict]:
-        warnings: List[Dict] = []
-        FormattingValidator.check_separator(_entry(content, line), header_columns, warnings)
-        return warnings
+        v = _validator()
+        v.check_separator(_entry(content, line), header_columns)
+        return v.warnings
 
     def test_valid_separator_no_warning(self):
         assert self._run("|---|---|", header_columns=3) == []
@@ -264,9 +281,10 @@ class TestCheckSeparator:
         assert result[0]["line"] == 5
 
     def test_warning_appended_to_existing_list(self):
-        warnings = [{"line": 1, "msg": "prior"}]
-        FormattingValidator.check_separator(_entry("bad", 2), 3, warnings)
-        assert len(warnings) == 2
+        v = _validator()
+        v.warnings = [{"line": 1, "msg": "prior"}]
+        v.check_separator(_entry("bad", 2), 3)
+        assert len(v.warnings) == 2
 
 
 # ---------------------------------------------------------------------------
@@ -276,9 +294,9 @@ class TestCheckSeparator:
 class TestCheckTableRow:
 
     def _run(self, content: str, header_columns: int, line: int = 3) -> List[Dict]:
-        warnings: List[Dict] = []
-        FormattingValidator.check_table_row(_entry(content, line), header_columns, warnings)
-        return warnings
+        v = _validator()
+        v.check_table_row(_entry(content, line), header_columns)
+        return v.warnings
 
     def test_valid_row_no_warning(self):
         assert self._run("| a | b |", header_columns=3) == []
@@ -298,9 +316,10 @@ class TestCheckTableRow:
         assert result[0]["line"] == 8
 
     def test_warning_appended_to_existing_list(self):
-        warnings = [{"line": 1, "msg": "prior"}]
-        FormattingValidator.check_table_row(_entry("| a | b", 3), 3, warnings)
-        assert len(warnings) == 2
+        v = _validator()
+        v.warnings = [{"line": 1, "msg": "prior"}]
+        v.check_table_row(_entry("| a | b", 3), 3)
+        assert len(v.warnings) == 2
 
     def test_row_with_leading_whitespace_still_validated(self):
         assert self._run("  | a | b |  ", header_columns=3) == []
@@ -313,59 +332,66 @@ class TestCheckTableRow:
 class TestValidateTableConsistency:
 
     def test_valid_table_no_warnings(self):
-        lines = _lines("| H1 | H2 |", "|---|---|", "| d1 | d2 |")
-        assert FormattingValidator.validate_table_consistency(lines) == []
+        v = _validator(lines=_lines("| H1 | H2 |", "|---|---|", "| d1 | d2 |"))
+        v.validate_table_consistency()
+        assert v.warnings == []
 
     def test_three_column_table_no_warnings(self):
-        lines = _lines("| A | B | C |", "|---|---|---|", "| 1 | 2 | 3 |")
-        assert FormattingValidator.validate_table_consistency(lines) == []
+        v = _validator(lines=_lines("| A | B | C |", "|---|---|---|", "| 1 | 2 | 3 |"))
+        v.validate_table_consistency()
+        assert v.warnings == []
 
     def test_invalid_separator_warns(self):
-        lines = _lines("| H1 | H2 |", "not a separator", "| d1 | d2 |")
-        result = FormattingValidator.validate_table_consistency(lines)
-        assert any("separator" in w["msg"].lower() for w in result)
+        v = _validator(lines=_lines("| H1 | H2 |", "not a separator", "| d1 | d2 |"))
+        v.validate_table_consistency()
+        assert any("separator" in w["msg"].lower() for w in v.warnings)
 
     def test_data_row_not_closed_warns(self):
-        lines = _lines("| H1 | H2 |", "|---|---|", "| d1 | d2")
-        result = FormattingValidator.validate_table_consistency(lines)
-        assert any("closed" in w["msg"].lower() for w in result)
+        v = _validator(lines=_lines("| H1 | H2 |", "|---|---|", "| d1 | d2"))
+        v.validate_table_consistency()
+        assert any("closed" in w["msg"].lower() for w in v.warnings)
 
     def test_data_row_column_mismatch_warns(self):
-        lines = _lines("| H1 | H2 |", "|---|---|", "| d1 |")
-        result = FormattingValidator.validate_table_consistency(lines)
-        assert any("column" in w["msg"].lower() for w in result)
+        v = _validator(lines=_lines("| H1 | H2 |", "|---|---|", "| d1 |"))
+        v.validate_table_consistency()
+        assert any("column" in w["msg"].lower() for w in v.warnings)
 
     def test_non_table_content_ignored(self):
-        lines = _lines("Just plain text.", "Another line.", "No table here.")
-        assert FormattingValidator.validate_table_consistency(lines) == []
+        v = _validator(lines=_lines("Just plain text.", "Another line.", "No table here."))
+        v.validate_table_consistency()
+        assert v.warnings == []
 
     def test_empty_lines_list_returns_empty(self):
-        assert FormattingValidator.validate_table_consistency([]) == []
+        v = _validator(lines=[])
+        v.validate_table_consistency()
+        assert v.warnings == []
 
     def test_multiple_data_rows_all_checked(self):
-        lines = _lines(
+        v = _validator(lines=_lines(
             "| H1 | H2 |",
             "|---|---|",
             "| r1c1 | r1c2 |",
             "| r2c1 | r2c2 |",
             "| r3c1 |",
-        )
-        result = FormattingValidator.validate_table_consistency(lines)
-        assert len(result) == 1
-        assert result[0]["line"] == 5
+        ))
+        v.validate_table_consistency()
+        assert len(v.warnings) == 1
+        assert v.warnings[0]["line"] == 5
 
     def test_table_preceded_by_non_table_lines(self):
-        lines = _lines(
+        v = _validator(lines=_lines(
             "Some intro text.",
             "| H1 | H2 |",
             "|---|---|",
             "| d1 | d2 |",
-        )
-        assert FormattingValidator.validate_table_consistency(lines) == []
+        ))
+        v.validate_table_consistency()
+        assert v.warnings == []
 
     def test_separator_with_aligned_columns_valid(self):
-        lines = _lines("| H1 | H2 |", "|:---|---:|", "| d1 | d2 |")
-        assert FormattingValidator.validate_table_consistency(lines) == []
+        v = _validator(lines=_lines("| H1 | H2 |", "|:---|---:|", "| d1 | d2 |"))
+        v.validate_table_consistency()
+        assert v.warnings == []
 
 
 # ---------------------------------------------------------------------------
@@ -375,53 +401,57 @@ class TestValidateTableConsistency:
 class TestRunAllChecks:
 
     def test_clean_document_returns_empty(self):
-        lines = _lines("**bold** and *italic*.", "![Alt](img.png)")
-        result = FormattingValidator.run_all_checks("**bold** and *italic*.\n![Alt](img.png)", lines)
-        assert result == []
+        content = "**bold** and *italic*.\n![Alt](img.png)"
+        v = _validator(full_content=content, lines=_lines("**bold** and *italic*.", "![Alt](img.png)"))
+        assert v.run_all_checks() == []
 
     def test_encoding_error_detected(self):
-        result = FormattingValidator.run_all_checks("bad � char", [])
+        v = _validator(full_content="bad � char", lines=[])
+        result = v.run_all_checks()
         assert any("encoding" in w["msg"].lower() for w in result)
 
     def test_bold_error_detected(self):
-        lines = _lines("**unclosed bold")
-        result = FormattingValidator.run_all_checks("**unclosed bold", lines)
+        v = _validator(full_content="**unclosed bold", lines=_lines("**unclosed bold"))
+        result = v.run_all_checks()
         assert any("bold" in w["msg"].lower() for w in result)
 
     def test_italic_error_detected(self):
-        lines = _lines("*unclosed italic")
-        result = FormattingValidator.run_all_checks("*unclosed italic", lines)
+        v = _validator(full_content="*unclosed italic", lines=_lines("*unclosed italic"))
+        result = v.run_all_checks()
         assert any("italic" in w["msg"].lower() for w in result)
 
     def test_missing_alt_text_detected(self):
-        lines = _lines("![](img.png)")
-        result = FormattingValidator.run_all_checks("![](img.png)", lines)
+        v = _validator(full_content="![](img.png)", lines=_lines("![](img.png)"))
+        result = v.run_all_checks()
         assert any("alt" in w["msg"].lower() for w in result)
 
     def test_table_error_detected(self):
-        lines = _lines("| H1 | H2 |", "bad separator", "| d1 | d2 |")
-        result = FormattingValidator.run_all_checks("", lines)
+        v = _validator(full_content="", lines=_lines("| H1 | H2 |", "bad separator", "| d1 | d2 |"))
+        result = v.run_all_checks()
         assert any("separator" in w["msg"].lower() for w in result)
 
     def test_results_sorted_by_line_number(self):
-        lines = [
+        v = _validator(full_content="", lines=[
             _entry("**unclosed", 5),
             _entry("*unclosed", 3),
             _entry("![](img.png)", 1),
-        ]
-        result = FormattingValidator.run_all_checks("", lines)
+        ])
+        result = v.run_all_checks()
         line_numbers = [w["line"] for w in result]
         assert line_numbers == sorted(line_numbers)
 
     def test_empty_inputs_return_empty(self):
-        assert FormattingValidator.run_all_checks("", []) == []
+        v = _validator(full_content="", lines=[])
+        assert v.run_all_checks() == []
 
     def test_multiple_issues_all_reported(self):
         lines = _lines("**unclosed", "*unclosed", "![](img.png)")
         full = "\n".join(e["content"] for e in lines)
-        result = FormattingValidator.run_all_checks(full, lines)
+        v = _validator(full_content=full, lines=lines)
+        result = v.run_all_checks()
         assert len(result) == 3
 
     def test_encoding_error_always_at_line_1(self):
-        result = FormattingValidator.run_all_checks("� bad content", [])
+        v = _validator(full_content="� bad content", lines=[])
+        result = v.run_all_checks()
         assert result[0]["line"] == 1
