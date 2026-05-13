@@ -363,7 +363,11 @@ class FileManager:
         """
         state = self.tab_manager.get_current_state()
         if not state:
+            self.current_file_path = None
+            self.current_file_content = None
+            self._is_dirty = False
             return
+        
         self.current_file_path = state.file_path
         self.current_file_content = self.tab_manager.get_editor_content() if state.file_path else None
         self._is_dirty = state.is_dirty
