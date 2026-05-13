@@ -122,9 +122,11 @@ class TemplateRules:
     Attributes:
         document_rules: Document-wide settings and requirements.
         headings:       Ordered list of expected headings and their content rules.
+        name:           Template identifier (stem of the template filename).
     """
     document_rules: DocumentRules = field(default_factory=DocumentRules)
     headings: List[HeadingRules] = field(default_factory=list)
+    name: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
         """Return a JSON-serializable representation of the template rules.
@@ -209,6 +211,7 @@ class TemplateParser:
             raise TypeError("content must be a string")
         name = os.path.splitext(os.path.basename(filepath))[0]
         rules = self._parse(filepath, content)
+        rules.name = name
         self.templates[name] = rules
         logger.debug("Loaded template: %s", name)
         return rules

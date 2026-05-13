@@ -11,8 +11,19 @@ from core.analyzer.formatting_validator import FormattingValidator
 from core.analyzer.links_validator import LinkValidator
 from utils.parsers.markdown_parser import DocumentMeta, HeadingInfo, ParsedDocument
 from utils.parsers.template_parser import DocumentRules, HeadingRules, TemplateRules
+from utils.facets_index_template import FACETS_INDEX_TEMPLATE_NAME, PUBLICATIONS_INDEX_TEMPLATE_NAME
 
 logger = logging.getLogger(__name__)
+
+_TEMPLATES_WITHOUT_FILENAME_CHECK = frozenset({
+    "template-publication",
+    FACETS_INDEX_TEMPLATE_NAME,
+    PUBLICATIONS_INDEX_TEMPLATE_NAME,
+})
+
+_TEMPLATES_WITHOUT_ALIAS_CHECK = frozenset({
+    PUBLICATIONS_INDEX_TEMPLATE_NAME,
+})
 
 
 class MarkdownAnalyzer:
@@ -79,7 +90,7 @@ class MarkdownAnalyzer:
         # H1 heading
         h1_headings = [h for h in doc.headings if h.level == 1]
         self._check_h1_count(h1_headings)
-        self._check_h1_filename(doc.meta)
+        self._check_h1_filename(doc.meta, template)
         self._check_h1_prefix(doc.meta, template.document_rules)
 
         # Section structure
@@ -91,7 +102,11 @@ class MarkdownAnalyzer:
         self._check_heading_levels(doc_map, non_h1_headings)
 
         if project_index:
-            link_validator = LinkValidator(doc, project_index, references_content=references_content)
+            link_validator = LinkValidator(
+                doc, project_index,
+                references_content=references_content,
+                skip_alias_check=(template.name in _TEMPLATES_WITHOUT_ALIAS_CHECK),
+            )
             link_warnings = link_validator.run_all_checks()
             self.current_warnings.extend(link_warnings)
             self.current_passed.extend(link_validator.passed)
@@ -121,16 +136,28 @@ class MarkdownAnalyzer:
         else:
             self._add_passed("Document contains exactly one H1 heading.")
 
-    def _check_h1_filename(self, meta: DocumentMeta) -> None:
+    def _check_h1_filename(self, meta: DocumentMeta, template: TemplateRules = None) -> None:
         """H1 value must match the filename stem (case-insensitive).
 
+        Normalisation: keep only alphanumeric characters and hyphens.
+        Spaces, underscores, and all other non-alphanumeric characters are
+        stripped before comparing (hyphens survive as an intentional exception).
+
+        The check is skipped for publication templates because publication files
+        use a descriptive title that does not correspond to their filename.
+
         Args:
-            meta: Metadata extracted from the parsed document.
+            meta:     Metadata extracted from the parsed document.
+            template: Matched template rules; used to opt out of the check.
         """
+        if template is not None and template.name in _TEMPLATES_WITHOUT_FILENAME_CHECK:
+            return
         if meta.h1_value is None or not meta.filepath:
             return
         stem = os.path.splitext(os.path.basename(meta.filepath))[0]
-        if meta.h1_value.lower().replace(" ", "_") != stem.lower():
+        normalized_h1 = LoaderConstants.RE_FILENAME_STRIP.sub('', meta.h1_value.lower())
+        normalized_stem = LoaderConstants.RE_FILENAME_STRIP.sub('', stem.lower())
+        if normalized_h1 != normalized_stem:
             self._add_warning(
                 1,
                 f"H1 value '{meta.h1_value}' does not match filename stem '{stem}'.",
@@ -218,6 +245,8 @@ class MarkdownAnalyzer:
 
         before = len(self.current_warnings)
         for heading in doc_headings:
+            if heading.level >= 3:
+                continue  # Sub-sections (H3+) are free-form; not checked against template
             if heading.level == 1 and h1_is_variable:
                 continue  # Variable H1 is matched by level, not by text
             if heading.text not in known_texts:

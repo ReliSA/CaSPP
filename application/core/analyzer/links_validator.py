@@ -12,7 +12,8 @@ class LinkValidator:
     defined in the target files.
     """
 
-    def __init__(self, doc: Any, project_index: Dict[str, Any], references_content: str = None):
+    def __init__(self, doc: Any, project_index: Dict[str, Any], references_content: str = None,
+                 skip_alias_check: bool = False):
         """
         Initializes the LinkValidator.
 
@@ -21,10 +22,12 @@ class LinkValidator:
             project_index (Dict[str, Any]): A global map containing metadata
                 (aliases, related links) for all files in the project.
             references_content (str): Pre-read content of References.md, supplied by FileManager.
+            skip_alias_check (bool): When True, check_alias_consistency is skipped entirely.
         """
         self.doc = doc
         self.project_index = project_index
         self.references_content = references_content
+        self.skip_alias_check = skip_alias_check
         full_name = os.path.basename(doc.meta.filepath)
         self.current_filename_stem = os.path.splitext(full_name)[0]
         self.current_filename_with_ext = full_name
@@ -85,7 +88,10 @@ class LinkValidator:
         """Ensures link labels are recognized aliases of the target.
 
         Only applies to A-Z group documents (link catalogue pages).
+        Skipped entirely when skip_alias_check is True.
         """
+        if self.skip_alias_check:
+            return
         if not any(h.is_group for h in self.doc.headings):
             return
 
