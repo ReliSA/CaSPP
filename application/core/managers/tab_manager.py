@@ -43,9 +43,7 @@ class TabManager:
         
         self.on_editor_text_changed_callback = None
         self.on_preview_anchor_clicked_callback = None
-        
-        self.add_new_tab()
-
+    
     def _update_tab_closability(self) -> None:
         """Shows or hides the close button to prevent closing the last empty tab.
         """
@@ -102,10 +100,7 @@ class TabManager:
             del self.tab_states[tab]
         self.tabs_widget.removeTab(index)
 
-        if self.tabs_widget.count() == 0:
-            self.add_new_tab()
-        else:
-            self._update_tab_closability()
+        self._update_tab_closability()
 
     def get_current_tab(self) -> Optional[TabWidget]:
         """Gets the currently active tab widget.
@@ -141,7 +136,7 @@ class TabManager:
         current_tab = self.get_current_tab()
         current_state = self.get_current_state()
         
-        if current_tab and not current_state.file_path and not current_state.is_dirty and not current_tab.editor.toPlainText():
+        if current_tab and current_state and not current_state.file_path and not current_state.is_dirty and not current_tab.editor.toPlainText():
             tab, state = current_tab, current_state
         else:
             tab = self.add_new_tab()

@@ -194,6 +194,13 @@ class Application:
             return
 
         state = self.tab_manager.get_current_state()
+
+        if not state:
+            logger.debug("Workspace is completely empty.")
+            self.file_manager.on_tab_changed()
+            self.editor_manager.update_live_preview()
+            return
+
         label = state.file_path or "Untitled"
         logger.debug("Active tab changed to: %s", label)
 
