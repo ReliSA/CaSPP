@@ -246,3 +246,23 @@ QMenu::item:selected {
     qproperty-icon: url("{{ICONS_DIR}}/LucideGithub.svg"); 
     qproperty-iconSize: 22px 22px;
 }
+
+
+#commit_input {
+    background-color: #252526;
+    color: #CCCCCC;
+    border: 1px solid #3C3C3C;
+    border-radius: 4px;
+    padding: 8px 12px; 
+    font-size: 10pt;
+}
+
+#commit_input:focus {
+    border: 1px solid #8A8A8A; 
+    outline: none;
+}
+
+#commit_input:disabled {
+    background-color: #1E1E1E;
+    color: #5C5C5C;
+}
