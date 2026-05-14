@@ -181,6 +181,14 @@ class TabManager:
             state.is_dirty = dirty
             self._refresh_tab_title(self.tabs_widget.currentIndex())
 
+    def has_dirty_tabs(self) -> bool:
+        """Checks if any open tab has unsaved changes.
+
+        Returns:
+            True if at least one tracked tab is dirty, False otherwise.
+        """
+        return any(state.is_dirty for state in self.tab_states.values())
+
     def _refresh_tab_title(self, index: int) -> None:
         """Updates the tab's display title, appending an asterisk if there are unsaved changes.
 

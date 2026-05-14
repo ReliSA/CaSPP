@@ -350,6 +350,22 @@ class Application:
         Returns:
             None.
         """
+
+        if self.tab_manager.has_dirty_tabs():
+            choice = ErrorManager.ask_save_discard_cancel(
+                "Unsaved Changes",
+                "You have unsaved changes in your workspace. Do you want to save them before exiting?"
+            )
+
+            if choice == "cancel":
+                event.ignore()
+                return
+                
+            elif choice == "save":
+                if not self.file_manager.save_all_dirty_tabs():
+                    event.ignore()
+                    return
+
         settings = QSettings(SettingsConstants.ORG_NAME, SettingsConstants.APP_NAME)
 
         # Save window geometry

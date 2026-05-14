@@ -22,6 +22,7 @@ from utils.exceptions import (
     FileNotFoundError, FileReadError, FileWriteError, 
     InvalidFileTypeError, FileSizeError, FileAccessError
 )
+from core.managers.error_manager import ErrorManager
 
 logger = logging.getLogger(__name__)
 
@@ -110,8 +111,7 @@ class FileHelper:
             return None
         
         except (OSError, RuntimeError) as e:
-            self._show_error(parent, "File Selection Error", 
-                           f"Failed to open file dialog: {str(e)}")
+            ErrorManager.show_error("File Selection Error", f"Failed to open file dialog: {str(e)}")
             return None
     
     def select_multiple_markdown_files(self, parent: Optional[QWidget] = None,
@@ -142,8 +142,7 @@ class FileHelper:
             return validated_paths
         
         except (OSError, RuntimeError) as e:
-            self._show_error(parent, "File Selection Error",
-                           f"Failed to open file dialog: {str(e)}")
+            ErrorManager.show_error("File Selection Error", f"Failed to open file dialog: {str(e)}")
             return []
     
     def select_directory(self, parent: Optional[QWidget] = None,
@@ -170,8 +169,7 @@ class FileHelper:
             return None
         
         except (OSError, RuntimeError) as e:
-            self._show_error(parent, "Directory Selection Error",
-                           f"Failed to open directory dialog: {str(e)}")
+            ErrorManager.show_error("Directory Selection Error", f"Failed to open directory dialog: {str(e)}")
             return None
     
     def validate_file(self, file_path: str) -> Optional[str]:
@@ -202,36 +200,6 @@ class FileHelper:
             logger = logging.getLogger(__name__)
             logger.warning(f"File validation failed for '{file_path}': {e}")
             return None
-
-    def _show_error(self, parent: Optional[QWidget], title: str, message: str) -> None:
-        """Show error message dialog.
-
-        Args:
-            parent: The parent widget for dialogs.
-            title: The dialog title.
-            message: The message to display or use for the operation.
-        """
-        QMessageBox.critical(parent, title, message)
-
-    def _show_warning(self, parent: Optional[QWidget], title: str, message: str) -> None:
-        """Show warning message dialog.
-
-        Args:
-            parent: The parent widget for dialogs.
-            title: The dialog title.
-            message: The message to display or use for the operation.
-        """
-        QMessageBox.warning(parent, title, message)
-
-    def _show_info(self, parent: Optional[QWidget], title: str, message: str) -> None:
-        """Show information message dialog.
-
-        Args:
-            parent: The parent widget for dialogs.
-            title: The dialog title.
-            message: The message to display or use for the operation.
-        """
-        QMessageBox.information(parent, title, message)
     
     def find_markdown_files(self, directory: Optional[str] = None, 
                           recursive: bool = True) -> List[str]:
@@ -308,8 +276,7 @@ class FileHelper:
             logger.error(f"Failed to save file '{file_path}': {e}")
             raise FileWriteError(file_path or "unknown", str(e))
         except RuntimeError as e:
-            self._show_error(parent, "Save Error", 
-                           f"Failed to save file: {str(e)}")
+            ErrorManager.show_error("Save Error", f"Failed to save file: {str(e)}")
             return None
     
     def read_file(self, file_path: str) -> Optional[str]:

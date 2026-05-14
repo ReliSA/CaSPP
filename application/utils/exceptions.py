@@ -67,82 +67,6 @@ class GitLibraryNotAvailableError(GitException):
         )
 
 
-class GitOperationError(GitException):
-    """Raised when a git operation fails."""
-
-    def __init__(self, operation: str, cause: Optional[Exception] = None) -> None:
-        """Initialize the object with required collaborators.
-
-        Args:
-            operation: The git operation name.
-            cause: The cause value.
-        """
-        message = f"Git {operation} operation failed"
-        if cause:
-            message += f": {str(cause)}"
-        
-        super().__init__(
-            message=message,
-            error_code="GIT_OPERATION_FAILED",
-            user_message=f"Git {operation} failed. Please check your repository status."
-        )
-
-
-class GitRemoteError(GitException):
-    """Raised when remote operations fail."""
-
-    def __init__(self, remote_name: str, operation: str, cause: Optional[Exception] = None) -> None:
-        """Initialize the object with required collaborators.
-
-        Args:
-            remote_name: The remote name value.
-            operation: The git operation name.
-            cause: The cause value.
-        """
-        message = f"Remote '{remote_name}' {operation} failed"
-        if cause:
-            message += f": {str(cause)}"
-            
-        super().__init__(
-            message=message,
-            error_code="GIT_REMOTE_ERROR",
-            user_message=f"Failed to {operation} from remote '{remote_name}'. Check network connection."
-        )
-
-
-class GitBranchError(GitException):
-    """Raised when branch operations fail."""
-
-    def __init__(self, branch_name: str, operation: str) -> None:
-        """Initialize the object with required collaborators.
-
-        Args:
-            branch_name: The branch name value.
-            operation: The git operation name.
-        """
-        super().__init__(
-            message=f"Branch '{branch_name}' {operation} failed",
-            error_code="GIT_BRANCH_ERROR",
-            user_message=f"Branch operation failed for '{branch_name}'"
-        )
-
-
-class GitDirtyWorkingTreeError(GitException):
-    """Raised when working tree has uncommitted changes."""
-
-    def __init__(self, operation: str) -> None:
-        """Initialize the object with required collaborators.
-
-        Args:
-            operation: The git operation name.
-        """
-        super().__init__(
-            message=f"Cannot {operation}: working tree has uncommitted changes",
-            error_code="GIT_DIRTY_TREE",
-            user_message=f"Cannot {operation}. Please commit or stash your changes first."
-        )
-
-
 # File-related exceptions
 class FileException(BaseAppException):
     """Base exception for file-related errors."""
@@ -185,23 +109,6 @@ class FileAccessError(FileException):
             message=message,
             error_code="FILE_ACCESS_ERROR",
             user_message=f"Cannot {operation} file '{file_path}'. Check file permissions."
-        )
-
-
-class InvalidFileFormatError(FileException):
-    """Raised when file format is invalid."""
-
-    def __init__(self, file_path: str, expected_format: str) -> None:
-        """Initialize the object with required collaborators.
-
-        Args:
-            file_path: The file path to process.
-            expected_format: The expected format value.
-        """
-        super().__init__(
-            message=f"Invalid file format for {file_path}. Expected: {expected_format}",
-            error_code="INVALID_FILE_FORMAT",
-            user_message=f"Invalid file format. Expected {expected_format} file."
         )
 
 
@@ -275,56 +182,6 @@ class FileSizeError(FileException):
         )
 
 
-# Analysis-related exceptions
-class AnalysisException(BaseAppException):
-    """Base exception for analysis-related errors."""
-    pass
-
-
-class MarkdownParsingError(AnalysisException):
-    """Raised when markdown parsing fails."""
-
-    def __init__(self, file_path: str, cause: Optional[Exception] = None) -> None:
-        """Initialize the object with required collaborators.
-
-        Args:
-            file_path: The file path to process.
-            cause: The cause value.
-        """
-        message = f"Failed to parse markdown file: {file_path}"
-        if cause:
-            message += f" ({str(cause)})"
-            
-        super().__init__(
-            message=message,
-            error_code="MARKDOWN_PARSE_ERROR",
-            user_message=f"Failed to analyze markdown file '{file_path}'"
-        )
-
-
-# Configuration exceptions
-class ConfigurationException(BaseAppException):
-    """Base exception for configuration-related errors."""
-    pass
-
-
-class InvalidConfigurationError(ConfigurationException):
-    """Raised when configuration is invalid."""
-
-    def __init__(self, setting: str, value: str) -> None:
-        """Initialize the object with required collaborators.
-
-        Args:
-            setting: The setting value.
-            value: The value value.
-        """
-        super().__init__(
-            message=f"Invalid configuration for '{setting}': {value}",
-            error_code="INVALID_CONFIG",
-            user_message=f"Configuration error: invalid value for {setting}"
-        )
-
-
 # Validation exceptions
 class ValidationException(BaseAppException):
     """Base exception for validation errors."""
@@ -346,74 +203,4 @@ class InvalidInputError(ValidationException):
             message=f"Invalid {parameter}: {value} ({reason})",
             error_code="INVALID_INPUT",
             user_message=f"Invalid {parameter}: {reason}"
-        )
-
-
-class EmptyInputError(ValidationException):
-    """Raised when required input is empty."""
-
-    def __init__(self, parameter: str) -> None:
-        """Initialize the object with required collaborators.
-
-        Args:
-            parameter: The parameter value.
-        """
-        super().__init__(
-            message=f"Required parameter '{parameter}' cannot be empty",
-            error_code="EMPTY_INPUT",
-            user_message=f"{parameter.title()} cannot be empty"
-        )
-
-
-# Threading exceptions
-class ThreadException(BaseAppException):
-    """Base exception for threading-related errors."""
-    pass
-
-
-class ThreadOperationError(ThreadException):
-    """Raised when thread operations fail."""
-
-    def __init__(self, operation: str, cause: Optional[Exception] = None) -> None:
-        """Initialize the object with required collaborators.
-
-        Args:
-            operation: The git operation name.
-            cause: The cause value.
-        """
-        message = f"Thread {operation} failed"
-        if cause:
-            message += f": {str(cause)}"
-            
-        super().__init__(
-            message=message,
-            error_code="THREAD_ERROR",
-            user_message=f"Background operation failed: {operation}"
-        )
-
-
-# UI exceptions  
-class UIException(BaseAppException):
-    """Base exception for UI-related errors."""
-    pass
-
-
-class WidgetInitializationError(UIException):
-    """Raised when widget initialization fails."""
-
-    def __init__(self, widget_name: str, cause: Optional[Exception] = None) -> None:
-        """Initialize the object with required collaborators.
-
-        Args:
-            widget_name: The widget name value.
-            cause: The cause value.
-        """
-        message = f"Failed to initialize widget: {widget_name}"
-        if cause:
-            message += f" ({str(cause)})"
-            
-        super().__init__(
-            message=message,
-            error_code="WIDGET_INIT_ERROR",
-            user_message=f"Failed to initialize {widget_name}"
         )
