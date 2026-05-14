@@ -9,12 +9,11 @@ from PyQt6.QtWidgets import (
     QSpacerItem,
     QSizePolicy,
     QListWidget,
-    QInputDialog,
+    QPlainTextEdit,
 )
 from PyQt6.QtGui import QIcon
-from typing import Tuple
 
-from utils.constants import UIConstants, AssetsConstants
+from utils.constants import UIConstants, AssetsConstants, GitConstants
 
 class GitScene(QWidget):
     """Handles git scene ui actions."""
@@ -63,6 +62,16 @@ class GitScene(QWidget):
         # Adding chnaged file list to the main layout
         self.layout.addWidget(self.list_git_files)
 
+        # Git commit message setup
+        self.commit_message_input = QPlainTextEdit()
+        self.commit_message_input.setObjectName(UIConstants.GIT_COMMIT_UI_ID)
+        self.commit_message_input.setPlaceholderText(GitConstants.GIT_COMMIT_PLACEHOLDER_TEXT)
+        self.commit_message_input.setFixedHeight(UIConstants.GIT_COMMIT_MESSAGE_INPUT_HEIGHT)
+        self.layout.addWidget(self.commit_message_input)
+        
+        # Adding git commint message to the main layout
+        self.layout.addWidget(self.commit_message_input)
+
     def set_output(self, message: str) -> None:
         """Replace git output list with new message lines.
 
@@ -92,16 +101,4 @@ class GitScene(QWidget):
         self.btn_pull.setEnabled(enabled)
         self.btn_push.setEnabled(enabled)
         self.btn_export_staged.setEnabled(enabled)
-
-    def ask_push_commit_message(self) -> Tuple[str, bool]:
-        """Ask user for optional commit message during push.
-
-        Returns:
-            The boolean result.
-        """
-        message, accepted = QInputDialog.getText(
-            self,
-            "Push markdown changes",
-            "Commit message (optional):",
-        )
-        return message.strip(), accepted
+        self.commit_message_input.setEnabled(enabled)

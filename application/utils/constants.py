@@ -41,6 +41,8 @@ class GitConstants:
     GIT_OPERATION_UNSTAGE_ALL = "unstage_all"
     GIT_OPERATION_COMMIT = "commit"
 
+    GIT_COMMIT_PLACEHOLDER_TEXT = "Enter commit message here (required for push)..."
+
 
 # File-related constants
 class FileConstants:
@@ -86,6 +88,9 @@ class UIConstants:
     # Timeouts (milliseconds)
     DEFAULT_TIMEOUT_MS = 30000
     PROGRESS_UPDATE_INTERVAL_MS = 100
+
+    # Git commit message
+    GIT_COMMIT_MESSAGE_INPUT_HEIGHT = 180
 
     # Window title
     APP_WINDOW_TITLE = "Markdown Analyzer"
@@ -143,6 +148,7 @@ class UIConstants:
 
     # Ui ids
     GIT_CONSOLE_UI_ID = "git_console"
+    GIT_COMMIT_UI_ID = "commit_input"
     SIDEBAR_UI_ID = "sidebar"
     SIDEBAR_MD_BTN_ID = "btn_sidebar_md"
     SIDEBAR_GIT_BTN_ID = "btn_sidebar_git"

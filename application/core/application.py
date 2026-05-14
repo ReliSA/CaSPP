@@ -261,10 +261,13 @@ class Application:
         """Prompt for commit message and run push operation.
         """
         git_viewer = self.main_window.get_git_viewer()
-        message, accepted = git_viewer.ask_push_commit_message()
-        if not accepted:
-            logger.info("Push cancelled by user")
-            git_viewer.append_output("Push cancelled.")
+        message = git_viewer.commit_message_input.toPlainText().strip()
+        if not message:
+            logger.warning("Push rejected: No commit message provided.")
+            ErrorManager.show_error(
+                "Missing Commit Message",
+                "You must enter a commit message before pushing your changes."
+            )
             return
 
         logger.info("User initiated push with custom commit message")
