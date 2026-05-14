@@ -1,125 +1,103 @@
 """
-Global error management.
+UI popup manager.
 """
 import logging
-import sys
-import traceback
-from functools import wraps
-
 from PyQt6.QtWidgets import QMessageBox
 
 from ui.main_window import MainWindow
-from utils.exceptions import BaseAppException 
-from utils.constants import ErrorConstants
 
 logger = logging.getLogger(__name__)
 
 
 class ErrorManager:
-    """Handles global application exceptions and displays popups."""
+    """Provides methods for displaying UI dialogs."""
 
     _instance = None
 
     def __init__(self, main_window: MainWindow) -> None:
-        """Initialize the ErrorManager and attach system hooks.
+        """Initialize the manager.
 
         Args:
-            main_window: The main window of the application used as the parent for error popups.
+            main_window: The application's main window.
         """
         ErrorManager._instance = self
         self.main_window = main_window
-        self._setup_exception_handling()
 
     @classmethod
-    def handle_slot_error(cls, error: Exception) -> None:
-        """Globally accessible method for the decorator to trigger the popup.
-
-        Args:
-            error: The exception instance caught by the safe_slot decorator.
-        """
+    def show_error(cls, title: str, message: str) -> None:
+        """Displays a critical error popup (Red X)."""
         if cls._instance:
-            if isinstance(error, BaseAppException):
-                logger.warning("Handled application error in Qt slot: %s", error)
-            else:
-                tb = getattr(error, "__traceback__", None)
-                logger.error(
-                    "Unhandled exception in Qt slot",
-                    exc_info=(type(error), error, tb) if tb else True,
-                )
-            cls._instance.show_error_popup(error)
+            QMessageBox.critical(cls._instance.main_window, title, message)
         else:
-            tb = getattr(error, "__traceback__", None)
-            logger.error(
-                "Slot error (no ErrorManager instance): %s",
-                error,
-                exc_info=(type(error), error, tb) if tb else None,
-            )
+            logger.error("Error popup [%s]: %s", title, message)
 
-    def _setup_exception_handling(self) -> None:
-        """Tell Python to send ALL unhandled errors to our custom UI handler.
-        """
-        sys.excepthook = self.handle_global_exception
-
-    def handle_global_exception(self, exc_type, exc_value, exc_traceback) -> None:
-        """Catches the error, prints it to the console, and triggers the popup.
-
-        Args:
-            exc_type: The class of the exception.
-            exc_value: The exception instance itself.
-            exc_traceback: The traceback object containing the call stack.
-        """
-
-        # Ignore KeyboardInterrupt
-        if issubclass(exc_type, KeyboardInterrupt):
-            sys.__excepthook__(exc_type, exc_value, exc_traceback)
-            return
-
-        logger.critical(
-            "Unhandled exception",
-            exc_info=(exc_type, exc_value, exc_traceback),
-        )
-
-        self.show_error_popup(exc_value)
-
-    def show_error_popup(self, error: Exception) -> None:
-        """Displays a error popup based on custom exceptions.
-
-        Args:
-            error: The exception object containing the error details.
-        """
-        title = ErrorConstants.DEFAULT_ERROR_TITLE
-        user_message = ErrorConstants.DEFAULT_ERROR_MESSAGE
-
-        if isinstance(error, BaseAppException):
-            user_message = error.user_message
-            title = getattr(error, 'title', title)
+    @classmethod
+    def show_warning(cls, title: str, message: str) -> None:
+        """Displays a warning popup (Yellow Triangle)."""
+        if cls._instance:
+            QMessageBox.warning(cls._instance.main_window, title, message)
         else:
-            user_message += f"\n\nDetails: {str(error)}"
+            logger.warning("Warning popup [%s]: %s", title, message)
 
-        QMessageBox.critical(self.main_window, title, user_message)
+    @classmethod
+    def show_info(cls, title: str, message: str) -> None:
+        """Displays an information popup (Blue 'i')."""
+        if cls._instance:
+            QMessageBox.information(cls._instance.main_window, title, message)
+        else:
+            logger.info("Info popup [%s]: %s", title, message)
 
-def safe_slot(func):
-    """Decorator to catch exceptions in PyQt slots and route them to the UI popup.
-
-    Args:
-        func: The slot function or method to be wrapped.
-
-    Returns:
-        The wrapped function which intercepts exceptions.
-    """
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        """Run the wrapped function and route exceptions to the error manager.
+    @classmethod
+    def ask_save_discard_cancel(cls, title: str, message: str) -> str:
+        """Asks the user to Save, Discard, or Cancel.
 
         Args:
-            *args: The args value.
-            **kwargs: The kwargs value.
+            title: The title of the dialog window.
+            message: The main text warning to display to the user.
 
         Returns:
-            The return value.
+            A string indicating the user's choice: 'save', 'discard', or 'cancel'.
         """
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            ErrorManager.handle_slot_error(e)
-    return wrapper
+        if not cls._instance:
+            return "discard"
+
+        box = QMessageBox(cls._instance.main_window)
+        box.setIcon(QMessageBox.Icon.Warning)
+        box.setWindowTitle(title)
+        box.setText(message)
+        box.setStandardButtons(
+            QMessageBox.StandardButton.Save | 
+            QMessageBox.StandardButton.Discard | 
+            QMessageBox.StandardButton.Cancel
+        )
+        box.setDefaultButton(QMessageBox.StandardButton.Save)
+
+        result = box.exec()
+        if result == QMessageBox.StandardButton.Save:
+            return "save"
+        elif result == QMessageBox.StandardButton.Discard:
+            return "discard"
+        return "cancel"
+
+    @classmethod
+    def ask_yes_no(cls, title: str, message: str) -> bool:
+        """Asks a Yes/No question.
+
+        Args:
+            title: The title of the dialog window.
+            message: The main text warning to display to the user.
+
+        Returns:
+            True if the user clicked Yes, False if the user clicked No or closed the dialog.
+        """
+        if not cls._instance:
+            return False
+
+        box = QMessageBox(cls._instance.main_window)
+        box.setIcon(QMessageBox.Icon.Warning)
+        box.setWindowTitle(title)
+        box.setText(message)
+        box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        box.setDefaultButton(QMessageBox.StandardButton.No)
+
+        return box.exec() == QMessageBox.StandardButton.Yes

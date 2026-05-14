@@ -16,6 +16,7 @@ from utils.git import stage_file as stage_file_operation
 from utils.git import stage_markdown_files as stage_markdown_files_operation
 from utils.git import unstage_all as unstage_all_operation
 from utils.git.types import GitResult
+from core.managers.error_manager import ErrorManager
 
 logger = logging.getLogger(__name__)
 
@@ -241,6 +242,15 @@ class GitManager(QObject):
         Returns:
             The boolean result.
         """
+        proceed = ErrorManager.ask_yes_no(
+            "Warning: Potential Data Loss",
+            "Exporting changes will clean your working directory. Any unsaved or uncommitted changes in your files may be permanently deleted!\n\nAre you sure you want to proceed?"
+        )
+        
+        if not proceed:
+            self.operation_output.emit(GitConstants.GIT_OPERATION_EXPORT_STAGED, "Export cancelled by user.")
+            return False
+
         kwargs: Dict[str, Any] = {}
         if output_zip_path is not None:
             kwargs["output_zip_path"] = output_zip_path
@@ -270,6 +280,10 @@ class GitManager(QObject):
                 "Git operation %r failed: %s",
                 operation,
                 (message or "")[:2000],
+            )
+            ErrorManager.show_warning(
+                "Git Busy", 
+                "Another Git operation is already running. Please wait for it to finish."
             )
 
         self.operation_output.emit(operation, message)

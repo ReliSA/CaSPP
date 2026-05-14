@@ -14,7 +14,7 @@ from core.analyzer.markdown_analyzer import MarkdownAnalyzer
 from utils.file_helper import FileHelper
 from utils.constants import FileConstants
 from core.managers.tab_manager import TabManager
-from core.managers.error_manager import safe_slot
+from core.managers.error_manager import ErrorManager
 from utils.git.markdown_auto_stager import MarkdownAutoStager
 from utils.file_matcher import FileMatcher
 from utils.exceptions import FileNotFoundError
@@ -107,6 +107,7 @@ class FileManager:
             self.tab_manager.set_error(
                 "Cannot analyze - file not found or inaccessible."
             )
+            ErrorManager.show_error("File Load Error", f"Cannot open file: {file_path}. It may have been deleted or moved.")
             return
 
         self._is_loading_file = True
@@ -116,6 +117,7 @@ class FileManager:
             if content is None:
                 logger.error("Read failed for: %s", validated)
                 self.tab_manager.set_error("Cannot analyze - failed to read file content.")
+                ErrorManager.show_error("File Read Error", f"Failed to read the contents of {validated}.")
                 return
 
             self.tab_manager.load_file_into_tab(validated, content)
@@ -236,6 +238,21 @@ class FileManager:
             self.tab_manager.set_tab_dirty(False)
             self.on_file_saved(saved_file, content)
 
+    def save_all_dirty_tabs(self) -> bool:
+        """Iterates through and saves all unsaved tabs.
+
+        Returns:
+            True if all dirty tabs were saved successfully, False if the user cancelled a Save As dialog.
+        """
+        for tab, state in self.tab_manager.tab_states.items():
+            if state.is_dirty:
+                self.tab_manager.tabs_widget.setCurrentWidget(tab)
+                self.save_current_markdown_file()
+                
+                if state.is_dirty:
+                    return False
+        return True
+
     def on_editor_text_changed(self) -> None:
         """Mark current tab dirty when user edits loaded content.
         """
@@ -301,7 +318,6 @@ class FileManager:
             logger.info("UI: explorer opened file — %s", file_path)
             self.load_markdown_file(file_path)
 
-    @safe_slot
     def handle_link_clicked(self, url: QUrl) -> None:
         """Handle link clicks from the markdown preview.
 
@@ -326,7 +342,8 @@ class FileManager:
         )
 
         if not target_path or not self.file_helper.validate_file(target_path):
-            raise FileNotFoundError(link_path)
+            ErrorManager.show_error("Link Error", f"The linked file '{link_path}' could not be found or is invalid.")
+            return
 
         self.load_markdown_file(target_path)
     

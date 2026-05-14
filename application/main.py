@@ -36,11 +36,7 @@ def setup_logging() -> None:
     )
     file_handler.setFormatter(formatter)
 
-    stream_handler = logging.StreamHandler(sys.stdout)
-    stream_handler.setFormatter(formatter)
-
     root.addHandler(file_handler)
-    root.addHandler(stream_handler)
 
     logging.getLogger(__name__).info(
         "Logging to %s (level=%s)",
@@ -66,7 +62,6 @@ def main() -> int:
         return result
     except Exception as e:
         logger.exception("Error starting application")
-        print(f"Error starting application: {e}", file=sys.stderr)
         return 1
 
 
