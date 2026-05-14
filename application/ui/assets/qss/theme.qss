@@ -21,9 +21,10 @@ QPlainTextEdit, QTextBrowser {
 
 /* --- File Explorer (Tree & List) --- */
 QTreeWidget, QListWidget {
-    background-color: #252526; /* Slightly lighter for the sidebar */
+    background-color: #252526;
     border: none;
     outline: none; 
+    selection-background-color: transparent;
 }
 QTreeWidget::item, QListWidget::item {
     padding: 4px;
