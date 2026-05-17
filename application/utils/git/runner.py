@@ -354,24 +354,36 @@ def get_status(repo: GitRepo, markdown_only: bool = False) -> Dict[str, List[str
         elif diff.change_type == GitConstants.CHANGE_TYPE_DELETED:
             status["deleted"].append(path)
 
+    # Staged vs HEAD: use `git diff --cached` so buckets match the CLI. GitPython's
+    # `index.diff(HEAD)` can misreport `change_type` for new files on some versions.
     try:
-        staged_diffs = repo.index.diff(GitConstants.DEFAULT_BRANCH_HEAD)
+        cached_lines = repo.git.diff("--cached", "--name-status").splitlines()
     except Exception:
-        staged_diffs = []
+        cached_lines = []
 
-    for diff in staged_diffs:
-        path = diff.a_path or diff.b_path
+    for line in cached_lines:
+        parts = line.split("\t")
+        if len(parts) < 2:
+            continue
+        status_code = parts[0].strip()
+        code = status_code[0] if status_code else ""
+        if code == "R" and len(parts) >= 3:
+            path = parts[2].strip()
+        else:
+            path = parts[1].strip()
         if not path:
             continue
         if markdown_only and not is_markdown_file(path):
             continue
 
-        if diff.change_type == GitConstants.CHANGE_TYPE_ADDED:
+        if code == GitConstants.CHANGE_TYPE_ADDED:
             status["added"].append(path)
-        elif diff.change_type == GitConstants.CHANGE_TYPE_MODIFIED and path not in status["modified"]:
+        elif code == GitConstants.CHANGE_TYPE_MODIFIED and path not in status["modified"]:
             status["modified"].append(path)
-        elif diff.change_type == GitConstants.CHANGE_TYPE_DELETED and path not in status["deleted"]:
+        elif code == GitConstants.CHANGE_TYPE_DELETED and path not in status["deleted"]:
             status["deleted"].append(path)
+        elif code == "R" and path not in status["modified"]:
+            status["modified"].append(path)
 
     return status
 
