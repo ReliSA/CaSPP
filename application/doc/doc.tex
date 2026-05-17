@@ -79,7 +79,51 @@ Použité knihovny:
 
 \subsection{Diagram}
 
+Následující obrázky shrnují závislosti mezi moduly a tok dat při klíčových činnostech aplikace. Diagramy zobrazení a analýzy zahrnují i vrstvy editoru a analyzátoru, aby byl vidět kontext práce se soubory v celém Markdown pohledu.
+
+\begin{figure}[H]
+    \centering
+    \adjustbox{max width=\textwidth,max height=0.85\textheight,center}{\includegraphics{images/dependency_diagram.png}}
+    \caption{Závislosti hlavních modulů aplikace (importy a vrstvy mezi vstupním bodem, aplikací, manažery, uživatelským rozhraním a pomocnými knihovnami).}
+    \label{fig:diagram-dependency}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \adjustbox{max width=\textwidth,max height=0.85\textheight,center}{\includegraphics{images/dataflow_git.png}}
+    \caption{Tok dat při Git operacích: akce uživatele v Git Scene nebo v menu, orchestrace v \texttt{GitManager}, provedení příkazů ve vlákně \texttt{GitOperationWorker} pomocí balíku \texttt{utils/git} a GitPython, zpětná vazba do konzole rozhraní.}
+    \label{fig:dataflow-git}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \adjustbox{max width=\textwidth,max height=0.85\textheight,center}{\includegraphics{images/dataflow_display.png}}
+    \caption{Tok dat při zobrazení markdown souboru: \texttt{FileManager} využívá \texttt{FileHelper} k validaci a načtení obsahu, \texttt{TabManager} obsluhuje záložky a editor; živý náhled vzniká převodem markdownu na HTML a zobrazením v náhledovém widgetu.}
+    \label{fig:dataflow-display}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \adjustbox{max width=\textwidth,max height=0.85\textheight,center}{\includegraphics{images/dataflow_analysis.png}}
+    \caption{Tok dat při analýze a validaci struktury markdownu po načtení nebo uložení: od \texttt{FileManager} přes parsování dokumentu, výběr šablony až po validátory a výpis výsledků v panelu analyzátoru.}
+    \label{fig:dataflow-analysis}
+\end{figure}
+
 \subsection{Moduly}
+
+Přehled závislostí modulů je na obr.~\ref{fig:diagram-dependency}. Tok zobrazení otevřeného souboru v rozhraní znázorňuje obr.~\ref{fig:dataflow-display}, tok Git operací obr.~\ref{fig:dataflow-git} a tok validace markdownu obr.~\ref{fig:dataflow-analysis}.
+
+\subsubsection{FileHelper (\texttt{utils/file\_helper.py})}
+
+Třída \texttt{FileHelper} soustředí nízkoúrovňové operace se soubory a systémovými dialogy PyQt6. Poskytuje výběr jednoho či více markdown souborů a pracovního adresáře (\texttt{QFileDialog}), validaci existence souboru, typu a oprávnění ke čtení, čtení a zápis s detekcí kódování (UTF-8, případně knihovna \texttt{charset\_normalizer}, záložní CP1252) a zapamatováním kódování pro konzistentní uložení. Dále vyhledává markdown soubory v adresáři (s možností rekurze), hlídá rozumnou velikost obsahu podle \texttt{FileConstants} a pomáhá při rozlišení relativních odkazů z náhledu (\texttt{resolve\_relative\_markdown\_link}).
+
+\subsubsection{FileManager (\texttt{core/managers/file\_manager.py})}
+
+\texttt{FileManager} koordinuje práci s dokumenty v uživatelském rozhraní: načítání šablon z adresáře, otevírání a ukládání markdown souborů ve spolupráci se \texttt{TabManager}, spouštění analýzy přes \texttt{MarkdownAnalyzer} a obsluhu průzkumníka souborů. Pro čtení, zápis a dialogy deleguje na \texttt{FileHelper}. Propojení s oknem, menu a záložkami je navázáno z třídy \texttt{Application} (\texttt{core/application.py}), včetně zpracování kliknutí na odkazy v náhledu.
+
+\subsubsection{Git operace (\texttt{GitManager}, balík \texttt{utils/git})}
+
+Správu příkazů Git zajišťuje \texttt{GitManager} (\texttt{core/managers/git\_manager.py}), který ve vlastním vlákně spouští \texttt{GitOperationWorker} odvozený od \texttt{QThread}. V jeden okamžik může běžet nejvýše jedna operace; další požadavky jsou odmítnuty s hláškou pro uživatele. Pracovník podle typu operace volá funkce z balíku \texttt{utils/git} (stav repozitáře, fetch, pull, push včetně commit zprávy, staging, export staged změn do archivu apod.), přičemž práce s repozitářem probíhá přes knihovnu GitPython. Výsledky jsou předávány jako \texttt{GitResult}. Nebezpečná akce exportu vyžaduje potvrzení dialogem o možné ztrátě dat. Signály manažeru aktualizují Git Scene (konzole, povolení ovládacích prvků); konkrétní propojení je v \texttt{Application}.
 
 \section{Validace markdown souborů}
 
@@ -427,5 +471,96 @@ Tato sekce obsahuje seznam dalších možných rozšíření aplikace.
 \end{itemize}
 
 \section{Návod k buildu}
+
+Tato sekce shrnuje instalaci, sestavení a spuštění aplikace. Podrobnější anglické návody jsou přímo v repozitáři a doplňují ji zejména tyto soubory:
+
+\begin{itemize}
+    \item \textbf{\texttt{application/README.md}} -- uživatelský manuál (ovládání rozhraní, základní tipy k analýze a Git režimu).
+    \item \textbf{\texttt{application/install.md}} -- příprava vývojového prostředí a použití build skriptů.
+\end{itemize}
+
+Koncept odpovídá rozlišení \emph{běžný uživatel} versus \emph{vývojář}: koncový uživatel typicky spouští již sestavený program nebo získá spustitelný soubor z dodaného skriptu; vývojář pracuje se zdrojovým kódem, virtuálním prostředím Pythonu a závislostmi v \texttt{application/requirements.txt}. Aplikaci je vhodné spouštět z kořenové složky projektu (obsahuje katalog projektu a metadata Gitu); při špatném pracovním adresáři se program nemusí spustit správně.
+
+\subsection{Požadavky}
+
+\begin{itemize}
+    \item \textbf{Git} -- pokud se používají funkce integrace s Git, musí být Git nainstalovaný v systému (\href{https://git-scm.com/downloads}{git-scm.com/downloads}). Ověření: příkaz \texttt{git --version}.
+    \item \textbf{Python 3.10} -- nutný pro vývoj a ruční instalaci závislostí; viz níže. Instalační dokumentace: \href{https://www.python.org/downloads/}{python.org/downloads}.
+\end{itemize}
+
+\subsection{Koncový uživatel: spuštění programu}
+
+Pokud je k dispozici již sestavený spustitelný soubor, není třeba ručně zakládat virtuální prostředí ani instalovat závislosti z PyPI.
+
+\textbf{Windows} -- v adresáři s programem nebo ve složce \texttt{dist} (PowerShell akceptuje i zápis s dopřednými lomítky):
+
+\begin{lstlisting}[basicstyle=\ttfamily\small]
+./markdown_analyzer.exe
+./dist/markdown_analyzer.exe
+\end{lstlisting}
+
+\textbf{Linux / macOS} -- v adresáři s programem nebo ve složce \texttt{dist}:
+
+\begin{lstlisting}[language=bash, basicstyle=\ttfamily\small]
+./markdown_analyzer
+./dist/markdown_analyzer
+chmod +x ./dist/markdown_analyzer   # pokud systém spuštění odmítne
+\end{lstlisting}
+
+\subsection{Sestavení spustitelného souboru (build skripty)}
+
+Build skripty leží v \textbf{kořeni klonovaného repozitáře} (vedle složky \texttt{application/}). Po dokončení sestavení bývá výstup ve složce \texttt{dist/}.
+
+\textbf{Windows (PowerShell)} -- zápis cesty s dopřednými lomítky je ekvivalentní klasickému tvaru s obrácenými lomítky:
+
+\begin{lstlisting}[basicstyle=\ttfamily\small]
+cd C:/cesta/k/koreni_projektu
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+./build_script.ps1
+./dist/markdown_analyzer.exe
+\end{lstlisting}
+
+\textbf{Linux / macOS}:
+
+\begin{lstlisting}[language=bash, basicstyle=\ttfamily\small]
+cd /cesta/k/koreni_projektu
+chmod +x build_script.sh    # jednou, pokud skript nemá právo ke spuštění
+./build_script.sh
+./dist/markdown_analyzer
+\end{lstlisting}
+
+\subsection{Vývojářské prostředí a závislosti}
+
+Pro práci se zdrojovým kódem je doporučené virtuální prostředí Pythonu a instalace balíčků z \texttt{application/requirements.txt}.
+
+\begin{enumerate}
+    \item Ověřit verzi interpretu (\texttt{Python 3.10.x}), např.\ \texttt{python3 --version} nebo na Windows \texttt{py -{}-version}.
+    \item Naklonovat repozitář a přejít do složky aplikace:
+\begin{lstlisting}[language=bash, basicstyle=\ttfamily\small]
+git clone <HTTPS/SSH>
+cd .../application
+\end{lstlisting}
+    \item Vytvořit a aktivovat virtuální prostředí:
+\begin{lstlisting}[basicstyle=\ttfamily\small]
+python3.10 -m venv venv                  # Linux / macOS
+py -3.10 -m venv venv                   # Windows, pokud chybí python3.10
+source venv/bin/activate                 # Linux / macOS
+# Windows (PowerShell): ./venv/Scripts/Activate.ps1
+\end{lstlisting}
+    \item Nainstalovat závislosti:
+\begin{lstlisting}[language=bash, basicstyle=\ttfamily\small]
+pip install -r requirements.txt
+# alternativa: python -m pip install -r requirements.txt
+\end{lstlisting}
+    \item Sestavit balík podle předchozí podsekce z \textbf{kořene} repozitáře (\texttt{build\_script.ps1} / \texttt{build\_script.sh}), nebo při ladění spouštět modul z aktivovaného prostředí v \texttt{application}, např.\ \texttt{python main.py}.
+\end{enumerate}
+
+\subsection{Poznámky}
+
+\begin{itemize}
+    \item Starší verze Pythonu než 3.10 mohou způsobit problémy se závislostmi.
+    \item Na Windows může výchozí politika PowerShellu blokovat spouštění skriptů; řešením je dočasné povolení pro proces (viz výše) nebo nastavení podle dokumentace systému.
+    \item Pokud Git funkce selžou, zkontrolujte instalaci Gitu v systému.
+\end{itemize}
 
 \end{document}
