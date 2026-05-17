@@ -16,7 +16,7 @@ for directory in (str(APP_DIR), str(TESTS_DIR)):
 
 from git import Repo  # noqa: E402
 
-from git_fixtures import init_repo_with_readme  # noqa: E402
+from fixtures.git_fixtures import init_repo_with_readme  # noqa: E402
 
 
 @pytest.fixture
