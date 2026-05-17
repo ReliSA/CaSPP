@@ -56,9 +56,15 @@ def push_markdown_changes(
     Returns:
         The git operation result.
     """
+    message = (commit_message or GitConstants.DEFAULT_COMMIT_MESSAGE).strip() or GitConstants.DEFAULT_COMMIT_MESSAGE
+    if len(message) > GitConstants.MAX_COMMIT_MESSAGE_LENGTH:
+        return GitResult(
+            False,
+            f"Invalid commit message: too long (max {GitConstants.MAX_COMMIT_MESSAGE_LENGTH} characters)",
+        )
+
     try:
         repo = runner.load_repo(repo_path)
-        message = (commit_message or GitConstants.DEFAULT_COMMIT_MESSAGE).strip() or GitConstants.DEFAULT_COMMIT_MESSAGE
         resolved_remote = remote_name or GitConstants.DEFAULT_REMOTE_NAME
 
         sync_state = runner.get_branch_sync_state(repo, fetch_remote=True, remote_name=resolved_remote)

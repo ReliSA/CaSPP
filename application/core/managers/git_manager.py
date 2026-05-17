@@ -128,6 +128,10 @@ class GitManager(QObject):
                 self.repo_path,
             )
             self.operation_output.emit(operation, "Another git operation is already running.")
+            ErrorManager.show_warning(
+                "Git Busy",
+                "Another Git operation is already running. Please wait for it to finish.",
+            )
             return False
 
         logger.info("Starting git operation %r (repo=%s)", operation, self.repo_path)
@@ -280,10 +284,6 @@ class GitManager(QObject):
                 "Git operation %r failed: %s",
                 operation,
                 (message or "")[:2000],
-            )
-            ErrorManager.show_warning(
-                "Git Busy", 
-                "Another Git operation is already running. Please wait for it to finish."
             )
 
         self.operation_output.emit(operation, message)

@@ -59,18 +59,23 @@ class GitScene(QWidget):
         self.list_git_files = QListWidget()
         self.list_git_files.setObjectName(UIConstants.GIT_CONSOLE_UI_ID)
 
-        # Adding chnaged file list to the main layout
+        # Adding changed file list to the main layout
         self.layout.addWidget(self.list_git_files)
 
-        # Git commit message setup
+        # Git commit message setup (inline editor; Push reads via commit_message_for_push)
         self.commit_message_input = QPlainTextEdit()
         self.commit_message_input.setObjectName(UIConstants.GIT_COMMIT_UI_ID)
         self.commit_message_input.setPlaceholderText(GitConstants.GIT_COMMIT_PLACEHOLDER_TEXT)
         self.commit_message_input.setFixedHeight(UIConstants.GIT_COMMIT_MESSAGE_INPUT_HEIGHT)
         self.layout.addWidget(self.commit_message_input)
-        
-        # Adding git commint message to the main layout
-        self.layout.addWidget(self.commit_message_input)
+
+    def commit_message_for_push(self) -> str:
+        """Return trimmed commit message from the inline editor.
+
+        Returns:
+            Stripped plain text suitable for validation and git push.
+        """
+        return self.commit_message_input.toPlainText().strip()
 
     def set_output(self, message: str) -> None:
         """Replace git output list with new message lines.

@@ -13,7 +13,7 @@ from PyQt6.QtGui import QCloseEvent
 
 # local imports
 from ui.main_window import MainWindow
-from utils.constants import FileConstants, AssetsConstants, SettingsConstants
+from utils.constants import FileConstants, AssetsConstants, SettingsConstants, GitConstants
 from utils.parsers.markdown_parser import MarkdownParser
 from core.analyzer.markdown_analyzer import MarkdownAnalyzer
 from utils.parsers.template_parser import TemplateParser
@@ -258,15 +258,25 @@ class Application:
         git_viewer.set_controls_enabled(True)
 
     def _push_with_custom_message(self) -> None:
-        """Prompt for commit message and run push operation.
-        """
+        """Read inline commit message from the Git scene and run push."""
         git_viewer = self.main_window.get_git_viewer()
-        message = git_viewer.commit_message_input.toPlainText().strip()
+        message = git_viewer.commit_message_for_push()
         if not message:
             logger.warning("Push rejected: No commit message provided.")
             ErrorManager.show_error(
                 "Missing Commit Message",
                 "You must enter a commit message before pushing your changes."
+            )
+            return
+
+        if len(message) > GitConstants.MAX_COMMIT_MESSAGE_LENGTH:
+            logger.warning(
+                "Push rejected: Commit message exceeds max length (%s chars).",
+                GitConstants.MAX_COMMIT_MESSAGE_LENGTH,
+            )
+            ErrorManager.show_error(
+                "Commit Message Too Long",
+                f"The commit message must be at most {GitConstants.MAX_COMMIT_MESSAGE_LENGTH} characters.",
             )
             return
 
