@@ -6,7 +6,7 @@ How to use **Markdown Analyzer**: edit Markdown text files (`.md`), preview them
 
 ## Start the app
 
-Run the program **from your project folder** (the folder your team gave you—the one that contains the project and its Git data). If you start it from the wrong place, it may not open. For install and build steps, see [install.md](install.md).
+Run the program **from your project folder** (the folder your team gave you—the one that contains the project and its Git data). If you start it from the wrong place, it may not open. For install and build steps, see [INSTALLATION_OVERVIEW.md](INSTALLATION_OVERVIEW.md).
 
 ---
 
