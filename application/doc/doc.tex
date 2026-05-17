@@ -37,8 +37,8 @@
     \vspace{3cm}
     \begin{flushleft}
         Studenti: Bc. Trong Quoc Huy Dinh, Bc. Břetislav Milota, \\ Bc. Martin Reich, Bc. Eliška Toncarová \\ 
-        Osobní čísla: A22B0029P (asi dodat ostatní) \\
-        Emaily: bmilota@students.zcu.cz (asi další emaily) \\
+        Osobní čísla: A25N0040P, A25N0052P (asi dodat ostatní) \\
+        Emaily: qhdt@students.zcu.cz, bmilota@students.zcu.cz (asi další emaily) \\
         Datum: 16. 5. 2026
     \end{flushleft}
 \end{titlepage}
@@ -77,55 +77,151 @@ Použité knihovny:
 
 \section{Architektura aplikace}
 
-\subsection{Diagram}
+Tato sekce popisuje architekturu aplikace, rozdělení do hlavních modulů a 
+toky dat při zpracování markdown souborů či komunikaci s verzovacím systémem Git.
 
-Následující obrázky shrnují závislosti mezi moduly a tok dat při klíčových činnostech aplikace. Diagramy zobrazení a analýzy zahrnují i vrstvy editoru a analyzátoru, aby byl vidět kontext práce se soubory v celém Markdown pohledu.
+\subsection{Diagramy}
+
+Následující obrázky shrnují závislosti mezi moduly a tok dat při klíčových činnostech aplikace. 
+Diagramy zobrazení a analýzy zahrnují i vrstvy editoru a analyzátoru, aby byl vidět kontext práce se soubory 
+v celém Markdown pohledu.
 
 \begin{figure}[H]
     \centering
-    \adjustbox{max width=\textwidth,max height=0.85\textheight,center}{\includegraphics{images/dependency_diagram.png}}
+    \adjustbox{max width=\textwidth,max height=0.85\textheight,center}{\includegraphics{images/dependency_diagram.pdf}}
     \caption{Závislosti hlavních modulů aplikace (importy a vrstvy mezi vstupním bodem, aplikací, manažery, uživatelským rozhraním a pomocnými knihovnami).}
     \label{fig:diagram-dependency}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \adjustbox{max width=\textwidth,max height=0.85\textheight,center}{\includegraphics{images/dataflow_git.png}}
+    \adjustbox{max width=\textwidth,max height=0.85\textheight,center}{\includegraphics{images/dataflow_git.pdf}}
     \caption{Tok dat při Git operacích: akce uživatele v Git Scene nebo v menu, orchestrace v \texttt{GitManager}, provedení příkazů ve vlákně \texttt{GitOperationWorker} pomocí balíku \texttt{utils/git} a GitPython, zpětná vazba do konzole rozhraní.}
     \label{fig:dataflow-git}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \adjustbox{max width=\textwidth,max height=0.85\textheight,center}{\includegraphics{images/dataflow_display.png}}
+    \adjustbox{max width=\textwidth,max height=0.85\textheight,center}{\includegraphics{images/dataflow_display.pdf}}
     \caption{Tok dat při zobrazení markdown souboru: \texttt{FileManager} využívá \texttt{FileHelper} k validaci a načtení obsahu, \texttt{TabManager} obsluhuje záložky a editor; živý náhled vzniká převodem markdownu na HTML a zobrazením v náhledovém widgetu.}
     \label{fig:dataflow-display}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \adjustbox{max width=\textwidth,max height=0.85\textheight,center}{\includegraphics{images/dataflow_analysis.png}}
+    \adjustbox{max width=\textwidth,max height=0.85\textheight,center}{\includegraphics{images/dataflow_analysis.pdf}}
     \caption{Tok dat při analýze a validaci struktury markdownu po načtení nebo uložení: od \texttt{FileManager} přes parsování dokumentu, výběr šablony až po validátory a výpis výsledků v panelu analyzátoru.}
     \label{fig:dataflow-analysis}
 \end{figure}
 
 \subsection{Moduly}
 
-Přehled závislostí modulů je na obr.~\ref{fig:diagram-dependency}. Tok zobrazení otevřeného souboru v rozhraní znázorňuje obr.~\ref{fig:dataflow-display}, tok Git operací obr.~\ref{fig:dataflow-git} a tok validace markdownu obr.~\ref{fig:dataflow-analysis}.
+Tato sekce popisuje logické a adresářové členění zdrojového kódu aplikace. Architektura projektu je navržena modulárně, 
+s jasným oddělením uživatelského rozhraní (prezentační vrstvy) od aplikační logiky a pomocných nástrojů. 
 
-\subsubsection{FileHelper (\texttt{utils/file\_helper.py})}
+\subsubsection{Core}
 
-Třída \texttt{FileHelper} soustředí nízkoúrovňové operace se soubory a systémovými dialogy PyQt6. Poskytuje výběr jednoho či více markdown souborů a pracovního adresáře (\texttt{QFileDialog}), validaci existence souboru, typu a oprávnění ke čtení, čtení a zápis s detekcí kódování (UTF-8, případně knihovna \texttt{charset\_normalizer}, záložní CP1252) a zapamatováním kódování pro konzistentní uložení. Dále vyhledává markdown soubory v adresáři (s možností rekurze), hlídá rozumnou velikost obsahu podle \texttt{FileConstants} a pomáhá při rozlišení relativních odkazů z náhledu (\texttt{resolve\_relative\_markdown\_link}).
+Modul \texttt{core} tvoří samotné jádro celé aplikace. Je zde soustředěna veškerá business logika, správa stavu, 
+propojování komponent a analytické nástroje.
 
-\subsubsection{FileManager (\texttt{core/managers/file\_manager.py})}
+\begin{itemize}
 
-\texttt{FileManager} koordinuje práci s dokumenty v uživatelském rozhraní: načítání šablon z adresáře, otevírání a ukládání markdown souborů ve spolupráci se \texttt{TabManager}, spouštění analýzy přes \texttt{MarkdownAnalyzer} a obsluhu průzkumníka souborů. Pro čtení, zápis a dialogy deleguje na \texttt{FileHelper}. Propojení s oknem, menu a záložkami je navázáno z třídy \texttt{Application} (\texttt{core/application.py}), včetně zpracování kliknutí na odkazy v náhledu.
+    \item \textbf{\texttt{analyzer}} -- DOPLNIT
 
-\subsubsection{Git operace (\texttt{GitManager}, balík \texttt{utils/git})}
+    \item \textbf{\texttt{managers}} -- Tento balíček slouží jako hlavní řídicí (controller) vrstva aplikace. 
+    Třídy v této složce oddělují aplikační logiku od samotného uživatelského rozhraní (UI). 
+    Jejich úkolem je koordinace procesů, zpracování událostí z UI a komunikace mezi vizuálními 
+    komponentami a nízkoúrovňovými nástroji (jako je analyzátor, Git nebo souborový systém).
+    \begin{itemize}
+        \item \textbf{EditorManager} (\texttt{core/managers/editor\_manager.py}):
+        
+        \texttt{EditorManager} má na starosti řízení samotného textového editoru a jeho doplňkových vizuálních panelů. 
+        Zpracovává změny stavu přepínačů pro zobrazení živého náhledu a výstupu analyzátoru. Jeho klíčovou funkcí je 
+        dynamické převádění surového markdownu do formátovaného HTML kódu pomocí knihovny \texttt{markdown} a 
+        široké sady rozšíření \texttt{pymdownx}. Přebírá obsah z aktuální záložky (\texttt{TabManager}) a 
+        zajišťuje jeho okamžitou vizuální reprezentaci v panelu \texttt{Live Preview}.
 
-Správu příkazů Git zajišťuje \texttt{GitManager} (\texttt{core/managers/git\_manager.py}), který ve vlastním vlákně spouští \texttt{GitOperationWorker} odvozený od \texttt{QThread}. V jeden okamžik může běžet nejvýše jedna operace; další požadavky jsou odmítnuty s hláškou pro uživatele. Pracovník podle typu operace volá funkce z balíku \texttt{utils/git} (stav repozitáře, fetch, pull, push včetně commit zprávy, staging, export staged změn do archivu apod.), přičemž práce s repozitářem probíhá přes knihovnu GitPython. Výsledky jsou předávány jako \texttt{GitResult}. Nebezpečná akce exportu vyžaduje potvrzení dialogem o možné ztrátě dat. Signály manažeru aktualizují Git Scene (konzole, povolení ovládacích prvků); konkrétní propojení je v \texttt{Application}.
+        \item \textbf{ErrorManager} (\texttt{core/managers/error\_manager.py}):
+
+        \texttt{ErrorManager} centralizuje zobrazení vyskakovacích dialogů a chybových hlášení napříč celou aplikací. 
+        Pomocí třídních (statických) metod poskytuje jednotné rozhraní pro vyvolání informačních zpráv, 
+        varování, kritických chyb či interaktivních dotazů (jako je volba uložení/zahození změn při zavírání aplikace). 
+        Všechna tato upozornění interně realizuje prostřednictvím standardní UI komponenty \texttt{QMessageBox}.
+
+        \item \textbf{FileManager} (\texttt{core/managers/file\_manager.py}):
+
+        \texttt{FileManager} koordinuje práci s dokumenty v uživatelském rozhraní: 
+        načítání šablon z adresáře, otevírání a ukládání markdown souborů ve spolupráci se \texttt{TabManager}, 
+        spouštění analýzy přes \texttt{MarkdownAnalyzer} a obsluhu průzkumníka souborů. Pro čtení, zápis a 
+        dialogy deleguje na \texttt{FileHelper}. Propojení s oknem, menu a záložkami je navázáno z třídy 
+        \texttt{Application} (\texttt{core/application.py}), včetně zpracování kliknutí na odkazy v náhledu.
+
+        \item \textbf{GitManager} (\texttt{core/managers/git\_manager.py}):
+
+        \texttt{GitManager} slouží jako správce pro operace s verzovacím systémem Git napojený na uživatelské rozhraní. 
+        Aby nedocházelo k zamrzání aplikace při síťových nebo diskových operacích, 
+        deleguje spouštění příkazů (např. \texttt{push}, \texttt{pull}, \texttt{commit}) na asynchronní pracovní vlákno 
+        \texttt{GitOperationWorker}. O výsledcích, průběhu a chybách následně informuje UI pomocí systému událostí (signálů).
+
+        \item \textbf{TabManager} (\texttt{core/managers/tab\_manager.py}):
+
+        \texttt{TabManager} spravuje životní cyklus záložek v hlavním pracovním prostoru (\texttt{MarkdownScene}). 
+        Pomocí pomocné datové třídy \texttt{TabState} udržuje kontext o každé otevřené záložce, včetně cesty 
+        k načtenému souboru a indikace neuložených změn (tzv. \textit{dirty state}, reprezentovaný hvězdičkou v názvu). 
+        Zajišťuje logiku otevírání, zavírání a přepínání záložek, předává textové změny k dalšímu zpracování a 
+        rovněž propisuje formátované výsledky z analyzátoru do odpovídajícího UI panelu v konkrétní záložce.
+    \end{itemize}
+
+    \item \textbf{\texttt{application.py}} -- Třída \texttt{Application} představuje centrální bod celé aplikace. 
+    Slouží k inicializaci všech klíčových komponent (hlavní okno, analyzátory, manažeři, pomocné nástroje) 
+    a k propojení uživatelského rozhraní s aplikační logikou. Zajišťuje 
+    propojení událostí z UI (jako jsou kliknutí na tlačítka, výběr z menu či změny zaškrtávacích políček) 
+    s konkrétními akcemi v jednotlivých manažerech. Dále řídí životní cyklus aplikace, což zahrnuje 
+    aplikaci grafického motivu (QSS), spuštění hlavní smyčky událostí, bezpečné načítání předchozího stavu 
+    při startu (např. pozice okna, otevřené záložky, poslední adresář) a jeho ukládání při ukončování aplikace.
+
+\end{itemize}
+
+\subsubsection{Ui}
+
+Modul \texttt{ui} obsahuje definici uživatelského rozhraní aplikace:
+
+\begin{itemize}
+    \item \textbf{\texttt{assets}} -- aktiva aplikace (ikony a \texttt{QSS} vzhledy.)
+    \item \textbf{\texttt{components}} -- ui komponenty použité v jednotlivých scénách.
+    \item \textbf{\texttt{scenes}} -- scény aplikace.
+    \item \textbf{\texttt{main\_window.py}} -- definice hlavního okna apliakce.
+\end{itemize}
+
+\subsubsection{Utils}
+
+Modul \texttt{utils} obsahuje pomocné nástroje apliakce.
+
+\begin{itemize}
+    \item FileHelper (\texttt{utils/file\_helper.py}):
+
+    Třída \texttt{FileHelper} soustředí nízkoúrovňové operace se soubory a systémovými dialogy PyQt6. 
+    Poskytuje výběr jednoho či více markdown souborů a pracovního adresáře (\texttt{QFileDialog}), 
+    validaci existence souboru, typu a oprávnění ke čtení, čtení a zápis s detekcí kódování 
+    (UTF-8, případně knihovna \texttt{charset\_normalizer}, záložní CP1252) a zapamatováním kódování pro konzistentní uložení. 
+    Dále vyhledává markdown soubory v adresáři (s možností rekurze), hlídá rozumnou velikost obsahu podle \texttt{FileConstants} 
+    a pomáhá při rozlišení relativních odkazů z náhledu (\texttt{resolve\_relative\_markdown\_link}).
+
+    \item Git operace (\texttt{GitManager}, balík \texttt{utils/git}):
+
+    Správu příkazů Git zajišťuje \texttt{GitManager} (\texttt{core/managers/git\_manager.py}),
+    který ve vlastním vlákně spouští \texttt{GitOperationWorker} odvozený od \texttt{QThread}. 
+    V jeden okamžik může běžet nejvýše jedna operace; další požadavky jsou odmítnuty s hláškou pro uživatele. 
+    Pracovník podle typu operace volá funkce z balíku \texttt{utils/git} 
+    (stav repozitáře, fetch, pull, push včetně commit zprávy, staging, export staged změn do archivu apod.), 
+    přičemž práce s repozitářem probíhá přes knihovnu GitPython. Výsledky jsou předávány jako \texttt{GitResult}. 
+    Nebezpečná akce exportu vyžaduje potvrzení dialogem o možné ztrátě dat. Signály manažeru aktualizují Git Scene 
+    (konzole, povolení ovládacích prvků); konkrétní propojení je v \texttt{Application}.
+\end{itemize}
 
 \section{Validace markdown souborů}
+
+DOPLNIT
 
 \section{Uživatelské rozhraní}
 
@@ -476,7 +572,7 @@ Tato sekce shrnuje instalaci, sestavení a spuštění aplikace. Podrobnější 
 
 \begin{itemize}
     \item \textbf{\texttt{application/README.md}} -- uživatelský manuál (ovládání rozhraní, základní tipy k analýze a Git režimu).
-    \item \textbf{\texttt{application/INSTALLATION_OVERVIEW.md}} -- rozcestník pro vývojářskou a uživatelskou instalaci.
+    \item \textbf{\texttt{application/INSTALLATION\_OVERVIEW.md}} -- rozcestník pro vývojářskou a uživatelskou instalaci.
 \end{itemize}
 
 Koncept odpovídá rozlišení \emph{běžný uživatel} versus \emph{vývojář}: koncový uživatel typicky spouští již sestavený program nebo získá spustitelný soubor z dodaného skriptu; vývojář pracuje se zdrojovým kódem, virtuálním prostředím Pythonu a závislostmi v \texttt{application/requirements.txt}. Aplikaci je vhodné spouštět z kořenové složky projektu (obsahuje katalog projektu a metadata Gitu); při špatném pracovním adresáři se program nemusí spustit správně.
@@ -504,7 +600,7 @@ Pokud je k dispozici již sestavený spustitelný soubor, není třeba ručně z
 \begin{lstlisting}[language=bash, basicstyle=\ttfamily\small]
 ./markdown_analyzer
 ./dist/markdown_analyzer
-chmod +x ./dist/markdown_analyzer   # pokud systém spuštění odmítne
+chmod +x ./dist/markdown_analyzer   # pokud system spusteni odmitne
 \end{lstlisting}
 
 \subsection{Sestavení spustitelného souboru (build skripty)}
@@ -524,7 +620,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
 \begin{lstlisting}[language=bash, basicstyle=\ttfamily\small]
 cd /cesta/k/koreni_projektu
-chmod +x build_script.sh    # jednou, pokud skript nemá právo ke spuštění
+chmod +x build_script.sh    # jednou, pokud skript nema pravo ke spusteni
 ./build_script.sh
 ./dist/markdown_analyzer
 \end{lstlisting}
@@ -543,7 +639,7 @@ cd .../application
     \item Vytvořit a aktivovat virtuální prostředí:
 \begin{lstlisting}[basicstyle=\ttfamily\small]
 python3.10 -m venv venv                  # Linux / macOS
-py -3.10 -m venv venv                   # Windows, pokud chybí python3.10
+py -3.10 -m venv venv                   # Windows, pokud chybi python3.10
 source venv/bin/activate                 # Linux / macOS
 # Windows (PowerShell): ./venv/Scripts/Activate.ps1
 \end{lstlisting}
