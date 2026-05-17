@@ -111,6 +111,15 @@ def test_commit_rejects_message_too_long(tmp_path: Path) -> None:
     assert "long" in r.message.lower() or "too long" in r.message.lower()
 
 
+def test_push_markdown_changes_rejects_message_too_long(tmp_path: Path) -> None:
+    init_repo_with_readme(tmp_path)
+    (tmp_path / "README.md").write_text("changed\n", encoding="utf-8")
+    long_msg = "x" * (GitConstants.MAX_COMMIT_MESSAGE_LENGTH + 1)
+    result = push_module.push_markdown_changes(str(tmp_path), commit_message=long_msg)
+    assert result.success is False
+    assert "too long" in result.message.lower()
+
+
 def test_commit_without_staged_changes_reports_stage_first(tmp_path: Path) -> None:
     init_repo_with_readme(tmp_path)
     (tmp_path / "README.md").write_text("dirty\n", encoding="utf-8")
