@@ -19,6 +19,7 @@
 \usepackage{amssymb}
 \usepackage{colortbl}
 \usepackage{adjustbox}
+\usepackage{longtable}
 
 \begin{document}
 
@@ -37,8 +38,8 @@
     \vspace{3cm}
     \begin{flushleft}
         Studenti: Bc. Trong Quoc Huy Dinh, Bc. Břetislav Milota, \\ Bc. Martin Reich, Bc. Eliška Toncarová \\ 
-        Osobní čísla: A25N0040P, A25N0052P (asi dodat ostatní) \\
-        Emaily: qhdt@students.zcu.cz, bmilota@students.zcu.cz (asi další emaily) \\
+        Osobní čísla: A25N0040P, A25N0052P, A25N0056P (asi dodat ostatní) \\
+        Emaily: qhdt@students.zcu.cz, bmilota@students.zcu.cz, reichm@students.zcu.cz (asi další emaily) \\
         Datum: 16. 5. 2026
     \end{flushleft}
 \end{titlepage}
@@ -82,9 +83,24 @@ toky dat při zpracování markdown souborů či komunikaci s verzovacím systé
 
 \subsection{Diagramy}
 
-Následující obrázky shrnují závislosti mezi moduly a tok dat při klíčových činnostech aplikace. 
-Diagramy zobrazení a analýzy zahrnují i vrstvy editoru a analyzátoru, aby byl vidět kontext práce se soubory 
+Následující obrázky shrnují závislosti mezi moduly a tok dat při klíčových činnostech aplikace.
+Diagramy zobrazení a analýzy zahrnují i vrstvy editoru a analyzátoru, aby byl vidět kontext práce se soubory
 v celém Markdown pohledu.
+
+\subsubsection*{Diagram závislostí modulů}
+
+Diagram \ref{fig:diagram-dependency} znázorňuje, jak jsou jednotlivé třídy aplikace
+organizovány do vrstev a v jakém směru jdou importy. Vstupním bodem je \texttt{main.py},
+které inicializuje centrální třídu \texttt{Application}. Ta drží referenci na všechny
+manažery (\texttt{FileManager}, \texttt{EditorManager}, \texttt{TabManager},
+\texttt{GitManager}, \texttt{ErrorManager}, \texttt{MarkdownAutoStager}) a na hlavní okno
+\texttt{MainWindow}. Manažeři přes UI komponenty (\texttt{MarkdownScene}, \texttt{TabWidget},
+\texttt{GitScene}, \texttt{TopMenuBar}, \texttt{SidebarMenu}) volají datovou vrstvu --
+\texttt{MarkdownAnalyzer} se svými validátory, parsery (\texttt{MarkdownParser},
+\texttt{TemplateParser} sdílející \texttt{BaseParser}), \texttt{FileHelper},
+\texttt{FileMatcher} a balíček \texttt{utils.git}. Šipka \texttt{A $\rightarrow$ B} znamená,
+že modul A importuje (závisí na) modulu B; barvy odlišují vstupní bod, manažery, UI moduly
+a datové moduly.
 
 \begin{figure}[H]
     \centering
@@ -93,6 +109,20 @@ v celém Markdown pohledu.
     \label{fig:diagram-dependency}
 \end{figure}
 
+\subsubsection*{Tok dat při Git operacích}
+
+Diagram \ref{fig:dataflow-git} popisuje dva paralelní toky. \textbf{Flow A} (vlevo)
+reprezentuje uživatelem spouštěné Git operace (\emph{status}, \emph{fetch}, \emph{pull},
+\emph{push}, \emph{export staged}): kliknutí v \texttt{GitScene} nebo v menu projde přes
+\texttt{GitManager.start\_operation}, který vytvoří \texttt{GitOperationWorker}
+(\texttt{QThread}) a v něm spustí příslušnou funkci z balíku \texttt{utils.git}
+nad knihovnou GitPython. Výsledek (\texttt{GitResult}) se přes signály \texttt{operation\_output}
+a \texttt{operation\_finished} vrací zpět do GUI vlákna a vypisuje se v konzoli \texttt{GitScene}.
+\textbf{Flow B} (vpravo) ukazuje automatické stagování po uložení souboru: \texttt{FileManager}
+vyvolá \texttt{MarkdownAutoStager.stage\_file\_delayed}, který přes jednorázový
+\texttt{QTimer} (1\,s) spustí synchronní \texttt{stage\_markdown\_files} a o výsledku
+informuje signály \texttt{file\_staged}\,/\,\texttt{staging\_failed}.
+
 \begin{figure}[H]
     \centering
     \adjustbox{max width=\textwidth,max height=0.85\textheight,center}{\includegraphics{images/dataflow_git.pdf}}
@@ -100,12 +130,40 @@ v celém Markdown pohledu.
     \label{fig:dataflow-git}
 \end{figure}
 
+\subsubsection*{Tok dat při zobrazení markdown souboru}
+
+Diagram \ref{fig:dataflow-display} ukazuje cestu od otevření souboru
+(toolbar, dvojklik v průzkumníku, obnovení session nebo proklik v náhledu)
+až do dvou souběžných pohledů. \texttt{FileManager.load\_markdown\_file} deleguje
+validaci a načtení bytů na \texttt{FileHelper} (s detekcí kódování) a předá obsah
+do \texttt{TabManager.load\_file\_into\_tab}. Z něj tečou data dvěma směry: do
+\texttt{MarkdownEditorWidget} (kde \texttt{MarkdownHighlighter} provádí zvýraznění
+syntaxe po blocích a vykresluje \emph{editor pane}) a -- přes signál \texttt{textChanged}
+a \texttt{EditorManager.update\_live\_preview} -- do knihovny \texttt{markdown}
+s rozšířeními \texttt{pymdownx}, jejíž HTML výstup je obalen výchozím CSS a zobrazen
+v \texttt{QTextBrowser} jako \emph{preview pane}.
+
 \begin{figure}[H]
     \centering
     \adjustbox{max width=\textwidth,max height=0.85\textheight,center}{\includegraphics{images/dataflow_display.pdf}}
     \caption{Tok dat při zobrazení markdown souboru: \texttt{FileManager} využívá \texttt{FileHelper} k validaci a načtení obsahu, \texttt{TabManager} obsluhuje záložky a editor; živý náhled vzniká převodem markdownu na HTML a zobrazením v náhledovém widgetu.}
     \label{fig:dataflow-display}
 \end{figure}
+
+\subsubsection*{Tok dat při analýze a validaci}
+
+Diagram \ref{fig:dataflow-analysis} ilustruje proces validace, který se spouští
+po načtení nebo uložení markdown souboru. \texttt{FileManager.\_analyze\_current\_file}
+paralelně získá dvě věci: \texttt{ParsedDocument} z \texttt{MarkdownParser.parse\_content}
+a \texttt{TemplateRules} pro správnou šablonu, kterou \texttt{FileMatcher} dohledá
+podle rodičovského adresáře souboru. Obě data putují do
+\texttt{MarkdownAnalyzer.validate\_structure}, který spustí čtyři skupiny kontrol
+(\texttt{FormattingValidator}, \texttt{ContentValidator}, vlastní kontroly H1
+a sekcí, \texttt{LinkValidator}). Výsledný \texttt{analysis} dict
+(\texttt{warnings} + \texttt{passed}) je převeden metodou \texttt{generate\_report}
+na text a \texttt{TabManager.set\_analysis} ho po řádcích zobrazí v panelu
+\texttt{analyzer\_list} jako barevně odlišené \texttt{QListWidgetItem} pod editorem
+a náhledem.
 
 \begin{figure}[H]
     \centering
@@ -126,7 +184,52 @@ propojování komponent a analytické nástroje.
 
 \begin{itemize}
 
-    \item \textbf{\texttt{analyzer}} -- DOPLNIT
+    \item \textbf{\texttt{analyzer}} -- Tento balíček obsahuje veškerou logiku pro strukturální, obsahovou
+    a formátovací kontrolu markdown souborů proti pravidlům šablon STePSEnHECs-PaCt. Vstupem analyzátoru
+    je dvojice \texttt{ParsedDocument} (analyzovaný soubor) a \texttt{TemplateRules} (odpovídající šablona);
+    výstupem je seznam varování (\texttt{warnings}) a úspěšně provedených kontrol (\texttt{passed}), které
+    \texttt{TabManager} promítá do panelu Analyzer Output.
+
+    \begin{itemize}
+        \item \textbf{MarkdownAnalyzer} (\texttt{core/analyzer/markdown\_analyzer.py}):
+
+        Hlavní orchestrátor analýzy. Postupně spouští všechny dílčí validátory
+        (\texttt{FormattingValidator}, \texttt{ContentValidator}, \texttt{LinkValidator}) a sám provádí
+        kontroly úrovně dokumentu: počet H1 nadpisů, shodu H1 se jménem souboru, shodu prefixu H1
+        se šablonou, přítomnost a pořadí povinných sekcí, detekci sekcí, které šablona nezná, a kontrolu
+        správné úrovně nadpisů. Dále validuje breadcrumb řádek dokumentu (počet částí, fixní hodnoty,
+        existenci souborů odkazovaných z breadcrumbs). Pro speciální dokumenty
+        (\texttt{template-publication}, in-memory šablony pro \emph{facets} a \emph{publications} indexy)
+        vybrané kontroly přeskakuje. Výsledky umí převést do textového reportu
+        metodou \texttt{generate\_report()}.
+
+        \item \textbf{ContentValidator} (\texttt{core/analyzer/content\_validator.py}):
+
+        Kontroluje obsah pod jednotlivými nadpisy. Ověřuje, že povinné sekce nejsou prázdné, že množina
+        nalezených typů obsahu (\texttt{found\_types}) je nadmnožinou typů očekávaných šablonou
+        (\texttt{expected\_types}), že hlavičky tabulek odpovídají šabloně, že bullet listy obsahují
+        požadované prefixy (např.\ \texttt{(+)}, \texttt{(-)}) a že tabulka existuje tam, kde to šablona
+        vyžaduje. U seskupených sekcí (A--Z bloky) porovnává množinu skutečně přítomných písmen s tou,
+        kterou šablona definuje. Detekuje také kurzívní instrukce přebrané ze šablony
+        (např.\ \emph{remove or replace this text}), které ve výsledném dokumentu nemají co dělat.
+
+        \item \textbf{FormattingValidator} (\texttt{core/analyzer/formatting\_validator.py}):
+
+        Soustředí kontroly nízkoúrovňového formátování textu. Hlídá liché počty hvězdiček
+        (neuzavřený bold \texttt{**} nebo italic \texttt{*}, bullet markery jsou z řádku odfiltrovány),
+        obrázky bez alt textu (\texttt{![](url)}), správnou skladbu tabulek a přítomnost
+        Unicode \emph{replacement} znaku (\texttt{\textbackslash ufffd}), který indikuje
+        poškozené kódování souboru.
+
+        \item \textbf{LinkValidator} (\texttt{core/analyzer/links\_validator.py}):
+
+        Validuje markdown odkazy na úrovni celého projektu pomocí globálního indexu souborů
+        (\texttt{project\_index}). Ověřuje, že každý relativní odkaz na \texttt{.md} soubor existuje
+        v projektu, že vzájemné odkazy mezi vzory v sekci \emph{Related Patterns} jsou reciproční
+        (pokud vzor A odkazuje na vzor B, musí B odkazovat zpět na A) a že popisek odkazu odpovídá
+        názvu cílového souboru nebo některému z jeho aliasů uvedených v sekci \emph{Also Known As}.
+        Pro indexové šablony lze kontrolu aliasů přeskočit přepínačem \texttt{skip\_alias\_check}.
+    \end{itemize}
 
     \item \textbf{\texttt{managers}} -- Tento balíček slouží jako hlavní řídicí (controller) vrstva aplikace. 
     Třídy v této složce oddělují aplikační logiku od samotného uživatelského rozhraní (UI). 
@@ -210,18 +313,166 @@ Modul \texttt{utils} obsahuje pomocné nástroje apliakce.
     \item Git operace (\texttt{GitManager}, balík \texttt{utils/git}):
 
     Správu příkazů Git zajišťuje \texttt{GitManager} (\texttt{core/managers/git\_manager.py}),
-    který ve vlastním vlákně spouští \texttt{GitOperationWorker} odvozený od \texttt{QThread}. 
-    V jeden okamžik může běžet nejvýše jedna operace; další požadavky jsou odmítnuty s hláškou pro uživatele. 
-    Pracovník podle typu operace volá funkce z balíku \texttt{utils/git} 
-    (stav repozitáře, fetch, pull, push včetně commit zprávy, staging, export staged změn do archivu apod.), 
-    přičemž práce s repozitářem probíhá přes knihovnu GitPython. Výsledky jsou předávány jako \texttt{GitResult}. 
-    Nebezpečná akce exportu vyžaduje potvrzení dialogem o možné ztrátě dat. Signály manažeru aktualizují Git Scene 
+    který ve vlastním vlákně spouští \texttt{GitOperationWorker} odvozený od \texttt{QThread}.
+    V jeden okamžik může běžet nejvýše jedna operace; další požadavky jsou odmítnuty s hláškou pro uživatele.
+    Pracovník podle typu operace volá funkce z balíku \texttt{utils/git}
+    (stav repozitáře, fetch, pull, push včetně commit zprávy, staging, export staged změn do archivu apod.),
+    přičemž práce s repozitářem probíhá přes knihovnu GitPython. Výsledky jsou předávány jako \texttt{GitResult}.
+    Nebezpečná akce exportu vyžaduje potvrzení dialogem o možné ztrátě dat. Signály manažeru aktualizují Git Scene
     (konzole, povolení ovládacích prvků); konkrétní propojení je v \texttt{Application}.
+
+    \item Parsery (balík \texttt{utils/parsers}):
+
+    Balík \texttt{utils/parsers} převádí surový text markdown souborů a šablon na strukturované
+    datové třídy, se kterými následně pracuje analyzátor. Aby se logika rozpoznávání nadpisů,
+    breadcrumbs a typů obsahu neopakovala ve dvou modulech, je veškerá regexová a klasifikační
+    logika soustředěna do sdíleného modulu \texttt{base\_parser}.
+
+    \begin{itemize}
+        \item \textbf{base\_parser} (\texttt{utils/parsers/base\_parser.py}):
+
+        Modul sdílených parsovacích primitiv. Obsahuje funkce \texttt{parse\_heading\_line()}
+        (rozparsuje řádek nadpisu na úroveň, čistý text, odkaz a u šablon i indikátory \emph{optional}
+        a italických \emph{variable} placeholderů), \texttt{split\_h1()} (rozdělí H1 na prefix a hodnotu
+        podle dvojtečky), \texttt{parse\_breadcrumbs()} (rozpozná breadcrumb řádek od italic instrukcí
+        šablony) a \texttt{classify\_content\_line()} (klasifikuje řádek obsahu na typy text, bullet
+        list, tabulka, obrázek, odkaz, horizontální čára nebo footnote a extrahuje hlavičky tabulky
+        a bullet prefixy). Všechny ostatní parsery pracují právě nad těmito funkcemi.
+
+        \item \textbf{MarkdownParser} (\texttt{utils/parsers/markdown\_parser.py}):
+
+        Převádí načtený markdown soubor na \texttt{ParsedDocument}. Výstupem je dvojice
+        \texttt{DocumentMeta} (cesta k souboru, breadcrumbs v originálním i normalizovaném tvaru,
+        prefix a hodnota H1) a seznam \texttt{HeadingInfo} (úroveň nadpisu, text, číslo řádku
+        a vnořené \texttt{ContentInfo} s nalezenými typy obsahu, bullet prefixy, hlavičkami tabulky
+        a tzv.\ \emph{raw\_lines} pro pozdější kontroly formátování). Souvislé běhy A--Z nadpisů
+        jsou automaticky sbaleny do jediného \texttt{is\_group=True} záznamu, aby je bylo možné
+        porovnávat se šablonou jako celek. Metoda \texttt{get\_link\_metadata()} navíc z dokumentu
+        vytáhne aliasy (sekce \emph{Also Known As}) a vzájemné odkazy (\emph{Related Patterns});
+        výsledky se promítají do globálního \texttt{project\_index}, nad kterým pracuje
+        \texttt{LinkValidator}.
+
+        \item \textbf{TemplateParser} (\texttt{utils/parsers/template\_parser.py}):
+
+        Analogie \texttt{MarkdownParser} pro šablonové soubory. Výstupem je \texttt{TemplateRules}
+        obsahující \texttt{DocumentRules} (očekávané breadcrumbs, prefix H1) a seznam
+        \texttt{HeadingRules} s vnořenými \texttt{ContentRules} (očekávané typy obsahu, povinné bullet
+        prefixy, hlavičky tabulek). Parser navíc detekuje markery \emph{(optional)} a italické
+        \emph{variable} placeholdery v nadpisech a stejně jako dokumentový parser sbaluje A--Z bloky.
+        Načtené šablony jsou udržovány v interní mapě \texttt{templates} a vyhledávány podle jména.
+
+        \item \textbf{FileMatcher} (\texttt{utils/file\_matcher.py}):
+
+        Páruje konkrétní markdown soubor s odpovídající šablonou na základě jména rodičovského
+        adresáře (např.\ soubory v adresáři \texttt{patterns/} se validují proti šabloně
+        \texttt{template-pattern}). Speciální případy jako indexy \emph{facets} a publikační
+        soubory jsou ošetřeny pomocí in-memory šablon z modulu \texttt{facets\_index\_template}.
+
+        \item \textbf{facets\_index\_template} (\texttt{utils/facets\_index\_template.py}):
+
+        Definuje \texttt{TemplateRules} programaticky, bez načítání ze souboru, pro dokumenty,
+        které nemají odpovídající \texttt{.md} šablonu na disku
+        (indexy podle facet, seznam publikací). Tyto šablony mají volnější pravidla --
+        povolují variabilní H1 a libovolný textový obsah.
+
+        \item \textbf{Konstanty a výjimky} (\texttt{utils/constants.py}, \texttt{utils/exceptions.py}):
+
+        Soubor \texttt{constants.py} centralizuje všechny tzv.\ magické hodnoty -- regulární výrazy
+        pro nadpisy, odkazy a breadcrumbs, povolené přípony souborů, limity velikosti, ikony pro
+        report (\texttt{ICON\_OK}, \texttt{ICON\_WARNING}) i konstanty pro Git operace.
+        Soubor \texttt{exceptions.py} definuje hierarchii vlastních výjimek
+        (\texttt{BaseAppException}, \texttt{GitException}, \texttt{FileNotFoundError},
+        \texttt{InvalidInputError}, \ldots) s podporou uživatelsky srozumitelných hlášek a titulků
+        dialogů, díky čemuž \texttt{ErrorManager} dokáže zobrazit konzistentní chybové zprávy.
+    \end{itemize}
 \end{itemize}
 
 \section{Validace markdown souborů}
 
-DOPLNIT
+Validace markdown souborů je hlavní funkcí aplikace. Cílem je ověřit, že každý dokument
+katalogu STePSEnHECs-PaCt odpovídá pravidlům příslušné šablony -- má správně sestavený
+nadpis, breadcrumbs, sekce v očekávaném pořadí, smysluplný obsah pod každou sekcí a funkční
+vzájemné odkazy mezi vzory. Tok dat při validaci je znázorněn na obrázku
+\ref{fig:dataflow-analysis}.
+
+\subsection{Princip validace}
+
+Postup validace je rozdělen do tří kroků:
+
+\begin{enumerate}
+    \item \textbf{Parsování dokumentu a šablony.} \texttt{MarkdownParser} převede obsah souboru
+    na \texttt{ParsedDocument} (metadata, seznam nadpisů a strukturovaný obsah pod každým z nich).
+    \texttt{TemplateParser} převede odpovídající šablonu na \texttt{TemplateRules}.
+    Spárování dokumentu se šablonou zajišťuje \texttt{FileMatcher} na základě jména rodičovského
+    adresáře (např.\ \texttt{patterns/} $\rightarrow$ \texttt{template-pattern}); pro indexové soubory
+    se použijí in-memory šablony z modulu \texttt{facets\_index\_template}.
+
+    \item \textbf{Spuštění dílčích validátorů.} \texttt{MarkdownAnalyzer} jako orchestrátor postupně
+    spustí \texttt{FormattingValidator} (formátování textu), \texttt{ContentValidator}
+    (obsah jednotlivých sekcí), kontroly struktury a breadcrumbs ve vlastním těle a nakonec
+    \texttt{LinkValidator} (vzájemné odkazy v rámci celého projektu, pokud je k dispozici globální
+    \texttt{project\_index}). Každý validátor pracuje nad společnými datovými třídami a vrací dva
+    seznamy: \texttt{warnings} (nalezené chyby) a \texttt{passed} (úspěšně splněné kontroly).
+
+    \item \textbf{Agregace a zobrazení výsledků.} Výsledky všech validátorů jsou sloučeny,
+    seřazeny podle čísla řádku a předány \texttt{TabManager}, který je zobrazí v panelu
+    Analyzer Output s barevným odlišením úspěchů, varování a chyb.
+\end{enumerate}
+
+\subsection{Přehled validačních pravidel}
+
+Následující tabulka shrnuje všechna kontrolovaná pravidla, sloupec \emph{Kde se implementuje}
+odkazuje na umístění kontroly v kódu: \texttt{document\_loader} = během parsování v
+\texttt{MarkdownParser}, \emph{validátor} = některý z validátorů v balíku
+\texttt{core/analyzer}, \emph{oboje} = pravidlo je z části detekováno už při parsování
+(uložení potřebných dat do \texttt{ParsedDocument}) a finálně vyhodnoceno validátorem.
+
+\renewcommand{\arraystretch}{1.25}
+\begin{small}
+\begin{longtable}{|c|p{3.0cm}|p{8.5cm}|p{2.5cm}|}
+\hline
+\textbf{\#} & \textbf{Kategorie} & \textbf{Co se ověřuje} & \textbf{Kde se implementuje} \\
+\hline
+\endfirsthead
+\hline
+\textbf{\#} & \textbf{Kategorie} & \textbf{Co se ověřuje} & \textbf{Kde se implementuje} \\
+\hline
+\endhead
+
+1 & Struktura dokumentu & Dokument musí mít právě jeden H1 nadpis. & document\_loader \\ \hline
+2 & Struktura dokumentu & \texttt{dokument.h1\_value} (case-insensitive) == stem souboru. & document\_loader \\ \hline
+3 & Struktura dokumentu & Prefix v H1 musí souhlasit s tím, co šablona definuje. & oboje \\ \hline
+4 & Struktura dokumentu & Všechny non-optional headingy ze šablony musí existovat v dokumentu. & oboje \\ \hline
+5 & Struktura dokumentu & Pokud optional sekce existuje, její text musí odpovídat šabloně. & oboje \\ \hline
+6 & Struktura dokumentu & Sekce musí být ve stejném pořadí jako v šabloně. & oboje \\ \hline
+7 & Struktura dokumentu & Dokument neobsahuje headingy, které šablona vůbec nezná. & oboje \\ \hline
+8 & Struktura dokumentu & Sekce musí mít správnou úroveň (\#, \#\#, \#\#\#\ldots) podle šablony. & oboje \\ \hline
+9 & Breadcrumbs & Dokument musí mít breadcrumb řádek. & document\_loader \\ \hline
+10 & Breadcrumbs & Počet částí oddělených '>' musí odpovídat šabloně. & oboje \\ \hline
+11 & Breadcrumbs & Fixní části (ne poslední) musí textově odpovídat šabloně. & oboje \\ \hline
+12 & Breadcrumbs & Každý \texttt{[label](url)} v breadcrumbs odkazuje na existující soubor. & validátor \\ \hline
+13 & Obsah sekcí & Non-optional sekce musí mít alespoň nějaký obsah. & oboje \\ \hline
+14 & Obsah sekcí & \texttt{found\_types} musí být nadmnožinou \texttt{expected\_types} (kromě 'text'). & oboje \\ \hline
+15 & Obsah sekcí & Sloupce tabulky musí odpovídat šabloně. & oboje \\ \hline
+16 & Obsah sekcí & Pokud šablona definuje \texttt{bullet\_prefixes}, dokument je musí obsahovat. & oboje \\ \hline
+17 & Obsah sekcí & V dokumentu nesmí zůstat kurzívní instrukce ze šablony (např.\ 'remove or replace\ldots'). & oboje \\ \hline
+18 & Obsah sekcí & Dokument musí mít kompletní sadu písmen dle šablony. & oboje \\ \hline
+19 & Obsah sekcí & Tabulka existuje, ale může být prázdná. & oboje \\ \hline
+20 & Formátování & Liché počty \texttt{**} na řádku = neuzavřený bold. & oboje \\ \hline
+21 & Formátování & Liché počty \texttt{*} (mimo bullet marker) = neuzavřená italic. & oboje \\ \hline
+22 & Formátování & \texttt{![](url)} bez alt textu = přístupnostní chyba. & oboje \\ \hline
+23 & Formátování & Přítomnost replacement character ($\square$, \texttt{\textbackslash ufffd}) = špatné kódování souboru. & oboje \\ \hline
+24 & Formátování & Správně zadaná tabulka. & oboje \\ \hline
+25 & Linky & \texttt{[](url)} nebo \texttt{[label]()} = špatně zadaný odkaz. & document\_loader \\ \hline
+26 & Linky & \texttt{[label](relativní\_cesta)} musí odkazovat na existující soubor. & document\_loader \\ \hline
+27 & Linky & Pokud pattern A odkazuje v sekci 'Related Patterns' na pattern B, pak B musí mít odkaz zpět na A. & validátor \\ \hline
+28 & Linky & Pokud je v A--Z sekci odkaz na pattern pod jiným názvem (alias), ověřit, že cílový soubor existuje a cílový pattern má alias v sekci 'Also Known As'. & validátor \\ \hline
+
+\caption{Přehled validačních pravidel aplikovaných na markdown soubory.}
+\label{tab:validation-rules}
+\end{longtable}
+\end{small}
+\renewcommand{\arraystretch}{1.0}
 
 \section{Uživatelské rozhraní}
 
@@ -255,6 +506,63 @@ Tento pohled slouží k integraci s verzovacím systémem a poskytuje grafické 
 \section{Testování}
 
 \subsection{Jednotkové testy}
+
+Jednotkové testy aplikace jsou napsané v frameworku \texttt{pytest} a leží v adresáři
+\texttt{application/tests/}. Testy jsou tematicky rozděleny do podadresářů
+\texttt{analyzers/}, \texttt{parsers/}, \texttt{file/} a \texttt{git/}, které kopírují
+strukturu produkčního kódu. Sdílené fixtures (např.\ inicializace prázdného Git repozitáře
+s počátečním commitem) jsou definovány v \texttt{conftest.py} a \texttt{tests/fixtures/}.
+
+Testy se spouští z adresáře \texttt{application/} příkazem \texttt{pytest tests/} (případně
+s přepínači \texttt{-v} pro podrobný výpis nebo \texttt{--cov=core --cov=utils} pro měření
+pokrytí). Každý test je nezávislý -- využívá pytest fixtures \texttt{tmp\_path}
+pro dočasné soubory, takže testy nezasahují do skutečného souborového systému ani Git repozitáře
+projektu.
+
+\subsubsection*{Testy analyzátoru (\texttt{tests/analyzers/})}
+
+\begin{itemize}
+    \item \textbf{\texttt{test\_markdown\_analyzer.py}} -- pokrývá orchestrátor
+    \texttt{MarkdownAnalyzer}: inicializaci s vlastním i výchozím \texttt{base\_path},
+    kontroly počtu H1 nadpisů, shody H1 se jménem souboru, prefixu H1, povinných sekcí,
+    pořadí sekcí, detekce neznámých sekcí, úrovní nadpisů, validace breadcrumbs a jejich
+    odkazů, vyhledávání markdown odkazů a generování textového reportu.
+
+    \item \textbf{\texttt{test\_content\_validator.py}} -- pokrývá kontroly obsahu sekcí:
+    prázdné povinné sekce, shodu \texttt{found\_types} s \texttt{expected\_types},
+    sloupce a existenci tabulek, povinné bullet prefixy, detekci kurzívních instrukcí
+    přebraných ze šablony a kontroly úplnosti A--Z bloků.
+
+    \item \textbf{\texttt{test\_formatting\_validator.py}} -- pokrývá nízkoúrovňové kontroly
+    formátování: neuzavřený bold a italic, obrázky bez alt textu, korektnost tabulek
+    a detekci Unicode \emph{replacement} znaku.
+
+    \item \textbf{\texttt{test\_links\_validator.py}} a \textbf{\texttt{test\_relative\_checking.py}} --
+    pokrývají \texttt{LinkValidator}: kontrolu existence cílů relativních odkazů,
+    reciproční odkazy mezi vzory v sekci \emph{Related Patterns} a konzistenci aliasů
+    se sekcí \emph{Also Known As}.
+\end{itemize}
+
+\subsubsection*{Testy parserů (\texttt{tests/parsers/})}
+
+\begin{itemize}
+    \item \textbf{\texttt{test\_base\_parser.py}} -- pokrývá sdílené parsovací primitivy:
+    \texttt{parse\_heading\_line()} (úrovně nadpisů, optional a variable markery,
+    odkazy v nadpisech), \texttt{split\_h1()}, \texttt{parse\_breadcrumbs()}
+    (rozlišení od italic instrukcí) a \texttt{classify\_content\_line()} pro všechny
+    typy obsahu (text, bullet, tabulka, obrázek, odkaz, footnote, horizontal rule).
+
+    \item \textbf{\texttt{test\_markdown\_parser.py}} -- pokrývá \texttt{MarkdownParser}:
+    sestavení \texttt{ParsedDocument} z různých vstupů, korektní vyplnění
+    \texttt{DocumentMeta} (breadcrumbs, prefix a hodnota H1), sbalení A--Z bloků
+    do skupinových nadpisů a extrakci aliasů a vzájemných odkazů metodou
+    \texttt{get\_link\_metadata()}.
+
+    \item \textbf{\texttt{test\_template\_parser.py}} -- pokrývá \texttt{TemplateParser}:
+    rozpoznání povinných a optional sekcí, italických \emph{variable} placeholderů,
+    pravidel obsahu (\texttt{ContentRules}), správné sestavení \texttt{HeadingRules}
+    a sbalení A--Z bloků v šabloně.
+\end{itemize}
 
 \subsection{Testovací scénáře}
 
