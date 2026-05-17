@@ -1,13 +1,8 @@
 """Tests for FileHelper encoding and filesystem behaviors."""
 
-import sys
 from pathlib import Path
 
 import pytest
-
-APP_DIR = Path(__file__).resolve().parents[1]
-if str(APP_DIR) not in sys.path:
-    sys.path.insert(0, str(APP_DIR))
 
 import utils.file_helper as file_helper_mod  # noqa: E402
 from utils.constants import FileConstants  # noqa: E402
