@@ -17,7 +17,7 @@ Collecting observations
 
 ## Context
 
-During the project period you support the students to make the most out of their projects [[JAC'22]](../References.md). You act as a guide, more than as an assessor. While supporting, you observe the project team and its members. But there are many possible things to observe, and it is not possible to register all of them ’just in case’ you need them in the grading process. On the other hand, and this is more problematic, in a group process it is very well possible that you do not see what you should see to adequately assess differences in performance.
+During the project period you support the students to make the most out of their projects [[JAC'22]](../References.md). You act as a guide, more than as an assessor. While supporting, you observe the project team and its members. But there are many possible things to observe, and it is not possible to register all of them ’just in case’ you need them in the grading process. 
 
 ## Problem
 
