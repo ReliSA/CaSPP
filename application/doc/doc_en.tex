@@ -537,6 +537,46 @@ interfere with the actual file system or the project's Git repository.
     and collapsing A--Z blocks within the template.
 \end{itemize}
 
+\subsubsection*{File-layer tests (\texttt{tests/file/})}
+
+\begin{itemize}
+    \item \textbf{\texttt{test\_paths.py}} --
+    Validates \texttt{Config} repository-root resolution (locating the \texttt{.git} directory in the working 
+    directory or parents, failing when none exists), default markdown paths, and \texttt{MarkdownAnalyzer} initialization 
+    with respect to \texttt{base\_path}.
+
+    \item \textbf{\texttt{test\_file\_helper.py}} --
+    Covers \texttt{FileHelper}: UTF-8 and CP1252 read/write round-trips, rejecting saves that violate a CP1252-locked file,
+    \texttt{find\_markdown\_files} (recursive and flat layouts, deduplication),
+    \texttt{get\_file\_info}, \texttt{resolve\_relative\_markdown\_link}, validation helpers,
+    \texttt{MAX\_FILE\_SIZE\_MB} limits, and error paths (\texttt{FileNotFoundError}, \texttt{FileSizeError}, \texttt{FileWriteError}).
+
+    \item \textbf{\texttt{test\_file\_matcher.py}} --
+    Covers \texttt{FileMatcher}: template assignment from parent/grand-parent directory segments (\texttt{catalogue/}, 
+    publications/categories/methodologies, etc.), facets index files wired to 
+    \texttt{facets\_index\_template}, unknown paths yielding no match, and backslash-separated paths on Windows-like input.
+\end{itemize}
+
+\subsubsection*{Git-operation tests (\texttt{tests/git/})}
+
+\begin{itemize}
+    \item \textbf{\texttt{test\_git\_runner.py}} --
+    Targets helpers in \texttt{utils/git/runner.py}: path normalization relative to repo root,
+    markdown-extension detection, finding the repo root from a subdirectory,
+    Markdown-only status summaries, staged/unstaged wording in formatted status messages, and clean-vs-dirty trees.
+
+    \item \textbf{\texttt{test\_git\_operations.py}} --
+    Covers the refactored \texttt{utils/git/} helpers plus \texttt{GitManager}: 
+    \texttt{stage\_markdown\_files} filtering, \texttt{stage\_file} success and rejection of out-of-repo paths,
+    \texttt{unstage\_all}, 
+    \texttt{commit} (empty or over-long messages, missing staged changes, \texttt{stage\_all}), 
+    \texttt{push\_markdown\_changes} (custom vs default vs empty-supplied-message behavior, rejecting over-long messages,
+    blocking when mocked sync indicates the branch is behind the remote), fetch/pull/push guards when remotes/sync state are unsafe,
+    \texttt{export\_staged\_files\_zip}, \texttt{GitOperationWorker} routing for unknown and known ops,
+    \texttt{GitManager} rejecting overlapping operations while busy, 
+    and export flows that depend on the confirmation dialog outcome.
+\end{itemize}
+
 \subsection{Test Scenarios}
 
 To comprehensively verify the functionality of the application from the user's perspective, the correct 
