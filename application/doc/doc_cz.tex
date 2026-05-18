@@ -533,6 +533,51 @@ projektu.
     a sbalení A--Z bloků v šabloně.
 \end{itemize}
 
+\subsubsection*{Testy souborové vrstvy (\texttt{tests/file/})}
+
+\begin{itemize}
+    \item \textbf{\texttt{test\_paths.py}} --
+    ověřuje výpočet kořenové cesty repozitáře v \texttt{Config} (vyhledání adresáře
+    s~\texttt{.git} v aktuálním nebo nadřazených adresářích, chyba pokud Git repozitář neexistuje),
+    výchozí cestu k~markdown souboru a inicializaci \texttt{MarkdownAnalyzer} vůči parametru \texttt{base\_path}.
+
+    \item \textbf{\texttt{test\_file\_helper.py}} --
+    pokrývá \texttt{FileHelper}: čtení a zápis s~UTF-8 a CP1252 (roundtrip),
+    zamítnutí uložení nekompatibilních znaků při souboru s~ním nastaveným CP1252,
+    \texttt{find\_markdown\_files} (s~rekurzí i bez, deduplikace),
+    \texttt{get\_file\_info}, \texttt{resolve\_relative\_markdown\_link}, validaci souborů,
+    limity velikosti (\texttt{MAX\_FILE\_SIZE\_MB}) a čtení/zápis včetně výjimek
+    (\texttt{FileNotFoundError}, \texttt{FileSizeError}, \texttt{FileWriteError}).
+
+    \item \textbf{\texttt{test\_file\_matcher.py}} --
+    pokrývá \texttt{FileMatcher}: přiřazení šablony podle rodiče (či prarodiče) adresáře v~cestě k~souboru,
+    složky katalogu (\texttt{catalogue/}, publications, categories metodiky apod.), indexové soubory
+    pod \texttt{facets/} (šablony z~\texttt{facets\_index\_template}), pády pro neznámé cesty
+    a cesty se zpětným lomítkem (\texttt{\textbackslash}).
+\end{itemize}
+
+\subsubsection*{Testy Git operací (\texttt{tests/git/})}
+
+\begin{itemize}
+    \item \textbf{\texttt{test\_git\_runner.py}} --
+    testuje pomocné funkce v~\texttt{utils/git/runner.py}: normalizaci cesty vůči kořeni repozitáře,
+    rozpoznání markdown přípon, nalezení kořene \texttt{.git} ze zanoření, filtrovaný Git status jen pro Markdown,
+    formát výpisu statusu pro čistý i měněný working tree včetně staged změn.
+
+    \item \textbf{\texttt{test\_git\_operations.py}} --
+    pokrývá funkce pod \texttt{utils/git/} a chování \texttt{GitManager}: staging Markdown souborů
+    a filtrování případně zadaných cest (\texttt{stage\_markdown\_files}, \texttt{stage\_file}),
+    odstagging (\texttt{unstage\_all}), \texttt{commit} (prázdná či příliš dlouhá zpráva,
+    žádné staged změny, režim \texttt{stage\_all}),
+    \texttt{push\_markdown\_changes} (vlastní/z výchozí/z prázdné zprávě použití defaultu,
+    odmítnutí příliš dlouhé commit zprávy, blokace když lokální větev zaostává za vzdálenou větví při mockovaném synchronizačním stavu),
+    \texttt{fetch}/\texttt{pull}/\texttt{push} bez remotu či při problémovém sync stavu,
+    export staged do ZIPu (\texttt{export\_staged\_files\_zip}), větev zamítnutí druhé paralelní operace
+    u~\texttt{GitManager} při aktivním workeru,
+    rozřazení neznámého příkazu a známých operací ve \texttt{GitOperationWorker}
+    a větev závislá na uživatelském potvrzení u export staged.
+\end{itemize}
+
 \subsection{Testovací scénáře}
 
 Pro komplexní ověření funkčnosti aplikace z pohledu uživatele, 
