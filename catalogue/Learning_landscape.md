@@ -96,7 +96,7 @@ Lastly, if the Learning landscape also contains [Flexible furniture](Flexible_Fu
  - The University of Oulu in Finland offers all members of the university several open collaboration and working environments. A large, diverse Learning landscape is located on the Linnanmaa campus and can be explored online as part of a virtual tour[^1].
  - A final exemplary case (Figure 4) is provided by the University of Strathclyde, which demonstrates that a learning landscape can be designed across multiple levels that are openly connected. The intermediate floors are also utilized optimally in this arrangement, providing a wide variety of different learning opportunities.
 
-## Notes (optional) 
+## Notes
 
 ![The "Lernarena", a Learning landscape at the Cologne UAS (Photo: Guido Münster)](https://github.com/ReliSA/STePSEnHECs-PaCt/blob/main/catalogue/facets/publications/dub24/Learning_landscape-1.png "The "Lernarena", a Learning landscape at the Cologne UAS (Photo: Guido Münster)")
 

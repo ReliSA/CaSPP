@@ -96,7 +96,7 @@ After some time, get back to them and help improve the task definitions by:
  
 ## Example(s) / Known Use(s)
 
-## Notes (optional) 
+## Notes
 
 ![From requirements to tasks](https://github.com/ReliSA/STePSEnHECs-PaCt/blob/main/catalogue/facets/publications/jac22/From_requirements_to_tasks.png "From requirements to tasks")
 

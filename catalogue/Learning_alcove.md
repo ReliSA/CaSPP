@@ -84,7 +84,7 @@ Lastly, while soundproofing elements often shield the people inside the Learning
  - However, Learning alcoves can also be integrated directly into a room and delimited by the room’s side walls. Figure 3 illustrates different solutions for this. The example on the left shows a Learning alcove at Utrecht University: the Learning alcove was installed in a row with other uniform Learning alcoves along a corridor and provides open access to the corridor.
  - The example on the right (Figure 4) shows the integration of a Learning alcove into an existing alcove in a room on the campus of Leipzig University.
 
-## Notes (optional) 
+## Notes
 
 ![Learning alcove in the "Lernarena" at the Cologne UAS (Photo: Guido Münster)](https://github.com/ReliSA/STePSEnHECs-PaCt/blob/main/catalogue/facets/publications/dub24/Learning_alcove-1.png "Learning alcove in the "Lernarena" at the Cologne UAS (Photo: Guido Münster)")
 

@@ -1,0 +1,455 @@
+import re
+import os
+from pathlib import Path
+from typing import Dict, List, Tuple
+import logging
+
+from utils.constants import FileConstants, LoaderConstants, ReportConstants
+from core.analyzer.content_validator import ContentValidator
+from utils.exceptions import FileNotFoundError, InvalidInputError
+from core.analyzer.formatting_validator import FormattingValidator
+from core.analyzer.links_validator import LinkValidator
+from utils.parsers.markdown_parser import DocumentMeta, HeadingInfo, ParsedDocument
+from utils.parsers.template_parser import DocumentRules, HeadingRules, TemplateRules
+from utils.facets_index_template import FACETS_INDEX_TEMPLATE_NAME, PUBLICATIONS_INDEX_TEMPLATE_NAME
+
+logger = logging.getLogger(__name__)
+
+_TEMPLATES_WITHOUT_FILENAME_CHECK = frozenset({
+    "template-publication",
+    FACETS_INDEX_TEMPLATE_NAME,
+    PUBLICATIONS_INDEX_TEMPLATE_NAME,
+})
+
+_TEMPLATES_WITHOUT_ALIAS_CHECK = frozenset({
+    PUBLICATIONS_INDEX_TEMPLATE_NAME,
+})
+
+
+class MarkdownAnalyzer:
+    def __init__(self, base_path: str = None):
+        """Initialise the analyzer.
+
+        Args:
+            base_path: Root path of the project. Defaults to the repository root inferred from the location of this file.
+        """
+        if base_path is None:
+            app_dir = Path(__file__).parent.parent
+            self.base_path = app_dir.parent
+        else:
+            if not isinstance(base_path, (str, Path)):
+                raise InvalidInputError("base_path", base_path, "must be a string or Path object")
+            base_path_obj = Path(base_path)
+            if not base_path_obj.exists():
+                raise FileNotFoundError(str(base_path_obj))
+            self.base_path = base_path_obj
+
+        self.current_warnings: List[Dict] = []
+        self.current_passed: List[str] = []
+
+    def validate_structure(self, doc: ParsedDocument, template: TemplateRules, project_index: Dict = None, references_content: str = None) -> Dict:
+        """Compare a parsed document against template rules.
+
+        Args:
+            doc: Parsed representation of the markdown file.
+            template: Rules extracted from the matching template.
+            project_index: Global index of all project files and their metadata.
+
+        Returns:
+            Dict with keys 'file', 'warnings', and 'passed'.
+        """
+        self.current_warnings = []
+        self.current_passed = []
+  
+        # Formatting
+        all_raw_lines = []
+        for heading in doc.headings:
+            all_raw_lines.extend(heading.content.raw_lines)
+
+        formatting_validator = FormattingValidator(
+            full_content=getattr(doc, 'raw_content', ""),
+            raw_lines=all_raw_lines
+        )
+        formatting_warnings = formatting_validator.run_all_checks()
+        self.current_warnings.extend(formatting_warnings)
+        self.current_passed.extend(formatting_validator.passed)
+
+        content_validator = ContentValidator(
+            raw_lines=all_raw_lines,
+            doc_data=doc,
+            rules=template
+        )
+        content_warnings = content_validator.run_all_checks()
+        self.current_warnings.extend(content_warnings)
+        self.current_passed.extend(content_validator.passed)
+
+        # Breadcrumbs
+        self._validate_breadcrumbs(doc.meta, template.document_rules)
+        self._check_breadcrumb_links(doc.meta)
+
+        # H1 heading
+        h1_headings = [h for h in doc.headings if h.level == 1]
+        self._check_h1_count(h1_headings)
+        self._check_h1_filename(doc.meta, template)
+        self._check_h1_prefix(doc.meta, template.document_rules)
+
+        # Section structure
+        non_h1_headings = [h for h in template.headings if not (h.level == 1 and h.is_variable)]
+        doc_map = {h.text: h for h in doc.headings}
+        self._check_mandatory_sections(doc_map, non_h1_headings)
+        self._check_section_order(doc.headings, non_h1_headings)
+        self._check_no_unknown_sections(doc.headings, template)
+        self._check_heading_levels(doc_map, non_h1_headings)
+
+        if project_index:
+            link_validator = LinkValidator(
+                doc, project_index,
+                references_content=references_content,
+                skip_alias_check=(template.name in _TEMPLATES_WITHOUT_ALIAS_CHECK),
+            )
+            link_warnings = link_validator.run_all_checks()
+            self.current_warnings.extend(link_warnings)
+            self.current_passed.extend(link_validator.passed)
+
+        self.current_warnings.sort(key=lambda x: x['line'])
+        return {
+            "file": doc.meta.filepath,
+            "warnings": self.current_warnings,
+            "passed": self.current_passed,
+        }
+
+    def _check_h1_count(self, h1_headings: List[HeadingInfo]) -> None:
+        """Document must contain exactly one H1 heading.
+
+        Args:
+            h1_headings: All HeadingInfo objects whose level equals 1.
+        """
+        count = len(h1_headings)
+        if count == 0:
+            self._add_warning(1, "Document is missing an H1 heading.")
+        elif count > 1:
+            lines = ", ".join(str(h.line_number) for h in h1_headings)
+            self._add_warning(
+                h1_headings[1].line_number,
+                f"Document contains {count} H1 headings (lines {lines}); exactly one is required.",
+            )
+        else:
+            self._add_passed("Document contains exactly one H1 heading.")
+
+    def _check_h1_filename(self, meta: DocumentMeta, template: TemplateRules = None) -> None:
+        """H1 value must match the filename stem (case-insensitive).
+
+        Normalisation: keep only alphanumeric characters and hyphens.
+        Spaces, underscores, and all other non-alphanumeric characters are
+        stripped before comparing (hyphens survive as an intentional exception).
+
+        The check is skipped for publication templates because publication files
+        use a descriptive title that does not correspond to their filename.
+
+        Args:
+            meta:     Metadata extracted from the parsed document.
+            template: Matched template rules; used to opt out of the check.
+        """
+        if template is not None and template.name in _TEMPLATES_WITHOUT_FILENAME_CHECK:
+            return
+        if meta.h1_value is None or not meta.filepath:
+            return
+        stem = os.path.splitext(os.path.basename(meta.filepath))[0]
+        normalized_h1 = LoaderConstants.RE_FILENAME_STRIP.sub('', meta.h1_value.lower())
+        normalized_stem = LoaderConstants.RE_FILENAME_STRIP.sub('', stem.lower())
+        if normalized_h1 != normalized_stem:
+            self._add_warning(
+                1,
+                f"H1 value '{meta.h1_value}' does not match filename stem '{stem}'.",
+            )
+        else:
+            self._add_passed("H1 value matches the filename stem.")
+
+    def _check_h1_prefix(self, meta: DocumentMeta, doc_rules: DocumentRules) -> None:
+        """H1 prefix must match the template's expected prefix.
+
+        Args:
+            meta: Metadata extracted from the parsed document.
+            doc_rules: Document-level rules from the matched template.
+        """
+        expected = doc_rules.h1_prefix
+        actual = meta.h1_prefix
+        if expected == actual:
+            self._add_passed("H1 prefix matches the template.")
+            return
+        if expected is None:
+            self._add_warning(1, f"H1 has an unexpected prefix '{actual}'; template expects a plain title.")
+        elif actual is None:
+            self._add_warning(1, f"H1 is missing required prefix '{expected}'.")
+        else:
+            self._add_warning(1, f"H1 prefix '{actual}' does not match expected prefix '{expected}'.")
+
+    def _check_mandatory_sections(
+        self,
+        doc_map: Dict[str, HeadingInfo],
+        template_headings: List[HeadingRules],
+    ) -> None:
+        """Every non-optional template heading must exist in the document.
+
+        Args:
+            doc_map: Mapping of heading text to HeadingInfo for the document.
+            template_headings: Non-H1 heading rules from the template.
+        """
+        before = len(self.current_warnings)
+        for t_heading in template_headings:
+            if not t_heading.optional and t_heading.text not in doc_map:
+                self._add_warning(0, f"Mandatory section '{t_heading.text}' is missing.")
+        if len(self.current_warnings) == before:
+            self._add_passed("All mandatory sections are present.")
+
+    def _check_section_order(
+        self,
+        doc_headings: List[HeadingInfo],
+        template_headings: List[HeadingRules],
+    ) -> None:
+        """Sections must appear in the same relative order as in the template.
+
+        Args:
+            doc_headings: All headings extracted from the document, in document order.
+            template_headings: Non-H1 heading rules from the template, in template order.
+        """
+        template_index = {h.text: i for i, h in enumerate(template_headings)}
+        matched = [h for h in doc_headings if h.text in template_index]
+        order = [template_index[h.text] for h in matched]
+
+        before = len(self.current_warnings)
+        for i in range(1, len(order)):
+            if order[i] < order[i - 1]:
+                offender = matched[i]
+                self._add_warning(
+                    offender.line_number,
+                    f"Section '{offender.text}' is out of order relative to the template.",
+                )
+        if len(self.current_warnings) == before:
+            self._add_passed("Section order matches the template.")
+
+    def _check_no_unknown_sections(
+        self,
+        doc_headings: List[HeadingInfo],
+        template: TemplateRules,
+    ) -> None:
+        """Document must not contain headings that are absent from the template.
+
+        Args:
+            doc_headings: All headings extracted from the document.
+            template: Full template rules including all heading definitions.
+        """
+        known_texts = {h.text for h in template.headings}
+        template_h1 = next((h for h in template.headings if h.level == 1), None)
+        h1_is_variable = template_h1 is not None and template_h1.is_variable
+
+        before = len(self.current_warnings)
+        for heading in doc_headings:
+            if heading.level >= 3:
+                continue  # Sub-sections (H3+) are free-form; not checked against template
+            if heading.level == 1 and h1_is_variable:
+                continue  # Variable H1 is matched by level, not by text
+            if heading.text not in known_texts:
+                self._add_warning(
+                    heading.line_number,
+                    f"Unknown section '{heading.text}' is not defined in the template.",
+                )
+        if len(self.current_warnings) == before:
+            self._add_passed("No unknown sections found.")
+
+    def _check_heading_levels(
+        self,
+        doc_map: Dict[str, HeadingInfo],
+        template_headings: List[HeadingRules],
+    ) -> None:
+        """Each section must have the heading level specified in the template.
+
+        Args:
+            doc_map: Mapping of heading text to HeadingInfo for the document.
+            template_headings: Non-H1 heading rules from the template.
+        """
+        before = len(self.current_warnings)
+        for t_heading in template_headings:
+            actual = doc_map.get(t_heading.text)
+            if actual and actual.level != t_heading.level:
+                self._add_warning(
+                    actual.line_number,
+                    f"Section '{actual.text}' is H{actual.level} "
+                    f"but template requires H{t_heading.level}.",
+                )
+        if len(self.current_warnings) == before:
+            self._add_passed("All heading levels match the template.")
+
+    def _validate_breadcrumbs(self, doc_meta: DocumentMeta, doc_rules: DocumentRules) -> None:
+        """Validate the breadcrumb navigation line.
+
+        Args:
+            doc_meta: Metadata extracted from the parsed document.
+            doc_rules: Document-level rules from the matched template.
+        """
+        if not doc_meta.breadcrumbs:
+            self._add_warning(1, "Document is missing breadcrumbs.")
+            return
+
+        template_crumbs = doc_rules.breadcrumbs
+        actual_crumbs = doc_meta.breadcrumbs
+
+        if len(actual_crumbs) != len(template_crumbs):
+            self._add_warning(
+                1,
+                f"Breadcrumbs have {len(actual_crumbs)} part(s), "
+                f"but template expects {len(template_crumbs)}.",
+            )
+            return
+
+        before = len(self.current_warnings)
+        for i, (expected, actual) in enumerate(zip(template_crumbs, actual_crumbs)):
+            if expected.startswith("*") and expected.endswith("*"):
+                if not actual.strip():
+                    self._add_warning(
+                        1,
+                        f"Breadcrumb part {i + 1} (wildcard '{expected}') must not be empty.",
+                    )
+                continue
+            if expected != actual:
+                self._add_warning(
+                    1,
+                    f"Breadcrumb part {i + 1} is '{actual}', but template expects '{expected}'.",
+                )
+        if len(self.current_warnings) == before:
+            self._add_passed("Breadcrumbs are present and valid.")
+
+    def _check_breadcrumb_links(self, doc_meta: DocumentMeta) -> None:
+        """Validate that every linked part in breadcrumbs points to an existing file.
+
+        Args:
+            doc_meta: Metadata extracted from the parsed document.
+        """
+        if not doc_meta.breadcrumbs or not doc_meta.filepath:
+            return
+
+        before = len(self.current_warnings)
+
+        for crumb in doc_meta.breadcrumbs:
+            for match in LoaderConstants.RE_LINK.finditer(crumb):
+                url = match.group(2)
+                exists, _ = self.check_file_exists(url, doc_meta.filepath)
+                if not exists:
+                    self._add_warning(1, f"Breadcrumb link '{url}' does not point to an existing file.")
+
+        if len(self.current_warnings) == before:
+            self._add_passed("All breadcrumb links point to existing files.")
+
+    def find_markdown_links(self, content: str) -> List[Dict]:
+        """Find all markdown links in the content.
+
+        Args:
+            content: Raw markdown text to scan.
+
+        Returns:
+            List of dicts with keys 'text', 'url', 'type', and 'line_position'.
+        """
+        if not isinstance(content, str):
+            raise InvalidInputError("content", content, "must be a string")
+        if not content.strip():
+            return []
+
+        links = []
+        for match in re.finditer(LoaderConstants.RE_LINK, content):
+            text = match.group(1)
+            url = match.group(2)
+            link_type = (
+                "markdown"
+                if any(url.endswith(ext) for ext in FileConstants.MARKDOWN_EXTENSIONS)
+                else "other"
+            )
+            links.append({
+                "text": text,
+                "url": url,
+                "type": link_type,
+                "line_position": content[: match.start()].count("\n") + 1,
+            })
+        return links
+
+    def check_file_exists(self, file_path: str, relative_to_file: str) -> Tuple[bool, str]:
+        """Check whether a file exists relative to the analysed file's location.
+
+        Args:
+            file_path: The file path extracted from a markdown link.
+            relative_to_file: Absolute path of the markdown file being analysed.
+
+        Returns:
+            (exists, absolute_path) tuple.
+        """
+        if not isinstance(file_path, str) or not file_path.strip():
+            raise InvalidInputError("file_path", file_path, "must be a non-empty string")
+        if not isinstance(relative_to_file, str) or not relative_to_file.strip():
+            raise InvalidInputError("relative_to_file", relative_to_file, "must be a non-empty string")
+
+        try:
+            base_dir = Path(relative_to_file).parent
+            full_path = (
+                base_dir / file_path
+                if not os.path.isabs(file_path)
+                else Path(file_path)
+            )
+            return full_path.exists(), str(full_path.resolve())
+        except (OSError, ValueError) as exc:
+            logger.warning("Error checking file existence for '%s': %s", file_path, exc)
+            return False, ""
+
+    def generate_report(self, analysis: Dict) -> str:
+        """Generate a human-readable report of the analysis.
+
+        Args:
+            analysis: Dict returned by validate_structure.
+
+        Returns:
+            Formatted markdown report string.
+        """
+        if not isinstance(analysis, dict):
+            raise InvalidInputError("analysis", analysis, "must be a dictionary")
+
+        if "error" in analysis:
+            return f"Error: {analysis['error']}"
+
+        report = "# Markdown Analysis Report\n\n"
+
+        if analysis:
+            warnings = analysis.get("warnings", [])
+            passed = analysis.get("passed", [])
+            report += "## Structural Validation\n"
+            for warn in warnings:
+                report += f"{ReportConstants.ICON_WARNING} (line {warn['line']}): {warn['msg']}\n"
+            for msg in passed:
+                report += f"{ReportConstants.ICON_OK} {msg}\n"
+            if not warnings and not passed:
+                report += "No checks were performed.\n"
+            report += "\n"
+
+        return report
+
+    def get_base_path(self) -> Path:
+        """Return the base path used for file operations.
+
+        Returns:
+            Root path of the project as a Path object.
+        """
+        return self.base_path
+
+    def _add_warning(self, line: int, msg: str) -> None:
+        """Append a validation warning to the current session.
+
+        Args:
+            line: The 1-based line number where the warning occurred.
+            msg: A description of the warning.
+        """
+        self.current_warnings.append({"line": line, "msg": msg})
+
+    def _add_passed(self, msg: str) -> None:
+        """Append a passed check message to the current session.
+
+        Args:
+            msg: A description of what passed.
+        """
+        self.current_passed.append(msg)

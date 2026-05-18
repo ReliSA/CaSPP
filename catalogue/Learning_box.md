@@ -77,7 +77,7 @@ If Learning boxes are to be used as break-out rooms for a specific course, it mu
  - The University of Wuppertal also provides Learning boxes of varying sizes and shapes. Besides the medium sized rectangular one presented in Figure 2, which offers space for a maximum of four people, they also provide bigger circular Learning boxes (Figure 3) for meetings and project work with up to eight participants.
  - Lastly, the Ruhr West UAS in Mühlheim created a small Learning box (Figure 4) for two to four people by building a transparent yet soundproof outer framework around a [Learning alcove](Learning_alcove.md), making the workspace a bit more privat and autonomous.
 
-## Notes (optional) 
+## Notes
 
 ![Learning boxes at the Kiel University (Photo: Christian Kohls)](https://github.com/ReliSA/STePSEnHECs-PaCt/blob/main/catalogue/facets/publications/dub24/Learning_box-1.png "Learning boxes at the Kiel University (Photo: Christian Kohls)")
 

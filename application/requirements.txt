@@ -1,0 +1,5 @@
+PyQt6
+GitPython
+Markdown
+Pymdown-extensions
+charset-normalizer

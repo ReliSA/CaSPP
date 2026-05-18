@@ -92,7 +92,7 @@ Furthermore, when setting up Learning isles, particular attention must be paid t
  - The University of Basel also presents different solutions for the design of Learning isles in the richly illustrated open access publication "Laboratorium Lernräume - Neue Lernräume an der Universität Basel" [SCH'23]. Learning isles have been integrated into specially designed learning areas as well as in transit areas.
  - Bielefeld UAS also offers Learning isles in various sizes, designs and seating options in different learning areas. As shown in the images (Figure 4), hallways and open intermediate spaces can be perfectly equipped with such Learning isles and made available for studying or group work.
 
-## Notes (optional) 
+## Notes
 
 ![Learning isles at the "Lernarena" (Photo: Guido Münster)](https://github.com/ReliSA/STePSEnHECs-PaCt/blob/main/catalogue/facets/publications/dub24/Learning_isle-1.png "Learning isles at the "Lernarena" (Photo: Guido Münster)")
 

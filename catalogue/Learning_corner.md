@@ -86,7 +86,7 @@ Lastly, in order for students to use the Learning corners productively, the work
  - The example shown in Figure 2 from HAW Hamburg demonstrates how Learning corners can also be created in the middle of a larger room area using cleverly placed dividing elements. High, mobile partition walls and planted room dividers create a protected "corner". If required, a large rollable screen can be pushed up to the Learning corner.
  - Figure 3 also shows an artificial Learning corner in a passageway on the campus of the Massachusetts Institute of Technology (MIT), with the raised backrests of the seating furniture forming a corner.
 
-## Notes (optional) 
+## Notes
 
 ![Learning corner at the "Lernarena" (Photo: Dennis Dubbert)](https://github.com/ReliSA/STePSEnHECs-PaCt/blob/main/catalogue/facets/publications/dub24/Learning_corner-1.png "Learning corner at the "Lernarena" (Photo: Dennis Dubbert)")
 

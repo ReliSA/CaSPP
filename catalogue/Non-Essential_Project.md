@@ -15,7 +15,7 @@ Not Business Critical, Customer's Side Project, Work on the Non-Business-Critica
 - [Primary perspective](facets/perspectives/perspectives.md): [Teacher](facets/perspectives/Teacher.md)
 - [Stage](facets/stages/stages.md): [Team and Project Setup](facets/categories/Team_and_Project_Setup.md)
 
-## Synopsis (optional)
+## Synopsis
 
 How not to risk relationship between teachers and customers inherent in students working on core business? Accept projects that are not on the customer's critical path or essential for their operations.
 
